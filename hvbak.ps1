@@ -12,7 +12,7 @@
     - Uses per-vm background jobs (named/perVmJob) to run each VM's workflow concurrently.
     - No throttling: all per-vm jobs are started immediately. Only the external 7z process is set to Idle priority.
     - Implements graceful cleanup in a finally block: removes checkpoints, restarts VMs, and cleans up incomplete exports even if the export is cancelled via Hyper-V Manager or Ctrl+C.
-    - Per-job logs are written to the shared TempRoot to survive per-VM folder deletion.
+    - All output from background jobs is streamed to the parent script via PowerShell pipelines (Receive-Job); no log files are created on disk.
     - Supports Ctrl+C cancellation: stops all background jobs, kills related 7z.exe processes, and removes temp contents.
 
 .PARAMETER NamePattern
@@ -163,21 +163,7 @@ foreach ($vm in $vms) {
             Write-Output "$ts  $sanitized"
         }
 
-        # Define a shared per-VM status file in TempRoot
-        $statusFile = Join-Path $TempRoot ("vmbkp_status_{0}.json" -f $safeVmName)
-        function SetStatus { param([string]$Phase,[int]$Percent)
-            $obj = [PSCustomObject]@{
-                Vm        = $vmName
-                SafeVm    = $safeVmName
-                Phase     = $Phase
-                Percent   = $Percent
-                Timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-            }
-            try { $obj | ConvertTo-Json -Compress | Set-Content -Path $statusFile -Encoding UTF8 -ErrorAction SilentlyContinue } catch {}
-        }
-
         LocalLog ("Per-vm job started for {0}" -f $vmName)
-        SetStatus "Starting" 0
 
         $result = [PSCustomObject]@{ VMName = $vmName; TempPath = $null; DestArchive = $null; Success = $false; Message = $null }
 
@@ -247,17 +233,12 @@ foreach ($vm in $vms) {
                 }
             }
 
-            SetStatus "Checkpoint" 10
-
             # Export VM to per-vm folder
             try {
                 # Reflect long-running export phase in top progress
-                SetStatus "Exporting" 40
                 LocalLog ("Exporting VM {0} to {1}" -f $vmName, $vmTemp)
                 Export-VM -Name $vmName -Path $vmTemp -ErrorAction Stop
                 LocalLog ("Export completed for {0}" -f $vmName)
-                # Mark export completion
-                SetStatus "Export-VM" 55
             } catch {
                 LocalLog ("Export-VM failed or was cancelled for {0}: {1}" -f $vmName, $_)
                 throw
@@ -422,16 +403,40 @@ foreach ($vm in $vms) {
                 if ($pushed) { Pop-Location }
             }
 
-            SetStatus "Archiving (7z)" 60
-
             # Move archive to final destination
             try {
                 $destArchiveLeaf = Split-Path -Path $tempArchive -Leaf
                 $destArchivePath = Join-Path -Path $DateDestination -ChildPath $destArchiveLeaf
 
                 LocalLog ("Moving archive from temp {0} -> destination {1}" -f $tempArchive, $destArchivePath)
-                Move-Item -Path $tempArchive -Destination $destArchivePath -Force -ErrorAction Stop
-                LocalLog ("Moved archive to destination: {0}" -f $destArchivePath)
+                
+                # Verify source archive exists before attempting move
+                if (-not (Test-Path -Path $tempArchive)) {
+                    throw "Source archive not found at: $tempArchive"
+                }
+                
+                # Verify destination directory exists
+                if (-not (Test-Path -Path $DateDestination)) {
+                    LocalLog ("Destination directory does not exist, creating: {0}" -f $DateDestination)
+                    New-Item -Path $DateDestination -ItemType Directory -Force -ErrorAction Stop | Out-Null
+                }
+                
+                # Attempt the move with detailed error capture
+                try {
+                    Move-Item -Path $tempArchive -Destination $destArchivePath -Force -ErrorAction Stop
+                    LocalLog ("Moved archive to destination: {0}" -f $destArchivePath)
+                } catch {
+                    # Capture detailed error information
+                    $errorMsg = "Move-Item failed. Error: $($_.Exception.Message)"
+                    if ($_.Exception.InnerException) {
+                        $errorMsg += " Inner: $($_.Exception.InnerException.Message)"
+                    }
+                    LocalLog ("MOVE ERROR: {0}" -f $errorMsg)
+                    LocalLog ("Source exists: {0}, Size: {1} bytes" -f (Test-Path $tempArchive), (if (Test-Path $tempArchive) { (Get-Item $tempArchive).Length } else { "N/A" }))
+                    LocalLog ("Destination dir exists: {0}" -f (Test-Path $DateDestination))
+                    LocalLog ("Destination path: {0}" -f $destArchivePath)
+                    throw $errorMsg
+                }
 
                 # Delete per-vm export folder (entire folder) now that archive is safely at destination
                 try {
@@ -447,9 +452,10 @@ foreach ($vm in $vms) {
                 $result.Message = "Archive created and per-VM folder removed"
                 $result.DestArchive = $destArchivePath
             } catch {
-                LocalLog ("Failed to move archive to destination: {0}" -f $_)
+                $errorDetail = $_.ToString()
+                LocalLog ("Failed to move archive to destination: {0}" -f $errorDetail)
                 $result.Success = $false
-                $result.Message = "Archive succeeded but Move-Item failed: $_"
+                $result.Message = "Archive created but Move-Item failed: $errorDetail"
             }
         } catch {
             LocalLog ("Per-vm job error for {0}: {1}" -f $vmName, $_)
@@ -543,7 +549,7 @@ foreach ($vm in $vms) {
                     $sorted = $allVmArchives | Sort-Object SortKey -Descending
                     $keepArchives = $sorted | Select-Object -First $KeepCount
                     $deleteArchives = $sorted | Select-Object -Skip $KeepCount
-                
+                  
                     if ($KeepCount -eq 1) {
                         LocalLog ("Found {0} archives for {1}. Keeping {2}. Deleting {3} older archives..." -f 
                             $allVmArchives.Count, $vmName, $keepArchives[0].Name, $deleteArchives.Count)
@@ -644,42 +650,6 @@ foreach ($vm in $vms) {
     }
 
     $perVmJobs += $perVmJob
-
-    # register a per-vm event id using the new naming
-    $eventId = "PerVmJobState_$($perVmJob.Id)"
-    try {
-        Register-ObjectEvent -InputObject $perVmJob -EventName StateChanged -SourceIdentifier $eventId -Action {
-            try {
-                $newState = $Event.SourceEventArgs.NewState
-                if ($newState -in @('Completed','Failed','Stopped')) {
-                    $res = $null
-                    try { $res = Receive-Job -Job $Event.Sender -ErrorAction Stop } catch { $res = $null }
-
-                    try { $remaining = (Get-Job | Where-Object { $_.State -eq 'Running' }).Count } catch { $remaining = 'N/A' }
-
-                    if ($res -and $res.Success) {
-                        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Per-vm archive succeeded for $($res.VMName). Temp folder removed (if present). ($remaining jobs remaining)"
-                    } else {
-                        if ($res) {
-                            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Per-vm archive failed or skipped for $($res.VMName): $($res.Message). Leave export for inspection. ($remaining jobs remaining)"
-                        } else {
-                            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Per-vm job Id $($Event.Sender.Id) finished but returned no result. ($remaining jobs remaining)"
-                        }
-                    }
-
-                    # cleanup event and job
-                    $sid = "PerVmJobState_$($Event.Sender.Id)"
-                    try { Unregister-Event -SourceIdentifier $sid -ErrorAction SilentlyContinue } catch {}
-                    try { Remove-Event -SourceIdentifier $sid -ErrorAction SilentlyContinue } catch {}
-                    try { Remove-Job -Job $Event.Sender -Force -ErrorAction SilentlyContinue } catch {}
-                }
-            } catch {
-                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Error in PerVm job-state handler: $_"
-            }
-        } | Out-Null
-    } catch {
-        Log ("Failed to register PerVm job StateChanged handler for Job Id {0}: {1}" -f $perVmJob.Id, $_)
-    }
 }
 
 if ($perVmJobs.Count -eq 0) {
@@ -687,7 +657,7 @@ if ($perVmJobs.Count -eq 0) {
     exit 0
 }
 
-# --- WAIT WITH REAL-TIME PROGRESS BAR AT TOP ---
+# --- MONITOR JOBS AND STREAM OUTPUT VIA PIPELINE ---
 $global:VmbkpCancelled = $false
 
 $consoleHandler = [ConsoleCancelEventHandler]{
@@ -703,73 +673,33 @@ $consoleHandler = [ConsoleCancelEventHandler]{
 
 [Console]::add_CancelKeyPress($consoleHandler)
 
-Log ("Streaming progress for {0} jobs..." -f $perVmJobs.Count)
-
-$progressRootId = 1
-$perVmIds = @{}
-# Track last rendered values to avoid unnecessary redraws
-$lastOverallPercent = -1
-$lastRunningCount = -1
-$lastVmStates = @{} # safeVm -> @{ Percent = [int]; Phase = [string] }
-$progressInitialized = $false
+Log ("Monitoring {0} jobs and streaming output..." -f $perVmJobs.Count)
 
 try {
     while ($true) {
         if ($global:VmbkpCancelled) { break }
 
-        $statusFiles = Get-ChildItem -Path (Join-Path $TempRoot 'vmbkp_status_*.json') -ErrorAction SilentlyContinue
-        $vmStatuses = @()
-        foreach ($sf in ($statusFiles | Sort-Object Name)) {
-            try {
-                $json = Get-Content $sf.FullName -Raw -ErrorAction SilentlyContinue
-                if ($json) { $vmStatuses += ($json | ConvertFrom-Json -ErrorAction SilentlyContinue) }
-            } catch {}
-        }
-
-        # Compute overall percent and running count
-        # Only consider the jobs started by this script to avoid counting unrelated background jobs
+        # Get running jobs
         $runningJobs = $perVmJobs | Where-Object { $_.State -eq 'Running' }
         $runningCount = ($runningJobs | Measure-Object).Count
-        $overallPercent = 0
-        if ($vmStatuses.Count -gt 0) {
-            $overallPercent = [int]([Math]::Round(($vmStatuses | Measure-Object Percent -Average).Average))
-        }
-
-        # Update root progress only when changed
-        if (-not $global:VmbkpCancelled -and ($overallPercent -ne $lastOverallPercent -or $runningCount -ne $lastRunningCount)) {
+        
+        # Receive and display output from all jobs (running and completed)
+        foreach ($job in $perVmJobs) {
             try {
-                Write-Progress -Id $progressRootId -Activity "VM backup batch" -Status ("Running {0} job(s). Overall {1}%." -f $runningCount, $overallPercent) -PercentComplete $overallPercent -ErrorAction SilentlyContinue
-                $progressInitialized = $true
-            } catch {
-                # Silently ignore any Write-Progress errors
-            }
-            $lastOverallPercent = $overallPercent
-            $lastRunningCount = $runningCount
-        }
-
-        # Update child progress bars only when their state changed; keep stable order
-        $nextId = 10
-        foreach ($st in ($vmStatuses | Sort-Object SafeVm)) {
-            if (-not $perVmIds.ContainsKey($st.SafeVm)) { $perVmIds[$st.SafeVm] = $nextId; $nextId++ }
-            $id = $perVmIds[$st.SafeVm]
-            $prev = $lastVmStates[$st.SafeVm]
-            $shouldUpdate = $true
-            if ($prev) {
-                if ($prev.Percent -eq $st.Percent -and $prev.Phase -eq $st.Phase) { $shouldUpdate = $false }
-            }
-            if (-not $global:VmbkpCancelled -and $shouldUpdate) {
-                try { 
-                    Write-Progress -Id $id -ParentId $progressRootId -Activity $st.Vm -Status $st.Phase -PercentComplete $st.Percent -ErrorAction SilentlyContinue
-                } catch {
-                    # Silently ignore any Write-Progress errors
+                # Receive available output without removing it from the job yet
+                $output = Receive-Job -Job $job -ErrorAction SilentlyContinue
+                if ($output) {
+                    # Stream output directly to console
+                    $output | ForEach-Object { Write-Output $_ }
                 }
-                $lastVmStates[$st.SafeVm] = @{ Percent = $st.Percent; Phase = $st.Phase }
+            } catch {
+                # Silently ignore receive errors during monitoring
             }
         }
-
+        
         if (-not $runningJobs -or $runningCount -eq 0) { break }
 
-        # Pump job state without blocking (PS 5.1 compatible: pass jobs explicitly)
+        # Pump job state without blocking
         if (-not $global:VmbkpCancelled -and $runningJobs) {
             try { Wait-Job -Job $runningJobs -Timeout 1 -ErrorAction SilentlyContinue | Out-Null } catch {}
         }
@@ -778,69 +708,40 @@ try {
     }
 } finally {
     try { [Console]::remove_CancelKeyPress($consoleHandler) } catch {}
-    # Complete all progress bars to clean up the display
-    if ($progressInitialized) {
-        try { Write-Progress -Id $progressRootId -Activity "VM backup batch" -Completed -ErrorAction SilentlyContinue } catch {}
-        foreach ($id in $perVmIds.Values) { 
-            try { Write-Progress -Id $id -Activity "VM" -Completed -ErrorAction SilentlyContinue } catch {} 
-        }
-    }
-    # Clean up any orphaned status files
-    try {
-        Get-ChildItem -Path (Join-Path $TempRoot 'vmbkp_status_*.json') -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-    } catch {}
 }
 
-# Final processing of results (defensive)
+# Final processing - get results and any remaining output
 foreach ($j in $perVmJobs) {
+    # First, get any remaining output
+    try {
+        $remainingOutput = Receive-Job -Job $j -ErrorAction SilentlyContinue
+        if ($remainingOutput) {
+            $remainingOutput | ForEach-Object { Write-Output $_ }
+        }
+    } catch {
+        # Output already received in monitoring loop
+    }
+    
+    # Then try to get the result object
     try {
         $res = Receive-Job -Job $j -ErrorAction Stop -Keep
-    } catch {
-        # If Receive-Job fails due to serialization issues, try to get basic job info
-        try {
-            $jobState = $j.State
-            $jobName = $j.Name
-            $jobError = $null
-            
-            # Try to get any error information from the job
-            if ($j.ChildJobs -and $j.ChildJobs[0]) {
-                $childJob = $j.ChildJobs[0]
-                if ($childJob.Error -and $childJob.Error.Count -gt 0) {
-                    $jobError = $childJob.Error[0].ToString()
-                }
-                if ($childJob.Warning -and $childJob.Warning.Count -gt 0) {
-                    $warnings = $childJob.Warning -join "; "
-                    Log ("Per-vm Job Id {0} warnings: {1}" -f $j.Id, $warnings)
-                }
-            }
-            
-            if ($jobState -eq 'Failed') {
-                if ($jobError) {
-                    Log ("Per-vm Job Id {0} FAILED with error: {1}" -f $j.Id, $jobError)
-                } else {
-                    Log ("Per-vm Job Id {0} FAILED but error details could not be retrieved (serialization issue)" -f $j.Id)
-                }
-            } elseif ($jobState -eq 'Completed') {
-                Log ("Per-vm Job Id {0} completed but output could not be received (serialization issue). Check job logs." -f $j.Id)
-            } else {
-                Log ("Per-vm Job Id {0} (Name: {1}, State: {2}) could not be received due to serialization error." -f $j.Id, $jobName, $jobState)
-            }
-        } catch {
-            Log ("Per-vm Job Id {0} already processed by handler or could not be accessed: {1}" -f $j.Id, $_.Exception.Message)
-        }
-        try { Remove-Job -Job $j -Force -ErrorAction SilentlyContinue } catch {}
-        continue
-    }
+        
+        try { $remaining = ($perVmJobs | Where-Object { $_.State -eq 'Running' }).Count } catch { $remaining = 'N/A' }
 
-    try { $remaining = ($perVmJobs | Where-Object { $_.State -eq 'Running' }).Count } catch { $remaining = 'N/A' }
-
-    if ($res -and $res.Success -eq $true) {
-        Log ("Per-vm job completed: {0} -> {1} ({2} jobs remaining)" -f $res.VMName, $res.DestArchive, $remaining)
-    } else {
-        if ($res) {
-            Log ("Per-vm job failed or skipped for {0}: {1}. Export left at: {2} ({3} jobs remaining)" -f $res.VMName, $res.Message, $res.TempPath, $remaining)
+        if ($res -and $res.Success -eq $true) {
+            Log ("SUMMARY: Job completed successfully for {0} -> {1}" -f $res.VMName, $res.DestArchive)
         } else {
-            Log ("No result for per-vm job id {0}; handler likely handled cleanup. ({1} jobs remaining)" -f $j.Id, $remaining)
+            if ($res) {
+                Log ("SUMMARY: Job failed for {0}: {1}" -f $res.VMName, $res.Message)
+            }
+        }
+    } catch {
+        # If we can't get the result object, check job state
+        $jobState = $j.State
+        if ($jobState -eq 'Failed') {
+            Log ("SUMMARY: Job Id {0} FAILED. See output above for details." -f $j.Id)
+        } elseif ($jobState -eq 'Completed') {
+            Log ("SUMMARY: Job Id {0} completed. See output above for details." -f $j.Id)
         }
     }
 
