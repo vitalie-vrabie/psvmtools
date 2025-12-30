@@ -827,11 +827,17 @@ foreach ($vm in $vms) {
 
                 # After cleanup, if the current date folder is empty, delete it as well
                 try {
-                    $curDateContents = Get-ChildItem -Path $DateDestination -Force -ErrorAction SilentlyContinue
-                    if (-not $curDateContents -or $curDateContents.Count -eq 0) {
-                        LocalLog ("Date folder {0} is empty after cleanup, deleting..." -f $DateDestination)
-                        Remove-Item -Path $DateDestination -Force -ErrorAction Stop
-                        LocalLog ("Deleted empty date folder: {0}" -f $DateDestination)
+                    # Do not delete the latest/current run folder ($DateDestination). Only prune older empty date folders.
+                    if ($DateDestination -and ($folder.FullName -ne $DateDestination)) {
+                        $curDateContents = Get-ChildItem -Path $DateDestination -Force -ErrorAction SilentlyContinue
+                        if (-not $curDateContents -or $curDateContents.Count -eq 0) {
+                            LocalLog ("Date folder {0} is empty after cleanup, deleting..." -f $DateDestination)
+                            Remove-Item -Path $DateDestination -Force -ErrorAction Stop
+                            LocalLog ("Deleted empty date folder: {0}" -f $DateDestination)
+                        }
+                    } else {
+                        # keep current date folder even if it's empty
+                        LocalLog ("Keeping latest date folder (not deleting even if empty): {0}" -f $DateDestination)
                     }
                 } catch {
                     LocalLog ("Failed to delete empty date folder {0}: {1}" -f $DateDestination, $_)
