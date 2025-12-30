@@ -157,7 +157,7 @@ set "MSI_FILE=%OUTPUT_PATH%\PSHVTools-Setup-1.0.0.msi"
 REM Step 1: Compile with candle.exe
 echo   Step 1/2: Compiling WXS to WIXOBJ...
 
-"%WIX_PATH%\candle.exe" -nologo -out "%WIXOBJ_FILE%" "%WXS_FILE%"
+"%WIX_PATH%\candle.exe" -nologo -arch x64 -out "%WIXOBJ_FILE%" "%WXS_FILE%"
 if !errorlevel! neq 0 (
     echo.
     echo [ERROR] Candle.exe failed with exit code: !errorlevel!
@@ -169,7 +169,7 @@ echo     [OK] Compilation successful
 REM Step 2: Link with light.exe
 echo   Step 2/2: Linking to MSI...
 
-"%WIX_PATH%\light.exe" -nologo -ext WixUIExtension -cultures:en-us -out "%MSI_FILE%" "%WIXOBJ_FILE%"
+"%WIX_PATH%\light.exe" -nologo -ext WixUIExtension -cultures:en-us -sice:ICE80 -out "%MSI_FILE%" "%WIXOBJ_FILE%"
 if !errorlevel! neq 0 (
     echo.
     echo [ERROR] Light.exe failed with exit code: !errorlevel!
