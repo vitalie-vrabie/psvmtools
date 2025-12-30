@@ -1,13 +1,14 @@
 @echo off
-REM Build-Release.bat
-REM Builds PSHVTools release and installer packages using MSBuild (replaces WiX)
+REM Build-Installer.bat
+REM Builds PSHVTools installer package (replaces Build-WixInstaller.bat)
+REM This script uses MSBuild instead of WiX Toolset
 
 setlocal enabledelayedexpansion
 
 echo.
 echo ========================================
-echo   PSHVTools MSBuild Builder
-echo   (WiX-free solution)
+echo   PSHVTools Installer Builder
+echo   MSBuild-based (No WiX required!)
 echo ========================================
 echo.
 
@@ -57,23 +58,17 @@ echo Please install one of the following:
 echo - Visual Studio 2022 (any edition)
 echo - .NET SDK 6.0 or later
 echo.
-echo Or install .NET SDK: https://dotnet.microsoft.com/download
 exit /b 1
 
 :msbuild_found
 echo   [OK] Found MSBuild: !MSBUILD_PATH!
 echo.
 
-REM Check which target to build
-set "BUILD_TARGET=Build"
-if /i "%~1"=="package" set "BUILD_TARGET=Package"
-if /i "%~1"=="clean" set "BUILD_TARGET=Clean"
-
-REM Build with MSBuild
-echo Building target: !BUILD_TARGET!...
+REM Build installer package with MSBuild
+echo Building installer package...
 echo.
 
-"!MSBUILD_PATH!" "%SCRIPT_DIR%\PSHVTools.csproj" /t:!BUILD_TARGET! /p:Configuration=Release /v:minimal
+"!MSBUILD_PATH!" "%SCRIPT_DIR%\PSHVTools.csproj" /t:Package /p:Configuration=Release /v:minimal
 
 if !errorlevel! neq 0 (
     echo.
@@ -82,57 +77,42 @@ if !errorlevel! neq 0 (
 )
 
 echo.
-
-REM Display results based on target
-if /i "!BUILD_TARGET!"=="Clean" (
-    echo Clean completed successfully.
-    exit /b 0
-)
-
 echo ========================================
 echo   Build Successful!
 echo ========================================
 echo.
 
-REM Display output files
-if exist "%SCRIPT_DIR%\release\PSHVTools-v1.0.0.zip" (
-    echo Source Package:
-    for %%A in ("%SCRIPT_DIR%\release\PSHVTools-v1.0.0.zip") do set "FILE_SIZE=%%~zA"
-    set /a "FILE_SIZE_KB=!FILE_SIZE! / 1024"
-    echo   File: release\PSHVTools-v1.0.0.zip
-    echo   Size: !FILE_SIZE_KB! KB
-    echo.
-)
-
-if exist "%SCRIPT_DIR%\dist\PSHVTools-Setup-1.0.0" (
-    echo Installer Package:
-    echo   Folder: dist\PSHVTools-Setup-1.0.0\
-    echo   Contains: Install.ps1, Module files, Documentation
-    echo.
-)
-
+REM Display output
 if exist "%SCRIPT_DIR%\dist\PSHVTools-Setup-1.0.0.zip" (
-    echo Installer ZIP:
+    echo Installer Package Created:
     for %%A in ("%SCRIPT_DIR%\dist\PSHVTools-Setup-1.0.0.zip") do set "FILE_SIZE=%%~zA"
     set /a "FILE_SIZE_KB=!FILE_SIZE! / 1024"
     echo   File: dist\PSHVTools-Setup-1.0.0.zip
     echo   Size: !FILE_SIZE_KB! KB
     echo.
+    echo Also available:
+    echo   Folder: dist\PSHVTools-Setup-1.0.0\
+    echo   Source ZIP: release\PSHVTools-v1.0.0.zip
+    echo.
 )
 
 echo ========================================
-echo   Usage Instructions
+echo   Installation Instructions
 echo ========================================
 echo.
-echo Build targets:
-echo   Build-Release.bat           - Build release and installer
-echo   Build-Release.bat package   - Build all + create installer ZIP
-echo   Build-Release.bat clean     - Clean build outputs
+echo For users:
+echo   1. Extract PSHVTools-Setup-1.0.0.zip
+echo   2. Right-click Install.ps1
+echo   3. Select "Run with PowerShell" as Administrator
 echo.
-echo Installation (from installer package):
-echo   1. Navigate to dist\PSHVTools-Setup-1.0.0\
-echo   2. Right-click Install.ps1, "Run with PowerShell" as Administrator
-echo   OR: powershell -ExecutionPolicy Bypass -File Install.ps1
+echo Or command line:
+echo   powershell -ExecutionPolicy Bypass -File Install.ps1
+echo.
+echo Silent install:
+echo   powershell -ExecutionPolicy Bypass -File Install.ps1 -Silent
+echo.
+echo Uninstall:
+echo   powershell -ExecutionPolicy Bypass -File Install.ps1 -Uninstall
 echo.
 
 exit /b 0

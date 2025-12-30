@@ -3,82 +3,94 @@
 **Version:** 1.0.0  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** hvbak  
-**Commands:** `hvbak` or `hv-bak`  
+**Commands:** `Backup-HyperVVM`, `Restore-HyperVVM`  
 **License:** MIT
 
 ---
 
 ## ?? What is PSHVTools?
 
-PSHVTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides the `hvbak` and `hv-bak` cmdlets for automated, parallel VM backups with checkpoint support and 7-Zip compression.
+PSHVTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides cmdlets for automated, parallel VM backups with checkpoint support and 7-Zip compression.
 
 ### Key Features:
-- ?? Live VM backups using Production checkpoints
-- ?? Parallel processing of multiple VMs
+- ? Live VM backups using Production checkpoints
+- ? Parallel processing of multiple VMs
 - ??? 7-Zip compression with multithreading
-- ?? Automatic cleanup (keeps 2 most recent backups)
+- ??? Automatic cleanup (keeps 2 most recent backups)
 - ?? Progress tracking with real-time status
-- ?? Graceful cancellation (Ctrl+C support)
+- ? Graceful cancellation (Ctrl+C support)
 - ?? Low-priority compression (Idle CPU class)
 
 ---
 
 ## ?? Installation
 
-### MSI Installer
+### PowerShell Installer (Recommended)
 
-1. Download `PSHVTools-Setup-1.0.0.msi`
-2. Double-click to install
-3. Follow the wizard
-4. Done!
+1. Download and extract `PSHVTools-Setup-1.0.0.zip`
+2. Right-click `Install.ps1` ? "Run with PowerShell" (as Administrator)
+3. Done!
+
+**Command line install:**
+```powershell
+powershell -ExecutionPolicy Bypass -File Install.ps1
+```
 
 **Silent install:**
-```cmd
-msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
+```powershell
+powershell -ExecutionPolicy Bypass -File Install.ps1 -Silent
 ```
 
 After installation:
 ```powershell
-# Display help (use either command)
-hvbak
-hv-bak
+# Import module
+Import-Module hvbak
 
-# Backup all VMs
-hvbak -NamePattern "*"
-# or
-hv-bak -NamePattern "*"
+# Get help
+Get-Help Backup-HyperVVM -Full
+Get-Help Restore-HyperVVM -Full
+
+# Backup a VM
+Backup-HyperVVM -VMName "MyVM" -Destination "D:\Backups"
 ```
 
 **Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
-## ??? Building the MSI Installer
+## ?? Building Release Packages
 
 ### Prerequisites
 
-Install WiX Toolset v3.14.1 or later:
+**MSBuild** (via one of these):
+- Visual Studio 2022 (any edition)
+- .NET SDK 6.0 or later
+- Build Tools for Visual Studio 2022
 
-**Option 1: WinGet**
-```powershell
-winget install --id WiXToolset.WiXToolset --accept-package-agreements --accept-source-agreements
-```
+**PowerShell 5.1+** (included with Windows)
 
-**Option 2: Direct Download**
-Download from https://wixtoolset.org/releases/
+**No WiX Toolset required!** ?
 
-**Option 3: Chocolatey**
-```powershell
-choco install wixtoolset
-```
-
-### Build the MSI
+### Build Commands
 
 ```cmd
-Build-WixInstaller.bat
+# Build release and installer packages
+Build-Release.bat
+
+# Build everything + create installer ZIP
+Build-Release.bat package
+
+# Build installer package only
+Build-Installer.bat
+
+# Clean build outputs
+Build-Release.bat clean
 ```
 
-The MSI installer will be created at: `dist\PSHVTools-Setup-1.0.0.msi`
+**Output:**
+- `release\PSHVTools-v1.0.0.zip` - Source package
+- `dist\PSHVTools-Setup-1.0.0\` - Installer package
+- `dist\PSHVTools-Setup-1.0.0.zip` - Distributable installer
 
 **Full build documentation:** See [BUILD_GUIDE.md](BUILD_GUIDE.md)
 
@@ -91,18 +103,25 @@ PSHVTools/
 ??? hvbak.ps1                          # Core backup script
 ??? hvbak.psm1                         # PowerShell module
 ??? hvbak.psd1                         # Module manifest
+??? Install-PSHVTools.ps1              # Installation script
+??? Uninstall-PSHVTools.ps1            # Uninstallation script
 ?
-??? Build-WixInstaller.bat             # Builds MSI installer
-??? PSHVTools-Installer.wxs            # WiX installer definition
+??? PSHVTools.csproj                   # MSBuild project
+??? Build-Release.bat                  # Main build script
+??? Build-Installer.bat                # Installer builder
+??? Create-InstallerScript.ps1         # Script generator
 ?
-??? README_VMBAK_MODULE.md             # Module documentation
 ??? QUICKSTART.md                      # Quick start guide
 ??? BUILD_GUIDE.md                     # Build instructions
-??? PACKAGE_README.md                  # Package documentation
+??? PROJECT_SUMMARY.md                 # Project overview
 ??? LICENSE.txt                        # MIT license
 ?
-??? dist/                              # Build output (created by scripts)
-    ??? PSHVTools-Setup-1.0.0.msi     # MSI installer
+??? release/                           # Build output (generated)
+?   ??? PSHVTools-v1.0.0/             # Source package
+?   ??? PSHVTools-v1.0.0.zip          # Source ZIP
+??? dist/                              # Installer output (generated)
+    ??? PSHVTools-Setup-1.0.0/        # Installer package
+    ??? PSHVTools-Setup-1.0.0.zip     # Installer ZIP
 ```
 
 ---
@@ -111,19 +130,32 @@ PSHVTools/
 
 ### For GitHub Releases
 
-Distribute the MSI installer:
-- **PSHVTools-Setup-1.0.0.msi** - Windows Installer package
+Distribute both packages:
+1. **PSHVTools-v1.0.0.zip** - Source package
+2. **PSHVTools-Setup-1.0.0.zip** - Installer package (recommended)
 
 ### For Enterprise IT Departments
 
-**MSI Installer Benefits:**
-- Industry-standard Windows Installer
-- Add/Remove Programs integration
-- Silent install: `msiexec /i PSHVTools-Setup-1.0.0.msi /quiet`
-- Silent uninstall: `msiexec /x PSHVTools-Setup-1.0.0.msi /quiet`
-- Group Policy deployment ready
-- SCCM/Intune compatible
-- Transactional installation with rollback support
+**PowerShell Installer Benefits:**
+- ? No WiX Toolset dependency
+- ? No special tools required to install
+- ? Works on all Windows versions with PowerShell 5.1+
+- ? Simple, transparent installation
+- ? Silent install support
+- ? Easy to customize
+- ? Clean uninstallation
+
+**Installation Commands:**
+```powershell
+# Interactive
+.\Install.ps1
+
+# Silent
+.\Install.ps1 -Silent
+
+# Uninstall
+.\Install.ps1 -Uninstall
+```
 
 ---
 
@@ -131,45 +163,45 @@ Distribute the MSI installer:
 
 ### Build Commands
 ```cmd
-# Build MSI installer
-Build-WixInstaller.bat
+# Build all packages
+Build-Release.bat package
 
-# Specify custom output path
-Build-WixInstaller.bat "C:\Release"
+# Build installer only
+Build-Installer.bat
+
+# Clean outputs
+Build-Release.bat clean
 ```
 
 ### Installation Commands
-```cmd
+```powershell
 # Interactive install
-msiexec /i PSHVTools-Setup-1.0.0.msi
+.\Install.ps1
 
 # Silent install
-msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
+.\Install.ps1 -Silent
 
-# Silent install with logging
-msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
-
-# Silent uninstall
-msiexec /x PSHVTools-Setup-1.0.0.msi /quiet /norestart
+# Uninstall
+.\Install.ps1 -Uninstall
 ```
 
 ### Usage Commands
 ```powershell
-# Display help (either command works)
-hvbak
-hv-bak
+# Import module
+Import-Module hvbak
 
-# Backup all VMs
-hvbak -NamePattern "*"
+# Backup a VM
+Backup-HyperVVM -VMName "MyVM" -Destination "D:\Backups"
 
-# Backup specific VMs (using hyphenated alias)
-hv-bak -NamePattern "srv-*"
+# Restore a VM
+Restore-HyperVVM -BackupPath "D:\Backups\MyVM_20250101_120000.7z"
 
-# Custom destination
-hvbak -NamePattern "*" -Destination "D:\backups"
+# List available commands
+Get-Command -Module hvbak
 
-# Detailed help
-Get-Help Invoke-VMBackup -Full
+# Get detailed help
+Get-Help Backup-HyperVVM -Full
+Get-Help Restore-HyperVVM -Full
 ```
 
 ---
@@ -178,10 +210,9 @@ Get-Help Invoke-VMBackup -Full
 
 | Document | Description | Target Audience |
 |----------|-------------|-----------------|
-| [README_HVBAK_MODULE.md](README_HVBAK_MODULE.md) | Module features and usage | End Users |
 | [QUICKSTART.md](QUICKSTART.md) | Quick start guide | End Users |
-| [BUILD_GUIDE.md](BUILD_GUIDE.md) | Building the MSI installer | Developers |
-| [PACKAGE_README.md](PACKAGE_README.md) | Package overview | Distributors |
+| [BUILD_GUIDE.md](BUILD_GUIDE.md) | Building packages | Developers |
+| [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | Project overview | Everyone |
 | [LICENSE.txt](LICENSE.txt) | MIT license | Everyone |
 
 ---
@@ -193,7 +224,7 @@ Get-Help Invoke-VMBackup -Full
 - PowerShell 5.1 or later
 - Hyper-V PowerShell module
 - 7-Zip installed (7z.exe in PATH)
-- Administrator privileges
+- Administrator privileges for installation
 
 ### Recommended
 - Windows Server 2019 or later
@@ -207,7 +238,7 @@ Get-Help Invoke-VMBackup -Full
 
 - **GitHub Issues:** https://github.com/vitalie-vrabie/pshvtools/issues
 - **GitHub Repository:** https://github.com/vitalie-vrabie/pshvtools
-- **Documentation:** See docs folder after installation
+- **Discussions:** https://github.com/vitalie-vrabie/pshvtools/discussions
 
 ---
 
@@ -222,131 +253,51 @@ Copyright (c) 2025 Vitalie Vrabie
 ## ?? Getting Started
 
 ### For End Users
-1. Download the MSI installer
-2. Run as Administrator
-3. Type `hvbak` or `hv-bak` to see help
+1. Download `PSHVTools-Setup-1.0.0.zip`
+2. Extract and run `Install.ps1` as Administrator
+3. Import the module: `Import-Module hvbak`
 4. Start backing up VMs!
 
 ### For Developers
 1. Clone the repository
-2. Install WiX Toolset
-3. Run `Build-WixInstaller.bat`
-4. Find MSI installer in `dist/` folder
-5. Test and distribute!
+2. Run `Build-Release.bat package`
+3. Find packages in `release/` and `dist/` folders
+4. Test and distribute!
 
 ---
 
-## ? Version History
+## ?? Version History
 
 ### Version 1.0.0 (2025)
 - Initial release
-- Core backup functionality
-- MSI installer with WiX Toolset
+- Core backup and restore functionality
+- MSBuild-based packaging
+- PowerShell installer
 - Complete documentation
-- PowerShell module integration
-- Both `hvbak` and `hv-bak` command aliases
+- Enterprise deployment support
 
 ---
 
-## ?? Highlights
+## ? Highlights
 
 - **Zero Configuration:** Works out of the box
 - **Professional:** Enterprise-ready features
 - **Well Documented:** Comprehensive guides
 - **Open Source:** MIT licensed
-- **Enterprise Ready:** MSI installer with Group Policy support
-- **Flexible Commands:** Use either `hvbak` or `hv-bak`
-
----
-
-## ??? Building the Release Package
-
-### Using MSBuild (NEW - Recommended)
-
-**Prerequisites:**
-- Visual Studio 2022 (any edition) OR
-- .NET SDK 6.0 or later
-
-**Build command:**
-```cmd
-Build-Release.bat
-```
-
-**Output:**
-- `release\PSHVTools-v1.0.0.zip` - Complete release package
-
-### What's in the Release Package:
-
-- `hvbak.ps1` - Core backup script
-- `hvbak.psm1` - PowerShell module
-- `hvbak.psd1` - Module manifest
-- `Install-PSHVTools.ps1` - PowerShell installer
-- `Uninstall-PSHVTools.ps1` - PowerShell uninstaller
-- `QUICKSTART.md` - Quick start guide
-- `README.md` - Full documentation
-- `LICENSE.txt` - MIT license
-
----
-
-## ?? Installation
-
-### PowerShell Installer (Recommended)
-
-1. Extract the release ZIP file
-2. Right-click `Install-PSHVTools.ps1` ? Run as Administrator
-3. Done!
-
-The installer will:
-- Copy module files to `C:\Program Files\WindowsPowerShell\Modules\hvbak\`
-- Verify the installation
-- Display success message
-
-After installation:
-```powershell
-# Display help
-hvbak
-
-# Backup all VMs
-hvbak -NamePattern "*"
-```
-
-### Manual Installation
-
-Copy module files to one of these locations:
-```
-System-wide (requires admin):
-C:\Program Files\WindowsPowerShell\Modules\hvbak\
-
-User-specific (no admin):
-C:\Users\<username>\Documents\WindowsPowerShell\Modules\hvbak\
-```
+- **Simple Installation:** PowerShell-based installer
+- **No Dependencies:** No WiX or special tools required
 
 ---
 
 ## ??? Uninstallation
 
-Run as Administrator:
 ```powershell
-.\Uninstall-PSHVTools.ps1
+# Run from installer directory
+.\Install.ps1 -Uninstall
+
+# Or manually delete:
+Remove-Item "C:\Program Files\WindowsPowerShell\Modules\hvbak" -Recurse -Force
 ```
-
-Or manually delete:
-```
-C:\Program Files\WindowsPowerShell\Modules\hvbak\
-```
-
----
-
-## ??? Building the MSI Installer (Legacy - Deprecated)
-
-**Note:** The WiX MSI installer is deprecated due to complexity and reliability issues. Use the PowerShell installer instead.
-
-If you still need the MSI:
-```cmd
-Build-WixInstaller.bat
-```
-
-Requires: WiX Toolset v3.14+
 
 ---
 

@@ -1,33 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="CreateZipArchive" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
     <Version>1.0.0</Version>
     <Authors>Vitalie Vrabie</Authors>
     <Product>PSHVTools - PowerShell Hyper-V Tools</Product>
     <Description>PowerShell module for backing up Hyper-V VMs using checkpoints and 7-Zip compression</Description>
-    <Copyright>Copyright © 2025 Vitalie Vrabie</Copyright>
+    <Copyright>Copyright Â© 2025 Vitalie Vrabie</Copyright>
     <PackageProjectUrl>https://github.com/vitalie-vrabie/pshvtools</PackageProjectUrl>
+    <ReleaseDir>$(MSBuildProjectDirectory)\release</ReleaseDir>
+    <DistDir>$(MSBuildProjectDirectory)\dist</DistDir>
+    <ModuleName>hvbak</ModuleName>
   </PropertyGroup>
 
-  <!-- Custom target to create release package -->
+  <!-- Main build target -->
+  <Target Name="Build" DependsOnTargets="CreateReleasePackage;CreateDistributablePackage;CreateZipArchive">
+    <Message Text="" Importance="high" />
+    <Message Text="========================================" Importance="high" />
+    <Message Text="Build completed successfully!" Importance="high" />
+    <Message Text="========================================" Importance="high" />
+    <Message Text="" Importance="high" />
+    <Message Text="Outputs:" Importance="high" />
+    <Message Text="  Release ZIP: $(ReleaseDir)\PSHVTools-v$(Version).zip" Importance="high" />
+    <Message Text="  Installer: $(DistDir)\PSHVTools-Setup-$(Version)" Importance="high" />
+    <Message Text="" Importance="high" />
+  </Target>
+
+  <!-- Clean target -->
+  <Target Name="Clean">
+    <Message Text="Cleaning build outputs..." Importance="high" />
+    <RemoveDir Directories="$(ReleaseDir)" Condition="Exists('$(ReleaseDir)')" />
+    <RemoveDir Directories="$(DistDir)" Condition="Exists('$(DistDir)')" />
+    <Message Text="Clean completed." Importance="high" />
+  </Target>
+
+  <!-- Rebuild target -->
+  <Target Name="Rebuild" DependsOnTargets="Clean;Build" />
+
+  <!-- Create release package -->
   <Target Name="CreateReleasePackage">
     <PropertyGroup>
-      <ReleaseDir>$(MSBuildProjectDirectory)\release\PSHVTools-v$(Version)</ReleaseDir>
+      <ReleasePackageDir>$(ReleaseDir)\PSHVTools-v$(Version)</ReleasePackageDir>
     </PropertyGroup>
     
     <Message Text="========================================" Importance="high" />
     <Message Text="Creating release package" Importance="high" />
     <Message Text="========================================" Importance="high" />
     <Message Text="" Importance="high" />
-    <Message Text="Output directory: $(ReleaseDir)" Importance="high" />
-    <Message Text="" Importance="high" />
     
-    <!-- Clean and create release directory -->
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\release" Condition="Exists('$(MSBuildProjectDirectory)\release')" />
-    <MakeDir Directories="$(ReleaseDir)" />
+    <RemoveDir Directories="$(ReleaseDir)" Condition="Exists('$(ReleaseDir)')" />
+    <MakeDir Directories="$(ReleasePackageDir)" />
     
-    <!-- Copy module files -->
     <ItemGroup>
       <ReleaseFiles Include="$(MSBuildProjectDirectory)\hvbak.ps1" />
       <ReleaseFiles Include="$(MSBuildProjectDirectory)\hvbak.psm1" />
@@ -39,36 +62,77 @@
       <ReleaseFiles Include="$(MSBuildProjectDirectory)\Uninstall-PSHVTools.ps1" />
     </ItemGroup>
     
-    <Copy SourceFiles="@(ReleaseFiles)" DestinationFolder="$(ReleaseDir)" />
-    
-    <Message Text="" Importance="high" />
-    <Message Text="Files copied successfully:" Importance="high" />
-    <Message Text="  - hvbak.ps1" Importance="high" />
-    <Message Text="  - hvbak.psm1" Importance="high" />
-    <Message Text="  - hvbak.psd1" Importance="high" />
-    <Message Text="  - Install-PSHVTools.ps1" Importance="high" />
-    <Message Text="  - Uninstall-PSHVTools.ps1" Importance="high" />
-    <Message Text="  - Documentation files" Importance="high" />
+    <Copy SourceFiles="@(ReleaseFiles)" DestinationFolder="$(ReleasePackageDir)" />
+    <Message Text="Release package created: $(ReleasePackageDir)" Importance="high" />
   </Target>
 
-  <!-- Custom target to create ZIP archive using PowerShell -->
+  <!-- Create distributable installer package -->
+  <Target Name="CreateDistributablePackage" DependsOnTargets="CreateReleasePackage">
+    <PropertyGroup>
+      <InstallerDir>$(DistDir)\PSHVTools-Setup-$(Version)</InstallerDir>
+      <ModuleInstallDir>$(InstallerDir)\Module</ModuleInstallDir>
+    </PropertyGroup>
+    
+    <Message Text="" Importance="high" />
+    <Message Text="Creating distributable installer..." Importance="high" />
+    
+    <RemoveDir Directories="$(DistDir)" Condition="Exists('$(DistDir)')" />
+    <MakeDir Directories="$(InstallerDir)" />
+    <MakeDir Directories="$(ModuleInstallDir)" />
+    
+    <ItemGroup>
+      <ModuleFiles Include="$(MSBuildProjectDirectory)\hvbak.ps1" />
+      <ModuleFiles Include="$(MSBuildProjectDirectory)\hvbak.psm1" />
+      <ModuleFiles Include="$(MSBuildProjectDirectory)\hvbak.psd1" />
+      <DocFiles Include="$(MSBuildProjectDirectory)\QUICKSTART.md" />
+      <DocFiles Include="$(MSBuildProjectDirectory)\README.md" />
+      <DocFiles Include="$(MSBuildProjectDirectory)\LICENSE.txt" />
+    </ItemGroup>
+    
+    <Copy SourceFiles="@(ModuleFiles)" DestinationFolder="$(ModuleInstallDir)" />
+    <Copy SourceFiles="@(DocFiles)" DestinationFolder="$(InstallerDir)" />
+    
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Create-InstallerScript.ps1&quot; -OutputDir &quot;$(InstallerDir)&quot; -Version $(Version)" />
+    
+    <Message Text="Installer package created: $(InstallerDir)" Importance="high" />
+  </Target>
+
+  <!-- Create ZIP archive -->
   <Target Name="CreateZipArchive" DependsOnTargets="CreateReleasePackage">
     <PropertyGroup>
-      <ZipFile>$(MSBuildProjectDirectory)\release\PSHVTools-v$(Version).zip</ZipFile>
-      <ReleaseDir>$(MSBuildProjectDirectory)\release\PSHVTools-v$(Version)</ReleaseDir>
+      <ZipFile>$(ReleaseDir)\PSHVTools-v$(Version).zip</ZipFile>
+      <ReleasePackageDir>$(ReleaseDir)\PSHVTools-v$(Version)</ReleasePackageDir>
     </PropertyGroup>
     
     <Message Text="" Importance="high" />
     <Message Text="Creating ZIP archive..." Importance="high" />
     
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Compress-Archive -Path '$(ReleaseDir)\*' -DestinationPath '$(ZipFile)' -Force&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Compress-Archive -Path '$(ReleasePackageDir)\*' -DestinationPath '$(ZipFile)' -Force&quot;" />
+    
+    <Message Text="ZIP archive created: $(ZipFile)" Importance="high" />
+  </Target>
+
+  <!-- Package everything for distribution -->
+  <Target Name="Package" DependsOnTargets="Build">
+    <PropertyGroup>
+      <InstallerDir>$(DistDir)\PSHVTools-Setup-$(Version)</InstallerDir>
+      <InstallerZipFile>$(DistDir)\PSHVTools-Setup-$(Version).zip</InstallerZipFile>
+    </PropertyGroup>
+    
+    <Message Text="" Importance="high" />
+    <Message Text="Creating installer ZIP..." Importance="high" />
+    
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Compress-Archive -Path '$(InstallerDir)\*' -DestinationPath '$(InstallerZipFile)' -Force&quot;" />
     
     <Message Text="" Importance="high" />
     <Message Text="========================================" Importance="high" />
-    <Message Text="Build completed successfully!" Importance="high" />
+    <Message Text="All packages created!" Importance="high" />
     <Message Text="========================================" Importance="high" />
     <Message Text="" Importance="high" />
-    <Message Text="Release package: $(ZipFile)" Importance="high" />
+    <Message Text="Distribution packages:" Importance="high" />
+    <Message Text="  1. Source ZIP: $(ReleaseDir)\PSHVTools-v$(Version).zip" Importance="high" />
+    <Message Text="  2. Installer ZIP: $(InstallerZipFile)" Importance="high" />
+    <Message Text="  3. Installer Folder: $(InstallerDir)\" Importance="high" />
     <Message Text="" Importance="high" />
   </Target>
 

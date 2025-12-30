@@ -10,19 +10,23 @@ PSHVTools is a professional PowerShell module for backing up Hyper-V virtual mac
 
 ### Download and Install
 
-1. Download **PSHVTools-Setup-1.0.0.msi** (304 KB)
-2. Double-click to install
-3. Follow the installation wizard
+**Option 1: Interactive Installation**
+1. Download **PSHVTools-Setup-1.0.0.zip**
+2. Extract the archive
+3. Right-click `Install.ps1` ? "Run with PowerShell" (as Administrator)
 4. Done!
+
+**Option 2: Command Line Installation**
+```powershell
+# Extract the ZIP file, then:
+powershell -ExecutionPolicy Bypass -File Install.ps1
+```
 
 ### Silent Installation (Enterprise)
 
-```cmd
+```powershell
 # Silent install
-msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
-
-# Silent install with logging
-msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
+powershell -ExecutionPolicy Bypass -File Install.ps1 -Silent
 ```
 
 ---
@@ -39,12 +43,12 @@ msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
 - ? **Low-Priority Compression** - Uses Idle CPU class to minimize impact
 
 ### Installation Features
-- ? **MSI Installer** - Professional Windows Installer package
-- ? **Add/Remove Programs** - Full Windows integration
-- ? **Start Menu Shortcuts** - Quick access to documentation
+- ? **PowerShell Installer** - Simple, transparent installation
+- ? **No Dependencies** - No WiX or special tools required
 - ? **Silent Install Support** - Perfect for enterprise deployment
-- ? **Group Policy Ready** - Deploy via GPO, SCCM, or Intune
-- ? **Transactional Install** - Automatic rollback on failure
+- ? **Works Everywhere** - Any Windows with PowerShell 5.1+
+- ? **Clean Uninstall** - Easy removal via same script
+- ? **No Registry Changes** - Just copies files to module directory
 
 ---
 
@@ -53,20 +57,18 @@ msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
 After installation:
 
 ```powershell
-# Display help
-hvbak
+# Import the module
+Import-Module hvbak
 
-# Backup all VMs
-hvbak -NamePattern "*"
+# Backup a VM
+Backup-HyperVVM -VMName "MyVM" -Destination "D:\Backups"
 
-# Backup specific VMs
-hv-bak -NamePattern "srv-*"
-
-# Custom destination
-hvbak -NamePattern "*" -Destination "D:\backups"
+# Restore a VM
+Restore-HyperVVM -BackupPath "D:\Backups\MyVM_20250101_120000.7z"
 
 # Get detailed help
-Get-Help Invoke-VMBackup -Full
+Get-Help Backup-HyperVVM -Full
+Get-Help Restore-HyperVVM -Full
 ```
 
 ---
@@ -78,7 +80,7 @@ Get-Help Invoke-VMBackup -Full
 - PowerShell 5.1 or later
 - Hyper-V PowerShell module
 - 7-Zip installed (7z.exe in PATH)
-- Administrator privileges
+- Administrator privileges for installation
 
 ### Recommended
 - Windows Server 2019 or later
@@ -90,28 +92,56 @@ Get-Help Invoke-VMBackup -Full
 
 ## ?? Enterprise Deployment
 
-### Group Policy Deployment
-1. Place MSI on network share
-2. Create GPO for software installation
-3. Assign to target computers
-4. Automatic deployment on startup
+### Network Deployment
+```powershell
+# Copy installer to network share
+Copy-Item "PSHVTools-Setup-1.0.0.zip" "\\server\share\"
 
-### SCCM/ConfigMgr
-```cmd
-Install: msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
-Uninstall: msiexec /x PSHVTools-Setup-1.0.0.msi /quiet /norestart
+# Deploy via script
+$computers = @("server1", "server2", "server3")
+foreach ($computer in $computers) {
+    Invoke-Command -ComputerName $computer -ScriptBlock {
+        $source = "\\server\share\PSHVTools-Setup-1.0.0"
+        & "$source\Install.ps1" -Silent
+    }
+}
 ```
 
-### Intune
-Upload as Line-of-Business app and assign to groups
+### Group Policy Startup Script
+```batch
+@echo off
+if not exist "C:\Program Files\WindowsPowerShell\Modules\hvbak" (
+    powershell -ExecutionPolicy Bypass -File "\\server\share\PSHVTools-Setup-1.0.0\Install.ps1" -Silent
+)
+```
+
+### PowerShell DSC
+```powershell
+Configuration InstallPSHVTools {
+    Script InstallPSHVTools {
+        GetScript = {
+            $module = Get-Module -ListAvailable hvbak
+            return @{ Result = ($null -ne $module) }
+        }
+        TestScript = {
+            $module = Get-Module -ListAvailable hvbak
+            return ($null -ne $module)
+        }
+        SetScript = {
+            $source = "\\server\share\PSHVTools-Setup-1.0.0"
+            & "$source\Install.ps1" -Silent
+        }
+    }
+}
+```
 
 ---
 
 ## ?? Documentation
 
-- **Quick Start Guide**: See QUICKSTART.md in installation folder
-- **Module Documentation**: README_HVBAK_MODULE.md
+- **Quick Start Guide**: QUICKSTART.md
 - **Build Instructions**: BUILD_GUIDE.md
+- **Project Summary**: PROJECT_SUMMARY.md
 - **GitHub Repository**: https://github.com/vitalie-vrabie/pshvtools
 
 ---
@@ -119,17 +149,20 @@ Upload as Line-of-Business app and assign to groups
 ## ?? Building from Source
 
 ### Prerequisites
-Install WiX Toolset v3.14.1 or later:
-```powershell
-winget install --id WiXToolset.WiXToolset
-```
+- MSBuild (via Visual Studio 2022 or .NET SDK 6.0+)
+- PowerShell 5.1+
+
+**No WiX Toolset required!**
 
 ### Build
 ```cmd
-Build-WixInstaller.bat
+# Build all packages
+Build-Release.bat package
 ```
 
-Output: `dist\PSHVTools-Setup-1.0.0.msi`
+Output:
+- `release\PSHVTools-v1.0.0.zip` - Source package
+- `dist\PSHVTools-Setup-1.0.0.zip` - Installer package
 
 ---
 
@@ -138,8 +171,8 @@ Output: `dist\PSHVTools-Setup-1.0.0.msi`
 - **hvbak.ps1** - Core backup script
 - **hvbak.psm1** - PowerShell module
 - **hvbak.psd1** - Module manifest
+- **Install.ps1** - PowerShell installer script
 - **Documentation** - Complete user guides
-- **MSI Installer** - Professional Windows Installer package
 
 ---
 
@@ -151,11 +184,23 @@ Output: `dist\PSHVTools-Setup-1.0.0.msi`
 
 ---
 
+## ??? Uninstallation
+
+```powershell
+# Navigate to installer folder
+cd path\to\PSHVTools-Setup-1.0.0
+
+# Run uninstaller
+powershell -ExecutionPolicy Bypass -File Install.ps1 -Uninstall
+```
+
+---
+
 ## ?? Support
 
 - **Issues**: https://github.com/vitalie-vrabie/pshvtools/issues
 - **Discussions**: https://github.com/vitalie-vrabie/pshvtools/discussions
-- **Documentation**: See docs in installation folder
+- **Documentation**: See docs in repository
 
 ---
 
@@ -170,15 +215,16 @@ Copyright (c) 2025 Vitalie Vrabie
 ## ?? Acknowledgments
 
 Built with:
-- WiX Toolset for MSI packaging
-- PowerShell for automation
+- MSBuild for packaging
+- PowerShell for automation and installation
 - 7-Zip for compression
 
 ---
 
 ## ?? Release Assets
 
-- **PSHVTools-Setup-1.0.0.msi** (304 KB) - Windows Installer package
+- **PSHVTools-v1.0.0.zip** - Source package
+- **PSHVTools-Setup-1.0.0.zip** - Installer package (recommended)
 
 ---
 

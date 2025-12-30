@@ -1,5 +1,5 @@
-# PSVMTools - Build Guide
-## Building the MSI Installer
+# PSHVTools - Build Guide
+## Building Release Packages (MSBuild - No WiX Required!)
 
 ---
 
@@ -7,264 +7,276 @@
 
 ### Prerequisites
 
-Install WiX Toolset v3.14.1 or later:
+**MSBuild** (via one of these):
+- Visual Studio 2022 (any edition)
+- .NET SDK 6.0 or later
+- Build Tools for Visual Studio 2022
 
-**Option 1: WinGet (Recommended)**
-```powershell
-winget install --id WiXToolset.WiXToolset --accept-package-agreements --accept-source-agreements
-```
+**PowerShell 5.1+** (included with Windows)
 
-**Option 2: Direct Download**
-Download from https://wixtoolset.org/releases/
+**No WiX Toolset required!** ?
 
-**Option 3: Chocolatey**
-```powershell
-choco install wixtoolset
-```
-
-### Build the MSI Installer
+### Build Release Package
 
 ```cmd
-Build-WixInstaller.bat
+Build-Release.bat
 ```
 
-This will create:
-- ? WiX MSI installer
-- ?? Output in the `dist` folder
-
-**Output:** `dist/PSVMTools-Setup-1.0.0.msi`
-
----
-
-## ?? MSI Installer (Professional)
-
-**Best for:** Professional deployment, traditional Windows installer experience
-
-**File:**
-- `dist/PSVMTools-Setup-1.0.0.msi` - Windows Installer (MSI) package
-
-**Size:** ~300 KB
-
-**Build Commands:**
-```cmd
-# Build with default output path (.\dist)
-Build-WixInstaller.bat
-
-# Build with custom output path
-Build-WixInstaller.bat "C:\Release"
-
-# Manual WiX build (advanced)
-candle.exe -nologo PSVMTools-Installer.wxs
-light.exe -nologo -ext WixUIExtension -out dist\PSVMTools-Setup-1.0.0.msi PSVMTools-Installer.wixobj
-```
-
-**To Install:**
-1. Copy `PSVMTools-Setup-1.0.0.msi` to target machine
-2. Double-click the MSI
-3. Follow the installation wizard
-4. Done!
-
-**Advantages:**
-- ? Industry-standard Windows Installer
-- ? Full MSI feature support
-- ? Transactional installation (rollback on failure)
-- ? Add/Remove Programs integration
-- ? Group Policy deployment support
-- ? SCCM/Intune compatible
-- ? Start Menu shortcuts
-- ? Silent install: `msiexec /i PSVMTools-Setup-1.0.0.msi /quiet`
-- ? Silent uninstall: `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet`
+This creates:
+- ?? Source ZIP package
+- ?? Installer package with PowerShell install script
+- ?? Output in `release\` and `dist\` folders
 
 ---
 
 ## ?? Build Options
 
-```cmd
-# Build with default output path (.\dist)
-Build-WixInstaller.bat
+### Build Commands
 
-# Build with custom output path
-Build-WixInstaller.bat "C:\MyBuilds"
+```cmd
+# Build release and installer packages
+Build-Release.bat
+
+# Build everything + create installer ZIP
+Build-Release.bat package
+
+# Build installer package only
+Build-Installer.bat
+
+# Clean build outputs
+Build-Release.bat clean
+```
+
+### MSBuild Direct
+
+```batch
+# Build default target
+msbuild PSHVTools.csproj
+
+# Build specific target
+msbuild PSHVTools.csproj /t:Package
+
+# Clean
+msbuild PSHVTools.csproj /t:Clean
 ```
 
 ---
 
-## ?? Usage After Installation
+## ?? Build Output
 
-After installation, the module is available system-wide:
+### Directory Structure
+
+```
+pshvtools/
+??? release/
+?   ??? PSHVTools-v1.0.0/          # Source package
+?   ?   ??? hvbak.ps1
+?   ?   ??? hvbak.psm1
+?   ?   ??? hvbak.psd1
+?   ?   ??? Install-PSHVTools.ps1
+?   ?   ??? Uninstall-PSHVTools.ps1
+?   ?   ??? README.md
+?   ?   ??? QUICKSTART.md
+?   ?   ??? LICENSE.txt
+?   ??? PSHVTools-v1.0.0.zip       # Source ZIP
+?
+??? dist/
+    ??? PSHVTools-Setup-1.0.0/     # Installer package
+    ?   ??? Install.ps1            # Installer script
+    ?   ??? README.txt             # Install instructions
+    ?   ??? Module/                # Module files
+    ?   ?   ??? hvbak.ps1
+    ?   ?   ??? hvbak.psm1
+    ?   ?   ??? hvbak.psd1
+    ?   ??? README.md
+    ?   ??? QUICKSTART.md
+    ?   ??? LICENSE.txt
+    ??? PSHVTools-Setup-1.0.0.zip  # Installer ZIP
+```
+
+---
+
+## ?? Installer Package
+
+**Best for:** Easy distribution and installation
+
+**Location:** `dist/PSHVTools-Setup-1.0.0/`
+
+**Installation:**
+```powershell
+# Interactive
+Right-click Install.ps1 ? "Run with PowerShell" (as Administrator)
+
+# Command line
+powershell -ExecutionPolicy Bypass -File Install.ps1
+
+# Silent
+powershell -ExecutionPolicy Bypass -File Install.ps1 -Silent
+```
+
+**Advantages:**
+- ? No WiX Toolset required to build
+- ? No special tools required to install
+- ? Works on all Windows versions with PowerShell 5.1+
+- ? Simple PowerShell script installation
+- ? Easy to customize and maintain
+- ? Clean uninstallation
+- ? No registry modifications
+
+---
+
+## ?? Installation Process
+
+### For Users
+
+1. **Extract** the installer package:
+   ```
+   PSHVTools-Setup-1.0.0.zip
+   ```
+
+2. **Run Install.ps1** as Administrator:
+   ```powershell
+   # Interactive
+   .\Install.ps1
+   
+   # Silent
+   .\Install.ps1 -Silent
+   ```
+
+3. **Verify** installation:
+   ```powershell
+   Get-Module -ListAvailable hvbak
+   Import-Module hvbak
+   Get-Command -Module hvbak
+   ```
+
+### Installation Location
+
+Module installed to:
+```
+C:\Program Files\WindowsPowerShell\Modules\hvbak\
+```
+
+---
+
+## ??? Uninstallation
 
 ```powershell
-# Display help
-vmbak
+# Interactive
+powershell -ExecutionPolicy Bypass -File Install.ps1 -Uninstall
 
-# Backup all VMs
-vmbak -NamePattern "*"
-
-# Backup specific VMs
-vmbak -NamePattern "srv-*"
-
-# Custom destination
-vmbak -NamePattern "*" -Destination "D:\backups"
-
-# Get detailed help
-Get-Help vmbak -Full
-```
-
----
-
-## ? Uninstallation
-
-### Using Add/Remove Programs
-- Open **Settings ? Apps**
-- Find **PSVMTools**
-- Click **Uninstall**
-
-### Using Start Menu
-- Open Start Menu
-- Find **PSVMTools**
-- Click **Uninstall PSVMTools**
-
-### Using Command Line
-```cmd
-# Silent uninstall
-msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart
-
-# Interactive uninstall
-msiexec /x PSVMTools-Setup-1.0.0.msi
-```
-
----
-
-## ?? Silent Installation (Automated Deployment)
-
-### Basic Silent Install
-```cmd
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
-```
-
-### Silent Install with Logging
-```cmd
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
-```
-
-### Network Installation
-```cmd
-msiexec /i \\server\share\PSVMTools-Setup-1.0.0.msi /quiet /norestart
-```
-
-### Properties
-```cmd
-# Install to custom location (if supported)
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet INSTALLDIR="C:\CustomPath"
+# Silent
+powershell -ExecutionPolicy Bypass -File Install.ps1 -Uninstall -Silent
 ```
 
 ---
 
 ## ?? Enterprise Deployment
 
-### Group Policy Deployment
+### Network Distribution
 
-1. **Prepare MSI:**
-   - Place MSI on network share
-   - Ensure domain computers have read access
+1. **Build** the installer package:
+   ```cmd
+   Build-Installer.bat
+   ```
 
-2. **Create GPO:**
-   - Open Group Policy Management
-   - Create new GPO or edit existing
-   - Link to target OU
+2. **Place** on network share:
+   ```
+   \\server\share\PSHVTools-Setup-1.0.0.zip
+   ```
 
-3. **Add Software:**
-   - Navigate to: `Computer Configuration ? Policies ? Software Settings ? Software Installation`
-   - Right-click ? New ? Package
-   - Browse to network share and select MSI
-   - Choose **Assigned** deployment method
-
-4. **Apply:**
-   - GPO will apply on next computer startup
-   - Software installs automatically
-
-### SCCM/ConfigMgr Deployment
-
-1. **Import MSI:**
-   - Import MSI into Software Library
-   - Create Application
-
-2. **Configure:**
-   - **Install command:** `msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart`
-   - **Uninstall command:** `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart`
-   - **Detection method:** Check for file or registry key
-
-3. **Deploy:**
-   - Deploy to device collections
-   - Set deployment schedule
-   - Monitor installation status
-
-### Intune Deployment
-
-1. **Upload:**
-   - Go to Apps ? All apps ? Add
-   - Select Line-of-business app
-   - Upload MSI file
-
-2. **Configure:**
-   - Set install/uninstall commands
-   - Configure detection rules
-   - Set requirements
-
-3. **Assign:**
-   - Assign to groups (Required/Available)
-   - Set deployment schedule
-   - Track installation status
+3. **Deploy** via script:
+   ```powershell
+   # Copy to local system
+   Copy-Item "\\server\share\PSHVTools-Setup-1.0.0.zip" "$env:TEMP"
+   
+   # Extract
+   Expand-Archive "$env:TEMP\PSHVTools-Setup-1.0.0.zip" "$env:TEMP\PSHVTools-Setup"
+   
+   # Install silently
+   powershell -ExecutionPolicy Bypass -File "$env:TEMP\PSHVTools-Setup\Install.ps1" -Silent
+   ```
 
 ### PowerShell DSC
 
 ```powershell
-Configuration InstallPSVMTools {
+Configuration InstallPSHVTools {
     Import-DscResource -ModuleName PSDesiredStateConfiguration
     
     Node "localhost" {
-        Package PSVMTools {
-            Ensure = "Present"
-            Path = "\\server\share\PSVMTools-Setup-1.0.0.msi"
-            Name = "PSVMTools"
-            ProductId = "{A3C5E8F1-9D4B-4A2C-B6E7-8F3D9C1A5B2E}"
+        Script InstallPSHVTools {
+            GetScript = {
+                $module = Get-Module -ListAvailable hvbak
+                return @{ Result = ($null -ne $module) }
+            }
+            
+            TestScript = {
+                $module = Get-Module -ListAvailable hvbak
+                return ($null -ne $module)
+            }
+            
+            SetScript = {
+                $source = "\\server\share\PSHVTools-Setup-1.0.0"
+                & "$source\Install.ps1" -Silent
+            }
         }
     }
 }
+```
+
+### Group Policy Startup Script
+
+```batch
+@echo off
+if not exist "C:\Program Files\WindowsPowerShell\Modules\hvbak" (
+    powershell -ExecutionPolicy Bypass -File "\\server\share\PSHVTools-Setup-1.0.0\Install.ps1" -Silent
+)
 ```
 
 ---
 
 ## ?? Troubleshooting Build Issues
 
-### "WiX not found"
-**Solution:** 
-- Install WiX Toolset from https://wixtoolset.org/releases/
-- Or use WinGet: `winget install WiXToolset.WiXToolset`
+### MSBuild not found
 
-### "File not found" errors
 **Solution:**
-- Run build from repository root directory
-- Ensure all required files are present:
-  - vmbak.ps1
-  - vmbak.psm1
-  - vmbak.psd1
-  - QUICKSTART.md
-  - PSVMTools-Installer.wxs
+```powershell
+# Install .NET SDK
+winget install Microsoft.DotNet.SDK.8
 
-### "Access denied" during build
+# Or install Visual Studio 2022
+winget install Microsoft.VisualStudio.2022.Community
+```
+
+### PowerShell execution policy
+
 **Solution:**
-- Close any files in `dist` folder
-- Delete `dist` folder and try again
-- Run Command Prompt as Administrator if building to protected location
+```powershell
+# Allow script execution
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-### WiX build errors
+### Build fails
+
 **Solution:**
 ```cmd
-# Clean build
-rmdir /s /q dist
-Build-WixInstaller.bat
+# Clean and rebuild
+Build-Release.bat clean
+Build-Release.bat
 ```
+
+### Missing files
+
+**Solution:**
+Ensure all required files are present:
+- hvbak.ps1
+- hvbak.psm1
+- hvbak.psd1
+- QUICKSTART.md
+- README.md
+- LICENSE.txt
+- Install-PSHVTools.ps1
+- Uninstall-PSHVTools.ps1
 
 ---
 
@@ -272,99 +284,54 @@ Build-WixInstaller.bat
 
 When updating to a new version:
 
-1. **Update module manifest** (`vmbak.psd1`):
+1. **Update module manifest** (`hvbak.psd1`):
    ```powershell
    ModuleVersion = '1.1.0'
    ```
 
-2. **Update WiX installer** (`PSVMTools-Installer.wxs`):
+2. **Update project file** (`PSHVTools.csproj`):
    ```xml
-   <Product Id="*" 
-            Name="PSVMTools" 
-            Version="1.1.0" 
-            ...>
+   <Version>1.1.0</Version>
    ```
 
-3. **Update build script** (`Build-WixInstaller.bat`):
-   ```batch
-   set "MSI_FILE=%OUTPUT_PATH%\PSVMTools-Setup-1.1.0.msi"
-   ```
-
-4. **Rebuild installer:**
+3. **Rebuild:**
    ```cmd
-   rmdir /s /q dist
-   Build-WixInstaller.bat
+   Build-Release.bat clean
+   Build-Release.bat package
    ```
 
 ---
 
-## ?? Testing the Installer
+## ? Testing
 
 ### Test Installation
-```cmd
+```powershell
 # Build
-Build-WixInstaller.bat
+.\Build-Release.bat package
 
-# Install
-cd dist
-msiexec /i PSVMTools-Setup-1.0.0.msi
+# Test install
+cd dist\PSHVTools-Setup-1.0.0
+.\Install.ps1
 
 # Verify
-vmbak
-Get-Module vmbak -ListAvailable
+Get-Module -ListAvailable hvbak
+Import-Module hvbak -Force
+Get-Command -Module hvbak
 
-# Check Start Menu
-explorer "shell:programs\PSVMTools"
-
-# Check Add/Remove Programs
-appwiz.cpl
+# Test functionality
+Backup-HyperVVM -Help
 ```
 
 ### Test Uninstallation
-```cmd
-# Uninstall via command
-msiexec /x PSVMTools-Setup-1.0.0.msi
+```powershell
+# Uninstall
+cd dist\PSHVTools-Setup-1.0.0
+.\Install.ps1 -Uninstall
 
 # Verify removal
-Get-Module vmbak -ListAvailable
+Get-Module -ListAvailable hvbak
 # Should return nothing
 ```
-
-### Test Silent Installation
-```cmd
-# Silent install
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
-
-# Check log
-type install.log | more
-
-# Verify
-vmbak
-```
-
----
-
-## ?? MSI Properties
-
-### Product Information
-- **Product Name:** PSVMTools
-- **Manufacturer:** Vitalie Vrabie
-- **Version:** 1.0.0
-- **Upgrade Code:** A3C5E8F1-9D4B-4A2C-B6E7-8F3D9C1A5B2E (constant)
-- **Product Code:** Auto-generated per version
-
-### Installation Paths
-- **Program Files:** `C:\Program Files\PSVMTools`
-- **PowerShell Module:** `C:\Program Files\WindowsPowerShell\Modules\vmbak`
-- **Start Menu:** `Start Menu\Programs\PSVMTools`
-
-### Features
-- Transactional installation
-- Rollback on failure
-- Add/Remove Programs integration
-- Start Menu shortcuts
-- Silent install/uninstall
-- Upgrade support
 
 ---
 
@@ -372,64 +339,95 @@ vmbak
 
 ### For GitHub Releases
 
-Create a release with:
-- **PSVMTools-Setup-1.0.0.msi** - MSI installer
+Create a release with both packages:
+
+1. **PSHVTools-v1.0.0.zip** - Source package
+2. **PSHVTools-Setup-1.0.0.zip** - Installer package
 
 ### Release Notes Template
+
 ```markdown
-## PSVMTools v1.0.0
+## PSHVTools v1.0.0
 
 ### Installation
 
-Download and run the MSI installer:
-- **PSVMTools-Setup-1.0.0.msi** (300 KB)
+Download the installer package:
+- **PSHVTools-Setup-1.0.0.zip**
+
+Extract and run Install.ps1 as Administrator.
 
 #### Interactive Installation
-Double-click the MSI file
+```powershell
+.\Install.ps1
+```
 
 #### Silent Installation
-```cmd
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```powershell
+.\Install.ps1 -Silent
 ```
 
 ### Requirements
-- Windows Server 2016+ or Windows 10+
-- Hyper-V installed
-- 7-Zip installed
+- Windows with Hyper-V
+- PowerShell 5.1 or later
 - Administrator privileges
+
+### Uninstallation
+```powershell
+.\Install.ps1 -Uninstall
 ```
-
----
-
-## ?? Additional Resources
-
-- **Module Documentation:** README_VMBAK_MODULE.md
-- **Quick Start Guide:** QUICKSTART.md
-- **Package Details:** PACKAGE_README.md
-- **License:** LICENSE.txt
+```
 
 ---
 
 ## ?? Summary
 
-**Build Command:**
+### Quick Build
+
 ```cmd
-Build-WixInstaller.bat
+# Build everything
+Build-Release.bat package
 ```
 
-**Output:**
+### Output
+
 ```
-dist/
-??? PSVMTools-Setup-1.0.0.msi
+release/PSHVTools-v1.0.0.zip          # Source package
+dist/PSHVTools-Setup-1.0.0.zip        # Installer package
 ```
 
-**Install Command:**
-```cmd
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+### Install
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Install.ps1
 ```
 
-**Distribute the MSI installer for professional Windows deployments!** ?
+**Simple, dependency-free build and installation!** ?
 
 ---
 
-**Need help?** Check the GitHub repository: https://github.com/vitalie-vrabie/psvmtools
+## ?? Migration from WiX
+
+This build system replaces the previous WiX-based MSI installer with a simpler PowerShell approach.
+
+**Benefits:**
+- ? No WiX Toolset dependency
+- ? Simpler build process
+- ? Easier to maintain
+- ? Works on any system with PowerShell
+- ? Faster builds
+- ? More transparent installation
+
+See `WIX_TO_MSBUILD_MIGRATION.md` for details.
+
+---
+
+## ?? Additional Resources
+
+- **Migration Guide:** WIX_TO_MSBUILD_MIGRATION.md
+- **Quick Start:** QUICKSTART.md
+- **Project Summary:** PROJECT_SUMMARY.md
+- **License:** LICENSE.txt
+
+---
+
+**Need help?** Check the GitHub repository: https://github.com/vitalie-vrabie/pshvtools
