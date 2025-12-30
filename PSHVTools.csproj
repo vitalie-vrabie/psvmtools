@@ -1,86 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project DefaultTargets="CreateZipArchive" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
-    <OutputType>Library</OutputType>
-    <AssemblyName>PSHVTools</AssemblyName>
-    <RootNamespace>PSHVTools</RootNamespace>
     <Version>1.0.0</Version>
     <Authors>Vitalie Vrabie</Authors>
-    <Company>PSHVTools</Company>
     <Product>PSHVTools - PowerShell Hyper-V Tools</Product>
     <Description>PowerShell module for backing up Hyper-V VMs using checkpoints and 7-Zip compression</Description>
     <Copyright>Copyright © 2025 Vitalie Vrabie</Copyright>
     <PackageProjectUrl>https://github.com/vitalie-vrabie/pshvtools</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/vitalie-vrabie/pshvtools</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <EnableDefaultItems>false</EnableDefaultItems>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
-  <!-- Include module files as content -->
-  <ItemGroup>
-    <None Include="hvbak.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="hvbak.psm1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="hvbak.psd1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="QUICKSTART.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="README.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="LICENSE.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Install-PSHVTools.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Uninstall-PSHVTools.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
   <!-- Custom target to create release package -->
-  <Target Name="CreateReleasePackage" AfterTargets="Build">
+  <Target Name="CreateReleasePackage">
     <PropertyGroup>
       <ReleaseDir>$(MSBuildProjectDirectory)\release\PSHVTools-v$(Version)</ReleaseDir>
     </PropertyGroup>
     
-    <Message Text="Creating release package in: $(ReleaseDir)" Importance="high" />
+    <Message Text="========================================" Importance="high" />
+    <Message Text="Creating release package" Importance="high" />
+    <Message Text="========================================" Importance="high" />
+    <Message Text="" Importance="high" />
+    <Message Text="Output directory: $(ReleaseDir)" Importance="high" />
+    <Message Text="" Importance="high" />
     
-    <!-- Create release directory -->
+    <!-- Clean and create release directory -->
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\release" Condition="Exists('$(MSBuildProjectDirectory)\release')" />
     <MakeDir Directories="$(ReleaseDir)" />
     
     <!-- Copy module files -->
     <ItemGroup>
-      <ReleaseFiles Include="hvbak.ps1;hvbak.psm1;hvbak.psd1;QUICKSTART.md;README.md;LICENSE.txt;Install-PSHVTools.ps1;Uninstall-PSHVTools.ps1" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\hvbak.ps1" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\hvbak.psm1" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\hvbak.psd1" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\QUICKSTART.md" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\README.md" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\LICENSE.txt" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\Install-PSHVTools.ps1" />
+      <ReleaseFiles Include="$(MSBuildProjectDirectory)\Uninstall-PSHVTools.ps1" />
     </ItemGroup>
     
     <Copy SourceFiles="@(ReleaseFiles)" DestinationFolder="$(ReleaseDir)" />
     
-    <Message Text="Release package created successfully!" Importance="high" />
+    <Message Text="" Importance="high" />
+    <Message Text="Files copied successfully:" Importance="high" />
+    <Message Text="  - hvbak.ps1" Importance="high" />
+    <Message Text="  - hvbak.psm1" Importance="high" />
+    <Message Text="  - hvbak.psd1" Importance="high" />
+    <Message Text="  - Install-PSHVTools.ps1" Importance="high" />
+    <Message Text="  - Uninstall-PSHVTools.ps1" Importance="high" />
+    <Message Text="  - Documentation files" Importance="high" />
   </Target>
 
-  <!-- Custom target to create ZIP archive -->
-  <Target Name="CreateZipArchive" AfterTargets="CreateReleasePackage">
+  <!-- Custom target to create ZIP archive using PowerShell -->
+  <Target Name="CreateZipArchive" DependsOnTargets="CreateReleasePackage">
     <PropertyGroup>
       <ZipFile>$(MSBuildProjectDirectory)\release\PSHVTools-v$(Version).zip</ZipFile>
       <ReleaseDir>$(MSBuildProjectDirectory)\release\PSHVTools-v$(Version)</ReleaseDir>
     </PropertyGroup>
     
-    <Message Text="Creating ZIP archive: $(ZipFile)" Importance="high" />
+    <Message Text="" Importance="high" />
+    <Message Text="Creating ZIP archive..." Importance="high" />
     
-    <ZipDirectory SourceDirectory="$(ReleaseDir)" DestinationFile="$(ZipFile)" Overwrite="true" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Compress-Archive -Path '$(ReleaseDir)\*' -DestinationPath '$(ZipFile)' -Force&quot;" />
     
-    <Message Text="ZIP archive created successfully!" Importance="high" />
-    <Message Text="Release files: $(ZipFile)" Importance="high" />
+    <Message Text="" Importance="high" />
+    <Message Text="========================================" Importance="high" />
+    <Message Text="Build completed successfully!" Importance="high" />
+    <Message Text="========================================" Importance="high" />
+    <Message Text="" Importance="high" />
+    <Message Text="Release package: $(ZipFile)" Importance="high" />
+    <Message Text="" Importance="high" />
   </Target>
 
 </Project>
