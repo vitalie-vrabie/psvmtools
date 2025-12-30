@@ -31,8 +31,9 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 # Define source files
 $SourceFiles = @(
     'hvbak.ps1',
-    'hvbak.psm1',
-    'hvbak.psd1'
+    'pshvtools.psm1',
+    'pshvtools.psd1',
+    'fix-vhd-acl.ps1'
 )
 
 # Verify source files exist
@@ -55,7 +56,7 @@ if ($MissingFiles.Count -gt 0) {
 }
 
 # Define installation path
-$InstallPath = "$env:ProgramFiles\WindowsPowerShell\Modules\hvbak"
+$InstallPath = "$env:ProgramFiles\WindowsPowerShell\Modules\pshvtools"
 
 Write-Host ""
 Write-Host "Installation path: $InstallPath" -ForegroundColor Cyan
@@ -86,7 +87,7 @@ try {
 Write-Host ""
 Write-Host "Verifying installation..." -ForegroundColor Yellow
 try {
-    $Module = Test-ModuleManifest -Path "$InstallPath\hvbak.psd1" -ErrorAction Stop
+    $Module = Test-ModuleManifest -Path "$InstallPath\pshvtools.psd1" -ErrorAction Stop
     Write-Host "  [OK] Module manifest is valid" -ForegroundColor Green
     Write-Host "  [OK] Module version: $($Module.Version)" -ForegroundColor Green
     Write-Host "  [OK] Exported commands: $($Module.ExportedCommands.Keys -join ', ')" -ForegroundColor Green
@@ -103,10 +104,11 @@ Write-Host "The module has been installed to:" -ForegroundColor Cyan
 Write-Host "  $InstallPath" -ForegroundColor White
 Write-Host ""
 Write-Host "To use the module, run:" -ForegroundColor Cyan
-Write-Host "  Import-Module hvbak" -ForegroundColor White
+Write-Host "  Import-Module pshvtools" -ForegroundColor White
 Write-Host "  hvbak" -ForegroundColor White
 Write-Host ""
 Write-Host "Or simply run the commands directly:" -ForegroundColor Cyan
 Write-Host "  hvbak -NamePattern '*'" -ForegroundColor White
 Write-Host "  hv-bak -NamePattern 'srv-*'" -ForegroundColor White
+Write-Host "  fix-vhd-acl -WhatIf" -ForegroundColor White
 Write-Host ""

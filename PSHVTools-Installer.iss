@@ -57,8 +57,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 WelcomeLabel1=Welcome to [name] Setup
 WelcomeLabel2=This will install [name/ver] on your computer.%n%nPSHVTools provides PowerShell cmdlets for backing up Hyper-V virtual machines with checkpoint support and 7-Zip compression.%n%nIt is recommended that you close all other applications before continuing.
 FinishedHeadingLabel=Completing [name] Setup
-FinishedLabelNoIcons=[name] has been successfully installed.%n%nThe hvbak PowerShell module is now available system-wide.
-FinishedLabel=[name] has been successfully installed.%n%nThe hvbak PowerShell module is now available system-wide.%n%nYou can now use the following commands:%n  Import-Module hvbak%n  Get-Help Backup-HyperVVM -Full
+FinishedLabelNoIcons=[name] has been successfully installed.%n%nThe pshvtools PowerShell module is now available system-wide.
+FinishedLabel=[name] has been successfully installed.%n%nThe pshvtools PowerShell module is now available system-wide.%n%nYou can now use the following commands:%n  Import-Module hvbak%n  Get-Help Invoke-VMBackup -Full
 
 [CustomMessages]
 english.PowerShellCheck=Checking PowerShell version...
@@ -67,10 +67,10 @@ english.ModuleInstall=Installing PowerShell module...
 
 [Files]
 ; Module files - install to PowerShell modules directory
-Source: "hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
-Source: "hvbak.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
-Source: "hvbak.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
-Source: "fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
+Source: "hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
@@ -93,7 +93,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 ; Register installation path
 Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"; Flags: uninsdeletekey
-Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "ModulePath"; ValueData: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "ModulePath"; ValueData: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: uninsdeletekey
 
 [Code]
 var
@@ -214,7 +214,7 @@ begin
   begin
     // Verify module installation
     Exec('powershell.exe',
-      '-NoProfile -NonInteractive -Command "Import-Module hvbak -ErrorAction SilentlyContinue"',
+      '-NoProfile -NonInteractive -Command "Import-Module pshvtools -ErrorAction SilentlyContinue"',
       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;
@@ -227,7 +227,7 @@ begin
   begin
     // Remove module from memory if loaded
     Exec('powershell.exe',
-      '-NoProfile -NonInteractive -Command "Remove-Module hvbak -ErrorAction SilentlyContinue"',
+      '-NoProfile -NonInteractive -Command "Remove-Module pshvtools -ErrorAction SilentlyContinue"',
       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 end;

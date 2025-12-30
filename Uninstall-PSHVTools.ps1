@@ -26,7 +26,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Define installation path
-$InstallPath = "$env:ProgramFiles\WindowsPowerShell\Modules\hvbak"
+$InstallPath = "$env:ProgramFiles\WindowsPowerShell\Modules\pshvtools"
 
 # Check if module is installed
 if (-not (Test-Path $InstallPath)) {
@@ -41,9 +41,9 @@ Write-Host ""
 
 # Remove module if it's loaded
 Write-Host "Checking for loaded module..." -ForegroundColor Yellow
-if (Get-Module hvbak) {
+if (Get-Module pshvtools) {
     Write-Host "  Removing loaded module..." -ForegroundColor Yellow
-    Remove-Module hvbak -Force
+    Remove-Module pshvtools -Force
     Write-Host "  [OK] Module unloaded" -ForegroundColor Green
 }
 
@@ -63,5 +63,5 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  Uninstall Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "The hvbak module has been removed from your system." -ForegroundColor Cyan
+Write-Host "The pshvtools module has been removed from your system." -ForegroundColor Cyan
 Write-Host ""

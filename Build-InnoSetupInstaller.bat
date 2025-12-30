@@ -70,18 +70,25 @@ if not exist "%SCRIPT_DIR%\hvbak.ps1" (
     echo   [OK] hvbak.ps1
 )
 
-if not exist "%SCRIPT_DIR%\hvbak.psm1" (
-    echo   [MISSING] hvbak.psm1
+if not exist "%SCRIPT_DIR%\pshvtools.psm1" (
+    echo   [MISSING] pshvtools.psm1
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] hvbak.psm1
+    echo   [OK] pshvtools.psm1
 )
 
-if not exist "%SCRIPT_DIR%\hvbak.psd1" (
-    echo   [MISSING] hvbak.psd1
+if not exist "%SCRIPT_DIR%\pshvtools.psd1" (
+    echo   [MISSING] pshvtools.psd1
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] hvbak.psd1
+    echo   [OK] pshvtools.psd1
+)
+
+if not exist "%SCRIPT_DIR%\fix-vhd-acl.ps1" (
+    echo   [MISSING] fix-vhd-acl.ps1
+    set "MISSING_FILES=1"
+) else (
+    echo   [OK] fix-vhd-acl.ps1
 )
 
 if not exist "%SCRIPT_DIR%\QUICKSTART.md" (
