@@ -24,14 +24,8 @@ choco install wixtoolset
 
 ### Build the MSI Installer
 
-**Option 1: Using Batch File (Easiest)**
 ```cmd
 Build-WixInstaller.bat
-```
-
-**Option 2: Using PowerShell**
-```powershell
-.\Build-WixInstaller.ps1
 ```
 
 This will create:
@@ -53,17 +47,11 @@ This will create:
 
 **Build Commands:**
 ```cmd
-# Batch file (recommended for simplicity)
+# Build with default output path (.\dist)
 Build-WixInstaller.bat
 
-# Batch file with custom output path
+# Build with custom output path
 Build-WixInstaller.bat "C:\Release"
-
-# PowerShell script
-.\Build-WixInstaller.ps1
-
-# PowerShell with custom output path
-.\Build-WixInstaller.ps1 -OutputPath "C:\Release"
 
 # Manual WiX build (advanced)
 candle.exe -nologo PSVMTools-Installer.wxs
@@ -91,27 +79,12 @@ light.exe -nologo -ext WixUIExtension -out dist\PSVMTools-Setup-1.0.0.msi PSVMTo
 
 ## ?? Build Options
 
-### Batch File Options
-
 ```cmd
 # Build with default output path (.\dist)
 Build-WixInstaller.bat
 
 # Build with custom output path
 Build-WixInstaller.bat "C:\MyBuilds"
-```
-
-### PowerShell Script Options
-
-```powershell
-# Build with default output path
-.\Build-WixInstaller.ps1
-
-# Custom output path
-.\Build-WixInstaller.ps1 -OutputPath "C:\MyBuilds"
-
-# Skip WiX check (if WiX path is custom)
-.\Build-WixInstaller.ps1 -SkipWixCheck
 ```
 
 ---
@@ -283,25 +256,15 @@ Configuration InstallPSVMTools {
 **Solution:**
 - Close any files in `dist` folder
 - Delete `dist` folder and try again
-- Run Command Prompt or PowerShell as Administrator if building to protected location
+- Run Command Prompt as Administrator if building to protected location
 
 ### WiX build errors
 **Solution:**
 ```cmd
-# Clean build (Batch)
+# Clean build
 rmdir /s /q dist
 Build-WixInstaller.bat
-
-# Clean build (PowerShell)
-Remove-Item -Path "dist" -Recurse -Force -ErrorAction SilentlyContinue
-.\Build-WixInstaller.ps1
 ```
-
-### "Batch file doesn't work"
-**Solution:**
-- Make sure you run from the repository root directory
-- Check that WiX Toolset is properly installed
-- Try running with administrator privileges
 
 ---
 
@@ -322,16 +285,9 @@ When updating to a new version:
             ...>
    ```
 
-3. **Update build scripts:**
-   
-   **Build-WixInstaller.bat:**
+3. **Update build script** (`Build-WixInstaller.bat`):
    ```batch
    set "MSI_FILE=%OUTPUT_PATH%\PSVMTools-Setup-1.1.0.msi"
-   ```
-   
-   **Build-WixInstaller.ps1:**
-   ```powershell
-   $msiFile = Join-Path -Path $OutputPath -ChildPath "PSVMTools-Setup-1.1.0.msi"
    ```
 
 4. **Rebuild installer:**
@@ -345,7 +301,7 @@ When updating to a new version:
 ## ?? Testing the Installer
 
 ### Test Installation
-```powershell
+```cmd
 # Build
 Build-WixInstaller.bat
 
@@ -365,7 +321,7 @@ appwiz.cpl
 ```
 
 ### Test Uninstallation
-```powershell
+```cmd
 # Uninstall via command
 msiexec /x PSVMTools-Setup-1.0.0.msi
 
@@ -375,7 +331,7 @@ Get-Module vmbak -ListAvailable
 ```
 
 ### Test Silent Installation
-```powershell
+```cmd
 # Silent install
 msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
 
@@ -456,13 +412,9 @@ msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
 
 ## ?? Summary
 
-**Build Commands:**
+**Build Command:**
 ```cmd
-# Batch file (recommended)
 Build-WixInstaller.bat
-
-# PowerShell script
-.\Build-WixInstaller.ps1
 ```
 
 **Output:**

@@ -14,7 +14,7 @@ A complete, professional-grade MSI installer for **PSVMTools** - a PowerShell mo
 - ? `vmbak.psd1` - Module manifest with PSVMTools branding
 
 ### 2. Installer Builder
-- ? `Build-WixInstaller.ps1` - Builds MSI installer with WiX Toolset
+- ? `Build-WixInstaller.bat` - Builds MSI installer with WiX Toolset
 - ? `PSVMTools-Installer.wxs` - WiX installer definition
 
 ### 3. Documentation
@@ -50,9 +50,9 @@ choco install wixtoolset
 
 ### Build Command
 
-```powershell
+```cmd
 # From repository root
-.\Build-WixInstaller.ps1
+Build-WixInstaller.bat
 ```
 
 **Output:** `dist/PSVMTools-Setup-1.0.0.msi` (~300 KB)
@@ -76,7 +76,7 @@ choco install wixtoolset
 - `PSVMTools-Setup-1.0.0.msi`
 
 **Usage:**
-```powershell
+```cmd
 # Interactive installation
 Double-click PSVMTools-Setup-1.0.0.msi
 
@@ -156,7 +156,7 @@ PSVMTools/
 ?   ??? vmbak.psd1             # Manifest
 ?
 ??? Installer
-?   ??? Build-WixInstaller.ps1         # MSI builder
+?   ??? Build-WixInstaller.bat         # MSI builder
 ?   ??? PSVMTools-Installer.wxs        # WiX definition
 ?
 ??? Documentation
@@ -184,12 +184,12 @@ PSVMTools/
    ```
 
 2. **Build the MSI**
-   ```powershell
-   .\Build-WixInstaller.ps1
+   ```cmd
+   Build-WixInstaller.bat
    ```
 
 3. **Test the Installation**
-   ```powershell
+   ```cmd
    # Install
    cd dist
    msiexec /i PSVMTools-Setup-1.0.0.msi
@@ -202,9 +202,9 @@ PSVMTools/
    ```
 
 4. **Push to GitHub**
-   ```powershell
+   ```cmd
    git add .
-   git commit -m "Switch to MSI-only installer"
+   git commit -m "Remove PowerShell installer builder, use batch file only"
    git push origin master
    ```
 
@@ -219,23 +219,23 @@ PSVMTools/
 ## ?? What You Can Do Now
 
 ### As Developer
-```powershell
+```cmd
 # Build MSI installer
-.\Build-WixInstaller.ps1
+Build-WixInstaller.bat
 
 # Clean build
-Remove-Item -Path "dist" -Recurse -Force
-.\Build-WixInstaller.ps1
+rmdir /s /q dist
+Build-WixInstaller.bat
 ```
 
 ### As Distributor
-```powershell
+```cmd
 # MSI is ready in dist/ folder
 # Distribute PSVMTools-Setup-1.0.0.msi
 ```
 
 ### As End User
-```powershell
+```cmd
 # Install
 msiexec /i PSVMTools-Setup-1.0.0.msi
 
@@ -267,7 +267,7 @@ You now have a **professional MSI installer** for PSVMTools that:
 - ? Works on any Windows system with Hyper-V
 - ? Is ready for GitHub releases
 - ? Includes professional branding
-- ? Has automated build process
+- ? Has automated build process (batch file)
 - ? Supports silent installation
 - ? Integrates with Windows properly
 - ? Enterprise deployment ready
