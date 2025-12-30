@@ -41,7 +41,7 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @('vmbak', 'vm-bak')
+AliasesToExport = @('hvbak', 'hv-bak')
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{
@@ -61,7 +61,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'Initial release of PSHVTools v1.0.0 - Hyper-V VM backup utilities with vmbak and vm-bak commands'
+        ReleaseNotes = 'Initial release of PSHVTools v1.0.0 - Hyper-V VM backup utilities with hvbak and hv-bak commands'
 
     } # End of PSData hashtable
 

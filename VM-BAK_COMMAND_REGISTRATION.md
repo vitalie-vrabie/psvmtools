@@ -1,16 +1,17 @@
-# vm-bak Command Registration Summary
+# hv-bak Command Registration Summary
 
 ## ? Changes Completed
 
 ### 1. Module Files Updated
 
 **vmbak.psm1:**
-- Added `New-Alias -Name vm-bak -Value Invoke-VMBackup -Force`
-- Updated `Export-ModuleMember` to include both aliases: `vmbak, vm-bak`
-- Added example using `vm-bak` in function documentation
+- Added `New-Alias -Name hvbak -Value Invoke-VMBackup -Force`
+- Added `New-Alias -Name hv-bak -Value Invoke-VMBackup -Force`
+- Updated `Export-ModuleMember` to include both aliases: `hvbak, hv-bak`
+- Added examples using `hvbak` and `hv-bak` in function documentation
 
 **vmbak.psd1:**
-- Updated `AliasesToExport` to include both: `@('vmbak', 'vm-bak')`
+- Updated `AliasesToExport` to include both: `@('hvbak', 'hv-bak')`
 - Updated `ProjectUri` to correct GitHub URL
 - Updated `ReleaseNotes` to mention both commands
 
@@ -18,7 +19,7 @@
 
 **README.md:**
 - Added both command names at the top
-- Updated all examples to show both `vmbak` and `vm-bak` usage
+- Updated all examples to show both `hvbak` and `hv-bak` usage
 - Updated "Getting Started" section
 - Added both aliases to "Highlights" section
 
@@ -35,18 +36,18 @@
 - ? MSI file rebuilt with updated module files
 - ? Both aliases now included in the installer
 - ? Size: 304 KB
-- ? File: `dist\PSVMTools-Setup-1.0.0.msi`
+- ? File: `dist\PSHVTools-Setup-1.0.0.msi`
 
 ## ?? How It Works
 
 After installing the MSI, users can use either command:
 
 ```powershell
-# Original command (still works)
-vmbak -NamePattern "*"
+# Main command (works)
+hvbak -NamePattern "*"
 
-# New hyphenated alias (also works)
-vm-bak -NamePattern "*"
+# Hyphenated alias (also works)
+hv-bak -NamePattern "*"
 ```
 
 Both commands execute the same `Invoke-VMBackup` function with identical functionality.
@@ -61,8 +62,8 @@ When the MSI installer runs, it installs:
    - vmbak.psd1
 
 2. **Two command aliases** available system-wide:
-   - `vmbak`
-   - `vm-bak`
+   - `hvbak`
+   - `hv-bak`
 
 3. **Documentation** and **Start Menu shortcuts**
 
@@ -78,28 +79,28 @@ Get-Module vmbak -ListAvailable
 Import-Module vmbak
 
 # Verify both commands exist
-Get-Command vmbak
-Get-Command vm-bak
+Get-Command hvbak
+Get-Command hv-bak
 
 # Display help (either command)
-vmbak
-vm-bak
+hvbak
+hv-bak
 
 # Use either command interchangeably
-vmbak -NamePattern "web-*"
-vm-bak -NamePattern "db-*"
+hvbak -NamePattern "web-*"
+hv-bak -NamePattern "db-*"
 ```
 
 ## ?? Technical Details
 
 ### Alias Registration
 - Both aliases are created in `vmbak.psm1` using `New-Alias`
-- Both are exported via `Export-ModuleMember -Alias vmbak, vm-bak`
+- Both are exported via `Export-ModuleMember -Alias hvbak, hv-bak`
 - Module manifest lists both in `AliasesToExport`
 
 ### Command Resolution
 ```
-User types: vm-bak
+User types: hv-bak
     ?
 PowerShell resolves alias ? Invoke-VMBackup
     ?
@@ -116,23 +117,23 @@ Calls vmbak.ps1 with parameters
 
 ## ?? Git Status
 
-- ? **Committed:** a8dbcf9
-- ? **Pushed:** to origin/master
+- ? **Committed:** (pending)
 - ? **Files changed:** 6 files
 - ? **Ready for release:** Yes
 
 ## ?? Next Steps for Release
 
-The updated MSI with `vm-bak` command is ready. When creating the GitHub release:
+The updated MSI with `hvbak` and `hv-bak` commands is ready. When creating the GitHub release:
 
-1. Upload the new `dist\PSVMTools-Setup-1.0.0.msi`
+1. Upload the new `dist\PSHVTools-Setup-1.0.0.msi`
 2. Mention both command names in release notes
-3. Show examples using both `vmbak` and `vm-bak`
+3. Show examples using both `hvbak` and `hv-bak`
 
 ## ? Verification Checklist
 
-- [x] `vm-bak` alias added to vmbak.psm1
-- [x] `vm-bak` added to AliasesToExport in vmbak.psd1
+- [x] `hvbak` alias added to vmbak.psm1
+- [x] `hv-bak` alias added to vmbak.psm1
+- [x] Both aliases added to AliasesToExport in vmbak.psd1
 - [x] README.md updated with both commands
 - [x] QUICKSTART.md updated with both commands
 - [x] MSI installer rebuilt
@@ -142,4 +143,4 @@ The updated MSI with `vm-bak` command is ready. When creating the GitHub release
 
 ---
 
-**Both `vmbak` and `vm-bak` commands are now registered and ready to use!** ??
+**Both `hvbak` and `hv-bak` commands are now registered and ready to use!** ??

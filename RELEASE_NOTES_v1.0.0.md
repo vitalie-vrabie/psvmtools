@@ -1,8 +1,8 @@
-# PSVMTools v1.0.0 - Initial Release
+# PSHVTools v1.0.0 - Initial Release
 
 ## ?? First Official Release
 
-PSVMTools is a professional PowerShell module for backing up Hyper-V virtual machines with checkpoint support and 7-Zip compression.
+PSHVTools is a professional PowerShell module for backing up Hyper-V virtual machines with checkpoint support and 7-Zip compression.
 
 ---
 
@@ -10,7 +10,7 @@ PSVMTools is a professional PowerShell module for backing up Hyper-V virtual mac
 
 ### Download and Install
 
-1. Download **PSVMTools-Setup-1.0.0.msi** (304 KB)
+1. Download **PSHVTools-Setup-1.0.0.msi** (304 KB)
 2. Double-click to install
 3. Follow the installation wizard
 4. Done!
@@ -19,10 +19,10 @@ PSVMTools is a professional PowerShell module for backing up Hyper-V virtual mac
 
 ```cmd
 # Silent install
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
 
 # Silent install with logging
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
+msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
 ```
 
 ---
@@ -54,19 +54,19 @@ After installation:
 
 ```powershell
 # Display help
-vmbak
+hvbak
 
 # Backup all VMs
-vmbak -NamePattern "*"
+hvbak -NamePattern "*"
 
 # Backup specific VMs
-vmbak -NamePattern "srv-*"
+hv-bak -NamePattern "srv-*"
 
 # Custom destination
-vmbak -NamePattern "*" -Destination "D:\backups"
+hvbak -NamePattern "*" -Destination "D:\backups"
 
 # Get detailed help
-Get-Help vmbak -Full
+Get-Help Invoke-VMBackup -Full
 ```
 
 ---
@@ -98,8 +98,8 @@ Get-Help vmbak -Full
 
 ### SCCM/ConfigMgr
 ```cmd
-Install: msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
-Uninstall: msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart
+Install: msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
+Uninstall: msiexec /x PSHVTools-Setup-1.0.0.msi /quiet /norestart
 ```
 
 ### Intune
@@ -112,7 +112,7 @@ Upload as Line-of-Business app and assign to groups
 - **Quick Start Guide**: See QUICKSTART.md in installation folder
 - **Module Documentation**: README_VMBAK_MODULE.md
 - **Build Instructions**: BUILD_GUIDE.md
-- **GitHub Repository**: https://github.com/vitalie-vrabie/psvmtools
+- **GitHub Repository**: https://github.com/vitalie-vrabie/pshvtools
 
 ---
 
@@ -129,7 +129,7 @@ winget install --id WiXToolset.WiXToolset
 Build-WixInstaller.bat
 ```
 
-Output: `dist\PSVMTools-Setup-1.0.0.msi`
+Output: `dist\PSHVTools-Setup-1.0.0.msi`
 
 ---
 
@@ -153,8 +153,8 @@ Output: `dist\PSVMTools-Setup-1.0.0.msi`
 
 ## ?? Support
 
-- **Issues**: https://github.com/vitalie-vrabie/psvmtools/issues
-- **Discussions**: https://github.com/vitalie-vrabie/psvmtools/discussions
+- **Issues**: https://github.com/vitalie-vrabie/pshvtools/issues
+- **Discussions**: https://github.com/vitalie-vrabie/pshvtools/discussions
 - **Documentation**: See docs in installation folder
 
 ---
@@ -178,10 +178,10 @@ Built with:
 
 ## ?? Release Assets
 
-- **PSVMTools-Setup-1.0.0.msi** (304 KB) - Windows Installer package
+- **PSHVTools-Setup-1.0.0.msi** (304 KB) - Windows Installer package
 
 ---
 
-**Thank you for using PSVMTools!** ??
+**Thank you for using PSHVTools!** ??
 
 For questions or issues, please visit the GitHub repository.

@@ -3,8 +3,8 @@
 ## Available Commands
 
 After installation, you can use either of these commands:
-- `vmbak` - Original command name
-- `vm-bak` - Hyphenated alias
+- `hvbak` - Main command name
+- `hv-bak` - Hyphenated alias
 
 Both commands work identically!
 
@@ -14,9 +14,9 @@ Both commands work identically!
 Simply run the cmdlet without parameters:
 
 ```powershell
-vmbak
+hvbak
 # or
-vm-bak
+hv-bak
 ```
 
 This will display the full help documentation including:
@@ -33,21 +33,21 @@ This will display the full help documentation including:
 Get-Help Invoke-VMBackup -Full
 
 # See only examples
-Get-Help vmbak -Examples
+Get-Help hvbak -Examples
 
 # Backup all VMs (using either command)
-vmbak -NamePattern "*"
-vm-bak -NamePattern "*"
+hvbak -NamePattern "*"
+hv-bak -NamePattern "*"
 
 # Backup specific VMs
-vmbak -NamePattern "MyVM"
-vm-bak -NamePattern "srv-*"
+hvbak -NamePattern "MyVM"
+hv-bak -NamePattern "srv-*"
 
 # Specify custom destination
-vmbak -NamePattern "*" -Destination "D:\backups"
+hvbak -NamePattern "*" -Destination "D:\backups"
 
 # Disable force turn off
-vm-bak -NamePattern "*" -ForceTurnOff:$false
+hv-bak -NamePattern "*" -ForceTurnOff:$false
 ```
 
 ## Testing the Installation
@@ -62,27 +62,27 @@ Get-Module vmbak
 Import-Module vmbak
 
 # Verify the cmdlets are available
-Get-Command vmbak
-Get-Command vm-bak
+Get-Command hvbak
+Get-Command hv-bak
 
 # Display help
-vmbak
+hvbak
 ```
 
 ## Common Usage Patterns
 
 ```powershell
 # Backup all VMs to default location
-vmbak -NamePattern "*"
+hvbak -NamePattern "*"
 
 # Backup VMs matching a pattern
-vm-bak -NamePattern "web-*"
+hv-bak -NamePattern "web-*"
 
 # Backup to specific destination
-vmbak -NamePattern "db-*" -Destination "E:\backups"
+hvbak -NamePattern "db-*" -Destination "E:\backups"
 
 # Backup without forcing VMs off on checkpoint failure
-vm-bak -NamePattern "*" -ForceTurnOff:$false
+hv-bak -NamePattern "*" -ForceTurnOff:$false
 ```
 
 ## Uninstallation
@@ -120,7 +120,7 @@ Import-Module vmbak
 
 ## Troubleshooting
 
-### "vmbak" or "vm-bak" command not found
+### "hvbak" or "hv-bak" command not found
 
 ```powershell
 # Verify installation
@@ -130,7 +130,7 @@ Get-Module vmbak -ListAvailable
 Import-Module vmbak
 
 # Verify both commands are available
-Get-Command vmbak, vm-bak
+Get-Command hvbak, hv-bak
 ```
 
 ### Module not loading automatically
@@ -163,9 +163,9 @@ Get-Module vmbak | Select-Object Name, Version, ExportedAliases
 
 ## Pro Tips
 
-1. **Use tab completion:** Type `vmbak -` and press Tab to cycle through parameters
-2. **Both commands work:** Choose whichever you prefer - `vmbak` or `vm-bak`
-3. **Check help anytime:** Run `vmbak` without parameters to see full help
+1. **Use tab completion:** Type `hvbak -` and press Tab to cycle through parameters
+2. **Both commands work:** Choose whichever you prefer - `hvbak` or `hv-bak`
+3. **Check help anytime:** Run `hvbak` without parameters to see full help
 4. **Wildcards work:** Use patterns like `"web-*"`, `"*-prod"`, etc.
 5. **Ctrl+C to cancel:** Gracefully stops backups and cleans up
 

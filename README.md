@@ -3,14 +3,14 @@
 **Version:** 1.0.0  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** vmbak  
-**Commands:** `vmbak` or `vm-bak`  
+**Commands:** `hvbak` or `hv-bak`  
 **License:** MIT
 
 ---
 
 ## ?? What is PSHVTools?
 
-PSHVTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides the `vmbak` and `vm-bak` cmdlets for automated, parallel VM backups with checkpoint support and 7-Zip compression.
+PSHVTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides the `hvbak` and `hv-bak` cmdlets for automated, parallel VM backups with checkpoint support and 7-Zip compression.
 
 ### Key Features:
 - ?? Live VM backups using Production checkpoints
@@ -40,13 +40,13 @@ msiexec /i PSHVTools-Setup-1.0.0.msi /quiet /norestart
 After installation:
 ```powershell
 # Display help (use either command)
-vmbak
-vm-bak
+hvbak
+hv-bak
 
 # Backup all VMs
-vmbak -NamePattern "*"
+hvbak -NamePattern "*"
 # or
-vm-bak -NamePattern "*"
+hv-bak -NamePattern "*"
 ```
 
 **Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)
@@ -156,17 +156,17 @@ msiexec /x PSHVTools-Setup-1.0.0.msi /quiet /norestart
 ### Usage Commands
 ```powershell
 # Display help (either command works)
-vmbak
-vm-bak
+hvbak
+hv-bak
 
 # Backup all VMs
-vmbak -NamePattern "*"
+hvbak -NamePattern "*"
 
 # Backup specific VMs (using hyphenated alias)
-vm-bak -NamePattern "srv-*"
+hv-bak -NamePattern "srv-*"
 
 # Custom destination
-vmbak -NamePattern "*" -Destination "D:\backups"
+hvbak -NamePattern "*" -Destination "D:\backups"
 
 # Detailed help
 Get-Help Invoke-VMBackup -Full
@@ -224,7 +224,7 @@ Copyright (c) 2025 Vitalie Vrabie
 ### For End Users
 1. Download the MSI installer
 2. Run as Administrator
-3. Type `vmbak` or `vm-bak` to see help
+3. Type `hvbak` or `hv-bak` to see help
 4. Start backing up VMs!
 
 ### For Developers
@@ -244,7 +244,7 @@ Copyright (c) 2025 Vitalie Vrabie
 - MSI installer with WiX Toolset
 - Complete documentation
 - PowerShell module integration
-- Both `vmbak` and `vm-bak` command aliases
+- Both `hvbak` and `hv-bak` command aliases
 
 ---
 
@@ -255,7 +255,7 @@ Copyright (c) 2025 Vitalie Vrabie
 - **Well Documented:** Comprehensive guides
 - **Open Source:** MIT licensed
 - **Enterprise Ready:** MSI installer with Group Policy support
-- **Flexible Commands:** Use either `vmbak` or `vm-bak`
+- **Flexible Commands:** Use either `hvbak` or `hv-bak`
 
 ---
 

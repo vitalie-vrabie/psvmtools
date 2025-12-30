@@ -31,15 +31,15 @@ function Invoke-VMBackup {
       PSCredential for in-guest WinRM shutdown attempts (not currently used in graceful shutdown logic). Optional.
 
     .EXAMPLE
-      vmbak -NamePattern "*"
+      hvbak -NamePattern "*"
       Exports all VMs to R:\vhd\YYYYMMDD
 
     .EXAMPLE
-      vm-bak -NamePattern "srv-*" -Destination "D:\backups"
+      hv-bak -NamePattern "srv-*" -Destination "D:\backups"
       Exports VMs matching "srv-*" to D:\backups\YYYYMMDD using the hyphenated alias.
 
     .EXAMPLE
-      vmbak -NamePattern "srv-*" -Destination "D:\backups" -ForceTurnOff:$false
+      hvbak -NamePattern "srv-*" -Destination "D:\backups" -ForceTurnOff:$false
       Exports VMs matching "srv-*" to D:\backups\YYYYMMDD without forcing power off on checkpoint failure.
 
     .NOTES
@@ -49,7 +49,7 @@ function Invoke-VMBackup {
       - Temp folder (E:\vmbkp.tmp) and destination (R:\vhd by default) must be accessible.
       - Graceful cleanup ensures VMs are restarted and checkpoints removed even on cancellation or failure.
       - Archives are created in 7z format with fast compression for better multithreading.
-      - Available as both 'vmbak' and 'vm-bak' commands.
+      - Available as both 'hvbak' and 'hv-bak' commands.
     #>
 
     [CmdletBinding()]
@@ -97,8 +97,9 @@ function Invoke-VMBackup {
 }
 
 # Create aliases for shorter commands
-New-Alias -Name vmbak -Value Invoke-VMBackup -Force
-New-Alias -Name vm-bak -Value Invoke-VMBackup -Force
+New-Alias -Name hvbak -Value Invoke-VMBackup -Force
+New-Alias -Name hv-bak -Value Invoke-VMBackup -Force
 
 # Export the function and aliases
-Export-ModuleMember -Function Invoke-VMBackup -Alias vmbak, vm-bak
+Export-ModuleMember -Function Invoke-VMBackup -Alias hvbak, hv-bak
+````````
