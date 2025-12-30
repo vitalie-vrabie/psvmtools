@@ -153,6 +153,15 @@ foreach ($vm in $vms) {
         param(
             $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount
         )
+        
+        # Set up a trap to catch job stopping/termination
+        trap {
+            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job termination detected for $vmName, initiating cleanup..."
+            # Set a flag that we've been cancelled
+            $script:JobCancelled = $true
+            # Re-throw to trigger the finally block
+            throw $_
+        }
 
         # Do not create any log files; write messages to console only
         function LocalLog { 
@@ -162,20 +171,20 @@ foreach ($vm in $vms) {
             $sanitized = $t -replace '[^\x20-\x7E\r\n\t]', '?'
             Write-Output "$ts  $sanitized"
         }
-        
-        # Function to check if job should be cancelled
-        function ShouldCancel {
-            # Check if the parent process has signaled cancellation by stopping this job
-            $currentJob = Get-Job -Id $PID -ErrorAction SilentlyContinue
-            if ($currentJob -and $currentJob.State -eq 'Stopping') {
-                return $true
-            }
-            return $false
-        }
 
         LocalLog ("Per-vm job started for {0}" -f $vmName)
+        
+        # Initialize cancellation flag
+        $script:JobCancelled = $false
 
-        $result = [PSCustomObject]@{ VMName = $vmName; TempPath = $null; DestArchive = $null; Success = $false; Message = $null }
+        # Function to check if job should be cancelled
+        function ShouldCancel {
+            # PowerShell background jobs don't have a reliable way to check cancellation from inside
+            # Instead, we'll check if a sentinel file exists or if an error was thrown
+            # For now, we'll rely on the try-catch mechanism and Stop-Job triggering exceptions
+            # This function serves as a placeholder for explicit cancellation checks
+            return $false
+        }
 
         # Track resources that need cleanup
         $snapshotName = $null
@@ -250,8 +259,8 @@ foreach ($vm in $vms) {
                 Export-VM -Name $vmName -Path $vmTemp -ErrorAction Stop
                 LocalLog ("Export completed for {0}" -f $vmName)
                 
-                # Check if we should cancel after export completes
-                if (ShouldCancel) {
+                # Check if we were cancelled during export
+                if ($script:JobCancelled) {
                     LocalLog ("Cancellation detected after export, aborting for {0}" -f $vmName)
                     throw "Operation cancelled by user"
                 }
@@ -274,7 +283,7 @@ foreach ($vm in $vms) {
             }
             
             # Check for cancellation before proceeding to cleanup and archiving
-            if (ShouldCancel) {
+            if ($script:JobCancelled) {
                 LocalLog ("Cancellation detected before cleanup, aborting for {0}" -f $vmName)
                 throw "Operation cancelled by user"
             }
