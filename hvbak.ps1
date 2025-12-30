@@ -93,11 +93,6 @@ $ShutdownTimeoutSeconds = 180
 $PollIntervalSeconds = 5
 $TempRoot = $TempFolder
 
-# Cancellation sentinel for this run (shared with child jobs)
-$RunId = [guid]::NewGuid().ToString('N')
-$script:CancelFile = Join-Path $TempRoot ("hvbak_cancel_{0}.flag" -f $RunId)
-if (Test-Path -LiteralPath $script:CancelFile) { Remove-Item -LiteralPath $script:CancelFile -Force -ErrorAction SilentlyContinue }
-
 # Ensure temp root exists
 try {
     if (-not (Test-Path -Path $TempRoot)) {
@@ -108,6 +103,10 @@ try {
     Write-Error ("Failed to create temp root {0} : {1}" -f $TempRoot, $_)
     exit 1
 }
+
+# Cancellation sentinel (shared with child jobs). Created on Ctrl+C.
+$CancelSentinel = Join-Path $TempRoot "hvbak.cancel"
+try { if (Test-Path $CancelSentinel) { Remove-Item -Path $CancelSentinel -Force -ErrorAction SilentlyContinue } } catch {}
 
 # Build per-date destination folder YYYYMMDD under $Destination
 $DateFolderName = (Get-Date).ToString("yyyyMMdd")
@@ -154,41 +153,56 @@ foreach ($vm in $vms) {
 
     Log ("Starting per-vm job for: {0}" -f $vmName)
 
-    $perVmJob = Start-Job -ArgumentList $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount, $script:CancelFile -ScriptBlock {
+    $perVmJob = Start-Job -ArgumentList $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount, $CancelSentinel -ScriptBlock {
         param(
-            $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount, $CancelFile
+            $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount, $CancelSentinel
         )
+        
+        # Set up a trap to catch job stopping/termination
+        trap {
+            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job termination detected for $vmName, initiating cleanup..."
+            $script:JobCancelled = $true
+            throw $_
+        }
 
         # Do not create any log files; write messages to console only
-        function LocalLog {
-            param($t)
+        function LocalLog { 
+            param($t) 
             $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
             # Sanitize the message to avoid XML serialization issues
             $sanitized = $t -replace '[^\x20-\x7E\r\n\t]', '?'
             Write-Output "$ts  $sanitized"
         }
 
-        function Assert-NotCancelled {
-            param([string]$Phase)
-            if (Test-Path -LiteralPath $CancelFile) {
-                LocalLog ("Cancellation detected ({0}); aborting {1}" -f (Split-Path -Leaf $CancelFile), $Phase)
-                throw "Operation cancelled by user"
+        function IsCancelled {
+            try {
+                if ($script:JobCancelled) { return $true }
+                return (Test-Path -Path $CancelSentinel)
+            } catch {
+                return $false
             }
         }
 
         LocalLog ("Per-vm job started for {0}" -f $vmName)
+        
+        # Initialize cancellation flag
+        $script:JobCancelled = $false
 
-        $result = [PSCustomObject]@{ VMName = $vmName; TempPath = $null; DestArchive = $null; Success = $false; Message = $null }
+        if (IsCancelled) {
+            LocalLog ("Cancellation already requested before starting work for {0}" -f $vmName)
+            throw "Operation cancelled by user"
+        }
 
         # Track resources that need cleanup
         $snapshotName = $null
         $wasRunning = $false
         $vmTemp = $null
+        # Timestamp to use for per-VM temp folder name; defaults to now and updated from checkpoint when available
         $checkpointTs = (Get-Date).ToString("yyyyMMddHHmmss")
         $vmWasTurnedOff = $false
 
         try {
-            Assert-NotCancelled "startup"
+            if (IsCancelled) { throw "Operation cancelled by user" }
 
             # determine VM state and whether it was running
             $vm = Get-VM -Name $vmName -ErrorAction Stop
@@ -256,9 +270,8 @@ foreach ($vm in $vms) {
                 LocalLog ("Exporting VM {0} to {1}" -f $vmName, $vmTemp)
                 Export-VM -Name $vmName -Path $vmTemp -ErrorAction Stop
                 LocalLog ("Export completed for {0}" -f $vmName)
-                
-                # Check if we were cancelled during export
-                if ($script:JobCancelled) {
+
+                if (IsCancelled) {
                     LocalLog ("Cancellation detected after export, aborting for {0}" -f $vmName)
                     throw "Operation cancelled by user"
                 }
@@ -319,11 +332,22 @@ foreach ($vm in $vms) {
             $tempArchive = Join-Path $TempRoot ("{0}_{1}.7z" -f $safeVmName, (Get-Date).ToString("yyyyMMddHHmmss"))
             if (Test-Path $tempArchive) { Remove-Item -Path $tempArchive -Force -ErrorAction SilentlyContinue }
 
+            # IMPORTANT: before starting 7z, bail out on cancellation
+            if (IsCancelled) {
+                LocalLog ("Cancellation detected before 7z archiving, aborting for {0}" -f $vmName)
+                throw "Operation cancelled by user"
+            }
+
             # Archive the CONTENTS of the per-VM folder using 7z format (no extra top-level folder)
             $pushed = $false
             try {
                 Push-Location -Path $vmTemp
                 $pushed = $true
+
+                if (IsCancelled) {
+                    LocalLog ("Cancellation detected before 7z start, aborting for {0}" -f $vmName)
+                    throw "Operation cancelled by user"
+                }
 
                 LocalLog ("Creating 7z archive: {0} -> {1}" -f $vmTemp, $tempArchive)
                 # Use 7z format with fast compression and multithreading
@@ -581,6 +605,7 @@ foreach ($vm in $vms) {
                 
                     foreach ($oldArchive in $deleteArchives) {
                         try {
+                        try {
                             LocalLog ("Deleting old archive: {0}" -f $oldArchive.Path)
                             Remove-Item -Path $oldArchive.Path -Force -ErrorAction Stop
                             LocalLog ("Successfully deleted: {0} from {1}" -f $oldArchive.Name, $oldArchive.DateFolder)
@@ -590,14 +615,6 @@ foreach ($vm in $vms) {
                                 $folderContents = Get-ChildItem -Path $oldArchive.FolderPath -Force -ErrorAction Stop
                                 if ($folderContents.Count -eq 0) {
                                     LocalLog ("Folder {0} is now empty, deleting..." -f $oldArchive.DateFolder)
-                                    Remove-Item -Path $oldArchive.FolderPath -Force -ErrorAction Stop
-                                    LocalLog ("Successfully deleted empty folder: {0}" -f $oldArchive.DateFolder)
-                                } else {
-                                    LocalLog ("Folder {0} still contains {1} items, keeping it" -f $oldArchive.DateFolder, $folderContents.Count)
-                                }
-                            } catch {
-                                LocalLog ("Failed to check/delete folder {0}: {1}" -f $oldArchive.DateFolder, $_)
-                            }
                         } catch {
                             LocalLog ("Failed to delete archive {0}: {1}" -f $oldArchive.Path, $_)
                         }
@@ -686,6 +703,7 @@ $consoleHandler = [ConsoleCancelEventHandler]{
         $global:VmbkpCancelled = $true
         # Signal cancellation for all child jobs
         try { New-Item -Path $script:CancelFile -ItemType File -Force | Out-Null } catch {}
+        try { New-Item -Path $script:CancelSentinel -ItemType File -Force | Out-Null } catch {}
 
         Write-Output ""
         Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  *** Ctrl+C received: Initiating graceful shutdown ***"
