@@ -30,6 +30,9 @@
 .PARAMETER GuestCredential
   PSCredential for in-guest WinRM shutdown attempts (not currently used in graceful shutdown logic). Optional.
 
+.PARAMETER KeepCount
+  Number of backup copies to keep per VM (older backups are deleted). Default: 2
+
 .EXAMPLE
   .\vmbak.ps1 -NamePattern "*"
   Exports all VMs to %USERPROFILE%\hvbak-archives\YYYYMMDD using default temp folder
@@ -41,6 +44,10 @@
 .EXAMPLE
   .\vmbak.ps1 -NamePattern "srv-*" -Destination "D:\backups" -ForceTurnOff:$false
   Exports VMs matching "srv-*" to D:\backups\YYYYMMDD without forcing power off on checkpoint failure.
+
+.EXAMPLE
+  .\vmbak.ps1 -NamePattern "web-*" -KeepCount 5
+  Exports VMs matching "web-*" and keeps the 5 most recent backups, deleting older ones.
 
 .NOTES
   - Run elevated (Administrator) on the Hyper-V host for best results.
@@ -65,7 +72,11 @@ param(
     [switch]$ForceTurnOff = $true,
 
     [Parameter(Mandatory = $false)]
-    [System.Management.Automation.PSCredential]$GuestCredential
+    [System.Management.Automation.PSCredential]$GuestCredential,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateRange(1, 100)]
+    [int]$KeepCount = 2
 )
 
 # Display help if no NamePattern provided
@@ -138,9 +149,9 @@ foreach ($vm in $vms) {
 
     Log ("Starting per-vm job for: {0}" -f $vmName)
 
-    $perVmJob = Start-Job -ArgumentList $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds -ScriptBlock {
+    $perVmJob = Start-Job -ArgumentList $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount -ScriptBlock {
         param(
-            $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds
+            $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount
         )
 
         # Do not create any log files; write messages to console only
@@ -485,7 +496,7 @@ foreach ($vm in $vms) {
                 }
             }
 
-            # --- CLEANUP OLD PER-VM ARCHIVES: Keep current + 1 previous archive for this VM ---
+            # --- CLEANUP OLD PER-VM ARCHIVES: Keep current + (KeepCount-1) previous archives for this VM ---
             try {
                 LocalLog ("Checking for old archives of {0} to clean up..." -f $vmName)
             
@@ -522,13 +533,23 @@ foreach ($vm in $vms) {
                     }
                 }
 
-                if ($allVmArchives.Count -gt 2) {
+                if ($allVmArchives.Count -gt $KeepCount) {
                     $sorted = $allVmArchives | Sort-Object SortKey -Descending
-                    $keepArchives = $sorted | Select-Object -First 2
-                    $deleteArchives = $sorted | Select-Object -Skip 2
+                    $keepArchives = $sorted | Select-Object -First $KeepCount
+                    $deleteArchives = $sorted | Select-Object -Skip $KeepCount
                 
-                    LocalLog ("Found {0} archives for {1}. Keeping {2} and {3}. Deleting {4} older archives..." -f 
-                        $allVmArchives.Count, $vmName, $keepArchives[0].Name, $keepArchives[1].Name, $deleteArchives.Count)
+                    if ($KeepCount -eq 1) {
+                        LocalLog ("Found {0} archives for {1}. Keeping {2}. Deleting {3} older archives..." -f 
+                            $allVmArchives.Count, $vmName, $keepArchives[0].Name, $deleteArchives.Count)
+                    } elseif ($KeepCount -eq 2) {
+                        LocalLog ("Found {0} archives for {1}. Keeping {2} and {3}. Deleting {4} older archives..." -f 
+                            $allVmArchives.Count, $vmName, $keepArchives[0].Name, $keepArchives[1].Name, $deleteArchives.Count)
+                    } else {
+                        $keepNames = ($keepArchives | Select-Object -First 3 | ForEach-Object { $_.Name }) -join ', '
+                        if ($KeepCount -gt 3) { $keepNames += ", ..." }
+                        LocalLog ("Found {0} archives for {1}. Keeping {2} most recent ({3}). Deleting {4} older archives..." -f 
+                            $allVmArchives.Count, $vmName, $KeepCount, $keepNames, $deleteArchives.Count)
+                    }
                 
                     foreach ($oldArchive in $deleteArchives) {
                         try {
@@ -555,9 +576,15 @@ foreach ($vm in $vms) {
                     }
                 
                     LocalLog ("Old archive cleanup completed for {0}." -f $vmName)
-                } elseif ($allVmArchives.Count -eq 2) {
-                    LocalLog ("Found 2 archives for {0}: {1} and {2}. No cleanup needed." -f 
-                        $vmName, $allVmArchives[0].Name, $allVmArchives[1].Name)
+                } elseif ($allVmArchives.Count -eq $KeepCount) {
+                    if ($KeepCount -eq 1) {
+                        LocalLog ("Found 1 archive for {0}: {1}. No cleanup needed." -f $vmName, $allVmArchives[0].Name)
+                    } elseif ($KeepCount -eq 2) {
+                        LocalLog ("Found 2 archives for {0}: {1} and {2}. No cleanup needed." -f 
+                            $vmName, $allVmArchives[0].Name, $allVmArchives[1].Name)
+                    } else {
+                        LocalLog ("Found {0} archives for {1}. No cleanup needed." -f $KeepCount, $vmName)
+                    }
                 } elseif ($allVmArchives.Count -eq 1) {
                     LocalLog ("Found only 1 archive for {0}: {1}. No cleanup needed." -f $vmName, $allVmArchives[0].Name)
                 } else {
