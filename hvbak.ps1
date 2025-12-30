@@ -506,6 +506,20 @@ foreach ($vm in $vms) {
                     # Read output asynchronously and parse for progress
                     $lastProgress = -1
                     while (-not $proc.HasExited) {
+                        if (IsCancelled) {
+                            LocalLog ("Cancellation detected during 7z archiving for {0}. Killing 7z and deleting temp archive." -f $vmName)
+                            try { if ($proc -and -not $proc.HasExited) { $proc.Kill() } } catch {}
+
+                            try {
+                                if ($tempArchive -and (Test-Path -LiteralPath $tempArchive)) {
+                                    Remove-Item -LiteralPath $tempArchive -Force -ErrorAction SilentlyContinue
+                                    LocalLog ("Deleted temp archive: {0}" -f $tempArchive)
+                                }
+                            } catch {}
+
+                            throw "Operation cancelled by user"
+                        }
+
                         $line = $proc.StandardOutput.ReadLine()
                         if ($line) {
                             # Parse progress: 7z outputs lines like "  5%" or " 15%"
@@ -550,6 +564,15 @@ foreach ($vm in $vms) {
                     LocalLog ("7z command was: {0} {1}" -f $sevenZip, ($args -join ' '))
                     LocalLog ("Working directory was: {0}" -f $vmTemp)
                     LocalLog ("Target archive: {0}" -f $tempArchive)
+
+                    # Best-effort delete partial temp archive on any error/cancel
+                    try {
+                        if ($tempArchive -and (Test-Path -LiteralPath $tempArchive)) {
+                            Remove-Item -LiteralPath $tempArchive -Force -ErrorAction SilentlyContinue
+                            LocalLog ("Deleted temp archive after error: {0}" -f $tempArchive)
+                        }
+                    } catch {}
+
                     throw
                 } finally {
                     if ($proc) {
@@ -569,6 +592,22 @@ foreach ($vm in $vms) {
             try {
                 $destArchiveLeaf = Split-Path -Path $tempArchive -Leaf
                 $destArchivePath = Join-Path -Path $DateDestination -ChildPath $destArchiveLeaf
+
+                # If cancelled after creating the archive but before moving, delete temp and any destination stub
+                if (IsCancelled) {
+                    LocalLog ("Cancellation detected before moving archive for {0}. Deleting archive and aborting." -f $vmName)
+                    try {
+                        if ($tempArchive -and (Test-Path -LiteralPath $tempArchive)) {
+                            Remove-Item -LiteralPath $tempArchive -Force -ErrorAction SilentlyContinue
+                            LocalLog ("Deleted temp archive: {0}" -f $tempArchive)
+                        }
+                        if ($destArchivePath -and (Test-Path -LiteralPath $destArchivePath)) {
+                            Remove-Item -LiteralPath $destArchivePath -Force -ErrorAction SilentlyContinue
+                            LocalLog ("Deleted destination archive stub: {0}" -f $destArchivePath)
+                        }
+                    } catch {}
+                    throw "Operation cancelled by user"
+                }
 
                 LocalLog ("Moving archive from temp {0} -> destination {1}" -f $tempArchive, $destArchivePath)
                 
