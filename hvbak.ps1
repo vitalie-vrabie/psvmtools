@@ -631,15 +631,16 @@ foreach ($vm in $vms) {
             }
         }
 
-        # Convert result to serialization-safe format before returning
-        $safeResult = @{
-            VMName      = [string]$result.VMName
-            TempPath    = [string]($result.TempPath -as [string])
-            DestArchive = [string]($result.DestArchive -as [string])
-            Success     = [bool]$result.Success
-            Message     = [string]($result.Message -as [string])
+        # Ensure result object only contains safe, serializable types before returning
+        # This prevents XML serialization errors when returning from background jobs
+        [PSCustomObject]@{
+            VMName = [string]($result.VMName ?? "")
+            TempPath = [string]($result.TempPath ?? "")
+            DestArchive = [string]($result.DestArchive ?? "")
+            Success = [bool]$result.Success
+            Message = [string]($result.Message ?? "")
         }
-        return $safeResult
+
     }
 
     $perVmJobs += $perVmJob
@@ -833,7 +834,7 @@ foreach ($j in $perVmJobs) {
 
     try { $remaining = ($perVmJobs | Where-Object { $_.State -eq 'Running' }).Count } catch { $remaining = 'N/A' }
 
-    if ($res -and $res.Success) {
+    if ($res -and $res.Success -eq $true) {
         Log ("Per-vm job completed: {0} -> {1} ({2} jobs remaining)" -f $res.VMName, $res.DestArchive, $remaining)
     } else {
         if ($res) {
