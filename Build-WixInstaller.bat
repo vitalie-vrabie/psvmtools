@@ -118,6 +118,16 @@ if not exist "%SCRIPT_DIR%\PSHVTools-Installer.wxs" (
     echo   [OK] PSHVTools-Installer.wxs
 )
 
+REM Check for license file
+if not exist "%SCRIPT_DIR%\License.rtf" (
+    echo.
+    echo [ERROR] License.rtf not found!
+    echo Please ensure License.rtf exists in the project root.
+    set "MISSING_FILES=1"
+) else (
+    echo   [OK] License.rtf
+)
+
 if defined MISSING_FILES (
     echo.
     echo [ERROR] Required files are missing!
@@ -128,25 +138,6 @@ REM Check for icon file
 if not exist "%SCRIPT_DIR%\icon.ico" (
     echo.
     echo [NOTE] icon.ico not found, using default Windows icon
-)
-
-REM Create License.rtf from LICENSE.txt if needed
-if not exist "%SCRIPT_DIR%\License.rtf" (
-    if exist "%SCRIPT_DIR%\LICENSE.txt" (
-        echo.
-        echo Converting LICENSE.txt to License.rtf...
-        
-        REM Simple conversion - create basic RTF
-        (
-            echo {\rtf1\ansi\deff0
-            echo {\fonttbl{\f0 Courier New;}}
-            echo \f0\fs20
-            type "%SCRIPT_DIR%\LICENSE.txt"
-            echo }
-        ) > "%SCRIPT_DIR%\License.rtf"
-        
-        echo   [OK] Created License.rtf
-    )
 )
 
 REM Build with WiX
