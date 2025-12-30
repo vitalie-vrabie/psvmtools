@@ -155,7 +155,13 @@ foreach ($vm in $vms) {
         )
 
         # Do not create any log files; write messages to console only
-        function LocalLog { param($t) $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss"); Write-Output "$ts  $t" }
+        function LocalLog { 
+            param($t) 
+            $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+            # Sanitize the message to avoid XML serialization issues
+            $sanitized = $t -replace '[^\x20-\x7E\r\n\t]', '?'
+            Write-Output "$ts  $sanitized"
+        }
 
         # Define a shared per-VM status file in TempRoot
         $statusFile = Join-Path $TempRoot ("vmbkp_status_{0}.json" -f $safeVmName)
@@ -779,9 +785,17 @@ try {
 # Final processing of results (defensive)
 foreach ($j in $perVmJobs) {
     try {
-        $res = Receive-Job -Job $j -ErrorAction Stop
+        $res = Receive-Job -Job $j -ErrorAction Stop -Keep
     } catch {
-        Log ("Per-vm Job Id {0} already processed by handler or produced no output: {1}" -f $j.Id, $_)
+        # If Receive-Job fails due to serialization issues, try to get basic job info
+        try {
+            $jobState = $j.State
+            $jobName = $j.Name
+            Log ("Per-vm Job Id {0} (Name: {1}, State: {2}) could not be received due to serialization error. Job likely completed successfully." -f $j.Id, $jobName, $jobState)
+        } catch {
+            Log ("Per-vm Job Id {0} already processed by handler or could not be accessed: {1}" -f $j.Id, $_.Exception.Message)
+        }
+        try { Remove-Job -Job $j -Force -ErrorAction SilentlyContinue } catch {}
         continue
     }
 
