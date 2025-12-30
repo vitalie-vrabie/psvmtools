@@ -361,6 +361,8 @@ foreach ($vm in $vms) {
                                 }
                             } catch {}
 
+                            $result.Success = $false
+                            $result.Message = "Export-VM cancelled by user"
                             throw "Operation cancelled by user"
                         }
 
@@ -369,6 +371,21 @@ foreach ($vm in $vms) {
                         }
 
                         Start-Sleep -Seconds 1
+                    }
+
+                    # If Export-VM was cancelled/stopped (e.g., Hyper-V Manager cancellation), treat that as a failure.
+                    if ($exportJob.State -eq 'Stopped') {
+                        LocalLog ("Export-VM job was stopped/cancelled for {0}. Cleaning up temp data and failing job." -f $vmName)
+                        try {
+                            if ($vmTemp -and (Test-Path -LiteralPath $vmTemp)) {
+                                Remove-Item -LiteralPath $vmTemp -Recurse -Force -ErrorAction SilentlyContinue
+                                LocalLog ("Removed incomplete export folder: {0}" -f $vmTemp)
+                            }
+                        } catch {}
+
+                        $result.Success = $false
+                        $result.Message = "Export-VM was cancelled/stopped"
+                        throw "Export-VM was cancelled/stopped"
                     }
 
                     # Bubble up any errors from the export job
