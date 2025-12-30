@@ -36,7 +36,9 @@ bld/
 # PSHVTools build outputs
 release/
 dist/*.zip
-dist/PSHVTools-Setup-*/
+# Ignore installer folders but allow the distributable EXE
+/dist/PSHVTools-Setup-*/
+!dist/PSHVTools-Setup-*.exe
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
