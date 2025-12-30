@@ -1,176 +1,402 @@
 # Quick Start Guide - PSHVTools
 
-## Available Commands
+## ?? Installation
 
-After installation, you can use either of these commands:
-- `hvbak` - Main command name
+### GUI Installer (Recommended)
+1. Download `PSHVTools-Setup-1.0.0.exe`
+2. Double-click to run
+3. Follow the wizard
+4. Done!
+
+### PowerShell Installer
+1. Extract `PSHVTools-Setup-1.0.0.zip`
+2. Run `Install.ps1` as Administrator
+3. Done!
+
+## ?? Available Commands
+
+After installation, the **pshvtools** module provides:
+
+### Backup Commands
+- `Invoke-VMBackup` - Full cmdlet name
+- `hvbak` - Short alias
 - `hv-bak` - Hyphenated alias
 
-Both commands work identically!
+### VHD Repair Commands
+- `Repair-VhdAcl` - Full cmdlet name
+- `fix-vhd-acl` - Short alias
 
-## Usage
+All commands work identically!
 
-### Display Help and Syntax
-Simply run the cmdlet without parameters:
+## ?? Quick Start
+
+### Importing the Module
 
 ```powershell
-hvbak
-# or
-hv-bak
+# Import the module (usually auto-loaded)
+Import-Module pshvtools
+
+# Verify it's loaded
+Get-Module pshvtools
+
+# List all commands
+Get-Command -Module pshvtools
 ```
 
-This will display the full help documentation including:
-- Synopsis
-- Description
-- Parameters
-- Examples
-- Notes
-
-### Quick Examples
+### Display Help
 
 ```powershell
-# Get detailed help
+# Display help for backup command
+hvbak
 Get-Help Invoke-VMBackup -Full
-
-# See only examples
 Get-Help hvbak -Examples
 
-# Backup all VMs (using either command)
+# Display help for VHD repair
+fix-vhd-acl
+Get-Help Repair-VhdAcl -Full
+Get-Help fix-vhd-acl -Examples
+```
+
+## ?? Backing Up VMs
+
+### Basic Usage
+
+```powershell
+# Backup all VMs
 hvbak -NamePattern "*"
-hv-bak -NamePattern "*"
 
 # Backup specific VMs
 hvbak -NamePattern "MyVM"
 hv-bak -NamePattern "srv-*"
+hvbak -NamePattern "web-?"
 
 # Specify custom destination
 hvbak -NamePattern "*" -Destination "D:\backups"
 
-# Disable force turn off
-hv-bak -NamePattern "*" -ForceTurnOff:$false
+# Use custom temp folder
+hvbak -NamePattern "*" -TempFolder "E:\temp"
 ```
 
-## Testing the Installation
+### Advanced Options
 
-After installation, verify the module is available:
+```powershell
+# Keep 5 most recent backups per VM (default is 2)
+hvbak -NamePattern "*" -KeepCount 5
+
+# Disable force turn off on checkpoint failure
+hv-bak -NamePattern "*" -ForceTurnOff:$false
+
+# Full control
+hvbak -NamePattern "prod-*" `
+      -Destination "D:\Backups" `
+      -TempFolder "E:\Temp" `
+      -KeepCount 3 `
+      -ForceTurnOff:$false
+```
+
+### Backup Behavior
+
+**What gets backed up:**
+- VM configuration
+- VM checkpoints/snapshots
+- **Excludes:** VHD/VHDX files (only config is backed up)
+
+**How backups work:**
+1. Creates checkpoint (Production or Standard)
+2. Exports VM configuration and checkpoint
+3. Removes VHD files from export
+4. Compresses to 7z archive
+5. Removes checkpoint
+6. Restarts VM if it was running
+7. Cleans up old backups based on KeepCount
+
+**Archive naming:**
+- Format: `VMName_yyyyMMddHHmmss.7z`
+- Stored in: `Destination\yyyyMMdd\VMName_timestamp.7z`
+- Example: `D:\backups\20251230\MyVM_20251230075500.7z`
+
+## ?? Fixing VHD Permissions
+
+### Basic Usage
+
+```powershell
+# Preview what would be fixed
+fix-vhd-acl -WhatIf
+
+# Fix all VMs on the host
+fix-vhd-acl
+
+# Fix VHDs in a specific folder
+fix-vhd-acl -VhdFolder "D:\Restores"
+
+# Fix VHDs from a CSV list
+fix-vhd-acl -VhdListCsv "C:\temp\vhds.csv"
+
+# Specify custom log file
+Repair-VhdAcl -LogFile "C:\Logs\vhd-fix.log"
+```
+
+### CSV Format for VhdListCsv
+
+Create a CSV file with these columns:
+```csv
+Path,VMId
+"D:\VMs\MyVM\disk.vhdx","12345678-1234-1234-1234-123456789abc"
+"D:\VMs\OtherVM\disk.vhdx",
+```
+
+- `Path` - Required: Full path to VHD/VHDX file
+- `VMId` - Optional: VM GUID without braces
+
+### What It Does
+
+The `fix-vhd-acl` command:
+1. Takes ownership of VHD/VHDX files
+2. Grants permissions to:
+   - **SYSTEM** - Full Control
+   - **Administrators** - Full Control
+   - **NT VIRTUAL MACHINE\{VM-GUID}** - Full Control (if VM specified)
+3. Logs all actions to file
+
+**Use cases:**
+- After restoring VHDs from backup
+- After copying VHDs between hosts
+- When VMs can't start due to permission errors
+- After moving VHDs to different folders
+
+## ?? Testing the Installation
 
 ```powershell
 # Check if module is loaded
-Get-Module hvbak
+Get-Module pshvtools
 
 # If not loaded, import it
-Import-Module hvbak
+Import-Module pshvtools
 
-# Verify the cmdlets are available
-Get-Command hvbak
-Get-Command hv-bak
+# Verify all commands are available
+Get-Command -Module pshvtools
 
-# Display help
+# Check aliases
+Get-Alias hvbak, hv-bak, fix-vhd-acl
+
+# Display help for each command
 hvbak
+fix-vhd-acl
+
+# Test with -WhatIf
+hvbak -NamePattern "*" -WhatIf  # Oops! hvbak doesn't support -WhatIf
+fix-vhd-acl -WhatIf  # This one does!
 ```
 
-## Common Usage Patterns
+## ?? Understanding Progress
+
+When running backups, you'll see:
+- **Root progress bar:** Overall batch progress
+- **Child progress bars:** Individual VM progress
+- **Console output:** Timestamped log messages
+- **Real-time updates:** Progress updates every 750ms
+
+**Progress phases:**
+1. **Starting** (0%)
+2. **Checkpoint** (10%)
+3. **Exporting** (40%)
+4. **Export-VM** (55%)
+5. **Archiving (7z)** (60%)
+6. **Complete** (100%)
+
+## ?? Configuration
+
+### Default Settings
+
+| Setting | Default Value | Description |
+|---------|---------------|-------------|
+| Destination | `%USERPROFILE%\hvbak-archives` | Backup root folder |
+| TempFolder | `%TEMP%\hvbak` | Temporary export folder |
+| ForceTurnOff | `$true` | Force VM off if checkpoint fails |
+| KeepCount | `2` | Number of backups to keep per VM |
+
+### Backup Retention
+
+The `KeepCount` parameter controls how many backups to keep:
+```powershell
+# Keep only the most recent backup
+hvbak -NamePattern "*" -KeepCount 1
+
+# Keep 10 backups (max: 100)
+hvbak -NamePattern "*" -KeepCount 10
+```
+
+**How cleanup works:**
+- Scans all date folders for each VM's archives
+- Sorts by timestamp (from filename)
+- Keeps the N most recent archives
+- Deletes older archives
+- Removes empty date folders
+
+## ??? Common Usage Patterns
+
+### Daily Backup Script
 
 ```powershell
-# Backup all VMs to default location
-hvbak -NamePattern "*"
+# Create a scheduled task script
+Import-Module pshvtools
 
-# Backup VMs matching a pattern
-hv-bak -NamePattern "web-*"
+# Backup all VMs, keep 7 days
+hvbak -NamePattern "*" -Destination "D:\Backups" -KeepCount 7
 
-# Backup to specific destination
-hvbak -NamePattern "db-*" -Destination "E:\backups"
-
-# Backup without forcing VMs off on checkpoint failure
-hv-bak -NamePattern "*" -ForceTurnOff:$false
+# Or backup specific groups
+hvbak -NamePattern "prod-*" -Destination "D:\Backups\Prod" -KeepCount 14
+hvbak -NamePattern "dev-*" -Destination "D:\Backups\Dev" -KeepCount 3
 ```
 
-## Uninstallation
-
-To remove the module:
-
-**Using Add/Remove Programs:**
-1. Open Settings ? Apps
-2. Find "PSHVTools"
-3. Click Uninstall
-
-**Using Start Menu:**
-1. Open Start Menu
-2. Find PSHVTools folder
-3. Click "Uninstall PSHVTools"
-
-**Using Command Line:**
-```cmd
-msiexec /x PSHVTools-Setup-1.0.0.msi
-```
-
-## Auto-load Module on Startup (Optional)
-
-The module is automatically available after installation. If you want to ensure it's loaded:
+### After Restoring VMs
 
 ```powershell
-# Edit your PowerShell profile
-notepad $PROFILE
+# Import module
+Import-Module pshvtools
 
-# Add this line:
-Import-Module hvbak
+# Fix permissions for all restored VMs
+fix-vhd-acl
 
-# Save and close the file
+# Or just for a specific folder
+fix-vhd-acl -VhdFolder "D:\Restored\VMs"
+
+# Check the log for any issues
+Get-Content "$env:TEMP\FixVhdAcl.log" -Tail 50
 ```
 
-## Troubleshooting
-
-### "hvbak" or "hv-bak" command not found
+### Maintenance Script
 
 ```powershell
-# Verify installation
-Get-Module hvbak -ListAvailable
+# Weekly maintenance
+Import-Module pshvtools
 
-# If found, import manually
-Import-Module hvbak
+# Backup all VMs
+hvbak -NamePattern "*" -KeepCount 4
 
-# Verify both commands are available
-Get-Command hvbak, hv-bak
+# Fix any permission issues
+fix-vhd-acl
+
+# Report
+Write-Host "Maintenance complete!" -ForegroundColor Green
 ```
 
-### Module not loading automatically
+## ? Uninstallation
+
+### GUI Installer Method
+1. Open **Settings** ? **Apps**
+2. Find **PSHVTools**
+3. Click **Uninstall**
+
+Or use **Start Menu** ? **PSHVTools** ? **Uninstall PSHVTools**
+
+### PowerShell Installer Method
 
 ```powershell
-# Check your module path
+# From installer directory
+.\Install.ps1 -Uninstall
+
+# Or manually
+Remove-Module pshvtools -ErrorAction SilentlyContinue
+Remove-Item "C:\Program Files\WindowsPowerShell\Modules\pshvtools" -Recurse -Force
+```
+
+## ?? Troubleshooting
+
+### Commands Not Found
+
+```powershell
+# Check if module is available
+Get-Module pshvtools -ListAvailable
+
+# If found but not loaded, import it
+Import-Module pshvtools
+
+# Verify commands
+Get-Command hvbak, fix-vhd-acl
+```
+
+### Module Not Loading Automatically
+
+```powershell
+# Check PowerShell module path
 $env:PSModulePath -split ';'
 
-# Verify module files exist in:
-# C:\Program Files\WindowsPowerShell\Modules\hvbak
+# Module should be in one of these locations:
+# C:\Program Files\WindowsPowerShell\Modules\pshvtools
+
+# Verify files exist
+Test-Path "C:\Program Files\WindowsPowerShell\Modules\pshvtools\pshvtools.psd1"
+Test-Path "C:\Program Files\WindowsPowerShell\Modules\pshvtools\pshvtools.psm1"
+Test-Path "C:\Program Files\WindowsPowerShell\Modules\pshvtools\hvbak.ps1"
+Test-Path "C:\Program Files\WindowsPowerShell\Modules\pshvtools\fix-vhd-acl.ps1"
 ```
 
-### Need to refresh module after changes
+### Backup Job Failed
+
+Check the error diagnostics in the console output:
+```
+Per-vm Job Id 1 FAILED with error: <detailed error message>
+```
+
+Common issues:
+- **Checkpoint failed:** VM may not support Production checkpoints
+- **Export failed:** Insufficient permissions or disk space
+- **7z not found:** Install 7-Zip and ensure it's in PATH
+- **Permission denied:** Run PowerShell as Administrator
+
+### VHD Permission Fix Not Working
 
 ```powershell
-# Remove and re-import
-Remove-Module hvbak -ErrorAction SilentlyContinue
-Import-Module hvbak -Force
+# Must run as Administrator
+# Check current privileges
+whoami /groups | findstr /i "S-1-16-12288"  # Should show High Mandatory Level
+
+# Check the log for details
+Get-Content "$env:TEMP\FixVhdAcl.log"
+
+# Try with -WhatIf first
+fix-vhd-acl -WhatIf
 ```
 
-### Check module version and aliases
+## ?? Pro Tips
+
+1. **Tab completion:** Type `hvbak -` and press Tab to cycle through parameters
+2. **Use aliases:** Choose whichever you prefer - `hvbak`, `hv-bak`, or `Invoke-VMBackup`
+3. **Check help anytime:** Run `hvbak` or `fix-vhd-acl` without parameters
+4. **Wildcards work:** Use patterns like `"web-*"`, `"*-prod"`, `"server-?"`
+5. **Ctrl+C to cancel:** Gracefully stops backups and cleans up resources
+6. **Monitor progress:** Watch real-time progress bars for each VM
+7. **Check logs:** VHD fix operations log to `$env:TEMP\FixVhdAcl.log`
+8. **Use -WhatIf:** Preview VHD permission fixes before applying
+9. **Adjust retention:** Change `KeepCount` based on storage capacity
+10. **Schedule it:** Create scheduled tasks for automated backups
+
+## ?? Additional Resources
+
+- **Full Documentation:** See README.md in the repository
+- **Build Guide:** See BUILD_GUIDE.md for developers
+- **Project Summary:** See PROJECT_SUMMARY.md for overview
+- **GitHub Repository:** https://github.com/vitalie-vrabie/pshvtools
+- **Issues & Support:** https://github.com/vitalie-vrabie/pshvtools/issues
+
+## ?? Learning More
 
 ```powershell
-# Get module information
-Get-Module hvbak | Select-Object Name, Version, ExportedAliases
+# Explore all parameters
+Get-Help Invoke-VMBackup -Parameter *
+Get-Help Repair-VhdAcl -Parameter *
 
-# List all exported aliases
-(Get-Module hvbak).ExportedAliases
+# See examples
+Get-Help hvbak -Examples
+Get-Help fix-vhd-acl -Examples
+
+# View online help (if available)
+Get-Help Invoke-VMBackup -Online
 ```
 
-## Pro Tips
+---
 
-1. **Use tab completion:** Type `hvbak -` and press Tab to cycle through parameters
-2. **Both commands work:** Choose whichever you prefer - `hvbak` or `hv-bak`
-3. **Check help anytime:** Run `hvbak` without parameters to see full help
-4. **Wildcards work:** Use patterns like `"web-*"`, `"*-prod"`, etc.
-5. **Ctrl+C to cancel:** Gracefully stops backups and cleans up
+**Happy backing up!** ??
 
-## Need More Help?
-
-- **Full Documentation:** See README_HVBAK_MODULE.md in installation folder
-- **GitHub Issues:** https://github.com/vitalie-vrabie/pshvtools/issues
-- **Repository:** https://github.com/vitalie-vrabie/pshvtools
+For questions or issues, visit: https://github.com/vitalie-vrabie/pshvtools
