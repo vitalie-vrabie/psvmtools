@@ -3,13 +3,14 @@
 **Version:** 1.0.0  
 **Product Name:** PSVMTools (PowerShell VM Tools)  
 **Module Name:** vmbak  
+**Commands:** `vmbak` or `vm-bak`  
 **License:** MIT
 
 ---
 
 ## ?? What is PSVMTools?
 
-PSVMTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides the `vmbak` cmdlet for automated, parallel VM backups with checkpoint support and 7-Zip compression.
+PSVMTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides the `vmbak` and `vm-bak` cmdlets for automated, parallel VM backups with checkpoint support and 7-Zip compression.
 
 ### Key Features:
 - ?? Live VM backups using Production checkpoints
@@ -38,11 +39,14 @@ msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
 
 After installation:
 ```powershell
-# Display help
+# Display help (use either command)
 vmbak
+vm-bak
 
 # Backup all VMs
 vmbak -NamePattern "*"
+# or
+vm-bak -NamePattern "*"
 ```
 
 **Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)
@@ -70,7 +74,6 @@ choco install wixtoolset
 
 ### Build the MSI
 
-**Option 1: Using Batch File (Recommended)**
 ```cmd
 Build-WixInstaller.bat
 ```
@@ -89,7 +92,7 @@ PSVMTools/
 ??? vmbak.psm1                         # PowerShell module
 ??? vmbak.psd1                         # Module manifest
 ?
-??? Build-WixInstaller.bat             # Builds MSI installer (Batch)
+??? Build-WixInstaller.bat             # Builds MSI installer
 ??? PSVMTools-Installer.wxs            # WiX installer definition
 ?
 ??? README_VMBAK_MODULE.md             # Module documentation
@@ -128,10 +131,10 @@ Distribute the MSI installer:
 
 ### Build Commands
 ```cmd
-# Build MSI installer (Batch)
+# Build MSI installer
 Build-WixInstaller.bat
 
-# Specify output path (PowerShell only)
+# Specify custom output path
 Build-WixInstaller.bat "C:\Release"
 ```
 
@@ -152,20 +155,21 @@ msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart
 
 ### Usage Commands
 ```powershell
-# Display help
+# Display help (either command works)
 vmbak
+vm-bak
 
 # Backup all VMs
 vmbak -NamePattern "*"
 
-# Backup specific VMs
-vmbak -NamePattern "srv-*"
+# Backup specific VMs (using hyphenated alias)
+vm-bak -NamePattern "srv-*"
 
 # Custom destination
 vmbak -NamePattern "*" -Destination "D:\backups"
 
 # Detailed help
-Get-Help vmbak -Full
+Get-Help Invoke-VMBackup -Full
 ```
 
 ---
@@ -220,7 +224,7 @@ Copyright (c) 2025 Vitalie Vrabie
 ### For End Users
 1. Download the MSI installer
 2. Run as Administrator
-3. Type `vmbak` to see help
+3. Type `vmbak` or `vm-bak` to see help
 4. Start backing up VMs!
 
 ### For Developers
@@ -240,6 +244,7 @@ Copyright (c) 2025 Vitalie Vrabie
 - MSI installer with WiX Toolset
 - Complete documentation
 - PowerShell module integration
+- Both `vmbak` and `vm-bak` command aliases
 
 ---
 
@@ -250,6 +255,7 @@ Copyright (c) 2025 Vitalie Vrabie
 - **Well Documented:** Comprehensive guides
 - **Open Source:** MIT licensed
 - **Enterprise Ready:** MSI installer with Group Policy support
+- **Flexible Commands:** Use either `vmbak` or `vm-bak`
 
 ---
 

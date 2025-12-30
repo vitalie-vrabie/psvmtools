@@ -35,6 +35,10 @@ function Invoke-VMBackup {
       Exports all VMs to R:\vhd\YYYYMMDD
 
     .EXAMPLE
+      vm-bak -NamePattern "srv-*" -Destination "D:\backups"
+      Exports VMs matching "srv-*" to D:\backups\YYYYMMDD using the hyphenated alias.
+
+    .EXAMPLE
       vmbak -NamePattern "srv-*" -Destination "D:\backups" -ForceTurnOff:$false
       Exports VMs matching "srv-*" to D:\backups\YYYYMMDD without forcing power off on checkpoint failure.
 
@@ -45,6 +49,7 @@ function Invoke-VMBackup {
       - Temp folder (E:\vmbkp.tmp) and destination (R:\vhd by default) must be accessible.
       - Graceful cleanup ensures VMs are restarted and checkpoints removed even on cancellation or failure.
       - Archives are created in 7z format with fast compression for better multithreading.
+      - Available as both 'vmbak' and 'vm-bak' commands.
     #>
 
     [CmdletBinding()]
@@ -91,8 +96,9 @@ function Invoke-VMBackup {
     & $scriptPath @params
 }
 
-# Create alias for shorter command
+# Create aliases for shorter commands
 New-Alias -Name vmbak -Value Invoke-VMBackup -Force
+New-Alias -Name vm-bak -Value Invoke-VMBackup -Force
 
-# Export the function and alias
-Export-ModuleMember -Function Invoke-VMBackup -Alias vmbak
+# Export the function and aliases
+Export-ModuleMember -Function Invoke-VMBackup -Alias vmbak, vm-bak
