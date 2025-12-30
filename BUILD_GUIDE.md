@@ -1,9 +1,30 @@
 # PSHVTools - Build Guide
-## Building Release Packages (MSBuild - No WiX Required!)
+## Building Release Packages
 
 ---
 
 ## ?? Quick Start
+
+### Build Options
+
+PSHVTools offers **two installer types**:
+
+1. **PowerShell Installer** (Simple, no dependencies)
+2. **GUI EXE Installer** (Professional wizard with Inno Setup)
+
+### Quick Build Commands
+
+```cmd
+# PowerShell Installer (MSBuild - no dependencies)
+Build-Release.bat package
+
+# GUI EXE Installer (Inno Setup - professional wizard)
+Build-InnoSetupInstaller.bat
+```
+
+---
+
+## ?? Option 1: PowerShell Installer (Recommended for Development)
 
 ### Prerequisites
 
@@ -15,21 +36,6 @@
 **PowerShell 5.1+** (included with Windows)
 
 **No WiX Toolset required!** ?
-
-### Build Release Package
-
-```cmd
-Build-Release.bat
-```
-
-This creates:
-- ?? Source ZIP package
-- ?? Installer package with PowerShell install script
-- ?? Output in `release\` and `dist\` folders
-
----
-
-## ?? Build Options
 
 ### Build Commands
 
@@ -47,24 +53,128 @@ Build-Installer.bat
 Build-Release.bat clean
 ```
 
-### MSBuild Direct
+### Output
 
-```batch
-# Build default target
-msbuild PSHVTools.csproj
+- `release/PSHVTools-v1.0.0.zip` - Source package (~19 KB)
+- `dist/PSHVTools-Setup-1.0.0/Install.ps1` - PowerShell installer
+- `dist/PSHVTools-Setup-1.0.0.zip` - Distributable installer
 
-# Build specific target
-msbuild PSHVTools.csproj /t:Package
-
-# Clean
-msbuild PSHVTools.csproj /t:Clean
-```
+### Advantages
+- ? No additional tools required
+- ? Fast builds (< 5 seconds)
+- ? Small size (~19 KB)
+- ? Easy to customize
+- ? Silent install support
 
 ---
 
-## ?? Build Output
+## ?? Option 2: GUI EXE Installer (Recommended for Distribution)
 
-### Directory Structure
+### Prerequisites
+
+**Inno Setup 6** (free, open source)
+
+```powershell
+# Install via WinGet (recommended)
+winget install JRSoftware.InnoSetup
+
+# Or via Chocolatey
+choco install innosetup
+
+# Or download from:
+# https://jrsoftware.org/isdl.php
+```
+
+### Build Command
+
+```cmd
+Build-InnoSetupInstaller.bat
+```
+
+### Output
+
+- `dist/PSHVTools-Setup-1.0.0.exe` - Professional GUI installer (~2-3 MB)
+
+### Features
+
+? **Professional GUI Wizard**
+- Modern Windows installer interface
+- Welcome screen
+- License agreement display
+- Installation directory selection
+- Progress bar
+- Completion screen
+
+? **System Requirements Check**
+- PowerShell version validation
+- Hyper-V detection
+- Interactive results display
+
+?? **Full Windows Integration**
+- Start Menu shortcuts
+- Add/Remove Programs entry
+- Built-in uninstaller
+- Registry integration
+
+### Advantages
+- ? Professional appearance
+- ? Familiar Windows installer experience
+- ? Full GUI wizard
+- ? Automated requirements check
+- ? Silent install support
+- ? Easy uninstallation
+
+### Silent Installation
+
+```cmd
+# Completely silent
+PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
+
+# Silent with log
+PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART /LOG="install.log"
+```
+
+**Full documentation:** See [INNO_SETUP_INSTALLER.md](INNO_SETUP_INSTALLER.md)
+
+---
+
+## ?? Comparison: PowerShell vs GUI EXE
+
+| Feature | PowerShell Installer | GUI EXE Installer |
+|---------|---------------------|-------------------|
+| **Build Tool** | MSBuild (built-in) | Inno Setup |
+| **File Size** | ~19 KB | ~2-3 MB |
+| **Build Time** | < 5 seconds | ~10 seconds |
+| **GUI Wizard** | ? No | ? Yes |
+| **Progress Bar** | ?? Console only | ? GUI |
+| **Requirements Check** | ?? During install | ? Before install |
+| **Uninstaller** | Separate script | ? Built-in |
+| **Add/Remove Programs** | ? No | ? Yes |
+| **Start Menu** | ? No | ? Yes |
+| **Silent Install** | ? Yes | ? Yes |
+| **Professional Look** | ?? Basic | ??? |
+| **Ease of Build** | ??? | ?? |
+| **Customization** | ??? | ?? |
+
+### When to Use Each
+
+**Use PowerShell Installer when:**
+- Quick development/testing
+- Internal deployment
+- Minimal size matters
+- No GUI needed
+- Maximum simplicity
+
+**Use GUI EXE Installer when:**
+- Public distribution
+- Professional appearance matters
+- End-user friendly installation
+- Requirements checking important
+- Windows integration desired
+
+---
+
+## ?? Build Output Structure
 
 ```
 pshvtools/
@@ -81,17 +191,12 @@ pshvtools/
 ?   ??? PSHVTools-v1.0.0.zip       # Source ZIP
 ?
 ??? dist/
-    ??? PSHVTools-Setup-1.0.0/     # Installer package
-    ?   ??? Install.ps1            # Installer script
-    ?   ??? README.txt             # Install instructions
-    ?   ??? Module/                # Module files
-    ?   ?   ??? hvbak.ps1
-    ?   ?   ??? hvbak.psm1
-    ?   ?   ??? hvbak.psd1
-    ?   ??? README.md
-    ?   ??? QUICKSTART.md
-    ?   ??? LICENSE.txt
-    ??? PSHVTools-Setup-1.0.0.zip  # Installer ZIP
+    ??? PSHVTools-Setup-1.0.0/     # PowerShell installer
+    ?   ??? Install.ps1
+    ?   ??? README.txt
+    ?   ??? Module/
+    ??? PSHVTools-Setup-1.0.0.zip  # PowerShell installer ZIP
+    ??? PSHVTools-Setup-1.0.0.exe  # GUI EXE installer
 ```
 
 ---
@@ -335,14 +440,15 @@ Get-Module -ListAvailable hvbak
 
 ---
 
-## ?? Distribution
+## ?? Distribution Recommendations
 
 ### For GitHub Releases
 
-Create a release with both packages:
+Upload all three packages:
 
 1. **PSHVTools-v1.0.0.zip** - Source package
-2. **PSHVTools-Setup-1.0.0.zip** - Installer package
+2. **PSHVTools-Setup-1.0.0.zip** - PowerShell installer (internal/dev)
+3. **PSHVTools-Setup-1.0.0.exe** - GUI installer (recommended for users)
 
 ### Release Notes Template
 
@@ -351,82 +457,54 @@ Create a release with both packages:
 
 ### Installation
 
-Download the installer package:
-- **PSHVTools-Setup-1.0.0.zip**
+**For most users (recommended):**
+Download and run: **PSHVTools-Setup-1.0.0.exe**
 
-Extract and run Install.ps1 as Administrator.
+**For PowerShell users:**
+Download and extract: **PSHVTools-Setup-1.0.0.zip**
+Then run: `Install.ps1` as Administrator
 
-#### Interactive Installation
-```powershell
-.\Install.ps1
-```
-
-#### Silent Installation
-```powershell
-.\Install.ps1 -Silent
-```
+**For developers:**
+Download source: **PSHVTools-v1.0.0.zip**
 
 ### Requirements
 - Windows with Hyper-V
 - PowerShell 5.1 or later
 - Administrator privileges
-
-### Uninstallation
-```powershell
-.\Install.ps1 -Uninstall
-```
 ```
 
 ---
 
 ## ?? Summary
 
-### Quick Build
+### Build Everything
 
 ```cmd
-# Build everything
+# PowerShell installer
 Build-Release.bat package
+
+# GUI EXE installer
+Build-InnoSetupInstaller.bat
 ```
 
-### Output
+### Outputs
 
 ```
-release/PSHVTools-v1.0.0.zip          # Source package
-dist/PSHVTools-Setup-1.0.0.zip        # Installer package
+? release/PSHVTools-v1.0.0.zip          (Source - 19 KB)
+? dist/PSHVTools-Setup-1.0.0.zip        (PowerShell - 19 KB)
+? dist/PSHVTools-Setup-1.0.0.exe        (GUI EXE - 2-3 MB)
 ```
 
-### Install
-
-```powershell
-powershell -ExecutionPolicy Bypass -File Install.ps1
-```
-
-**Simple, dependency-free build and installation!** ?
-
----
-
-## ?? Migration from WiX
-
-This build system replaces the previous WiX-based MSI installer with a simpler PowerShell approach.
-
-**Benefits:**
-- ? No WiX Toolset dependency
-- ? Simpler build process
-- ? Easier to maintain
-- ? Works on any system with PowerShell
-- ? Faster builds
-- ? More transparent installation
-
-See `WIX_TO_MSBUILD_MIGRATION.md` for details.
+**Professional installers for every use case!** ?
 
 ---
 
 ## ?? Additional Resources
 
-- **Migration Guide:** WIX_TO_MSBUILD_MIGRATION.md
-- **Quick Start:** QUICKSTART.md
-- **Project Summary:** PROJECT_SUMMARY.md
-- **License:** LICENSE.txt
+- **Inno Setup Guide:** [INNO_SETUP_INSTALLER.md](INNO_SETUP_INSTALLER.md)
+- **Quick Start:** [QUICKSTART.md](QUICKSTART.md)
+- **Project Summary:** [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)
+- **License:** [LICENSE.txt](LICENSE.txt)
 
 ---
 
