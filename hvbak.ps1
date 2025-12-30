@@ -634,11 +634,11 @@ foreach ($vm in $vms) {
         # Ensure result object only contains safe, serializable types before returning
         # This prevents XML serialization errors when returning from background jobs
         [PSCustomObject]@{
-            VMName = [string]($result.VMName ?? "")
-            TempPath = [string]($result.TempPath ?? "")
-            DestArchive = [string]($result.DestArchive ?? "")
+            VMName = [string](if ($result.VMName) { $result.VMName } else { "" })
+            TempPath = [string](if ($result.TempPath) { $result.TempPath } else { "" })
+            DestArchive = [string](if ($result.DestArchive) { $result.DestArchive } else { "" })
             Success = [bool]$result.Success
-            Message = [string]($result.Message ?? "")
+            Message = [string](if ($result.Message) { $result.Message } else { "" })
         }
 
     }
