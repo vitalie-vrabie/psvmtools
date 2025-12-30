@@ -162,7 +162,9 @@ foreach ($vm in $vms) {
         trap {
             Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job termination detected for $vmName, initiating cleanup..."
             $script:JobCancelled = $true
-            throw
+            # If the job is being stopped, don't convert it into a terminating error that marks the job as Failed.
+            # Let the finally/cleanup run and return a regular result object.
+            continue
         }
 
         # Do not create any log files; write messages to console only
@@ -1095,35 +1097,43 @@ try {
 
 # Final processing - get results and any remaining output
 foreach ($j in $perVmJobs) {
-    # First, get any remaining output
+    # Drain any remaining stream output first (the monitoring loop already drains most of it)
     try {
         $remainingOutput = Receive-Job -Job $j -ErrorAction SilentlyContinue
         if ($remainingOutput) {
             $remainingOutput | ForEach-Object { Write-Output $_ }
         }
     } catch {
-        # Output already received in monitoring loop
     }
-    
-    # Then try to get the result object
-    try {
-        $res = Receive-Job -Job $j -ErrorAction Stop -Keep
-        
-        try { $remaining = ($perVmJobs | Where-Object { $_.State -eq 'Running' }).Count } catch { $remaining = 'N/A' }
 
-        if ($res -and $res.Success -eq $true) {
+    # Always try to retrieve the final result object the job returns.
+    # Use -Keep so that even if output was partially received earlier, we can still fetch the final object.
+    $res = $null
+    try {
+        $res = Receive-Job -Job $j -Keep -ErrorAction Stop |
+            Where-Object { $_ -is [pscustomobject] -and ($_.PSObject.Properties.Name -contains 'Success') -and ($_.PSObject.Properties.Name -contains 'VMName') } |
+            Select-Object -Last 1
+    } catch {
+        $res = $null
+    }
+
+    $jobState = $j.State
+
+    if ($res) {
+        if ($res.Success -eq $true -and $jobState -ne 'Failed' -and $jobState -ne 'Stopped') {
             Log ("SUMMARY: Job completed successfully for {0} -> {1}" -f $res.VMName, $res.DestArchive)
         } else {
-            if ($res) {
-                Log ("SUMMARY: Job failed for {0}: {1}" -f $res.VMName, $res.Message)
-            }
+            $msg = $res.Message
+            if (-not $msg) { $msg = "Job state: $jobState" }
+            Log ("SUMMARY: Job failed for {0}: {1}" -f $res.VMName, $msg)
         }
-    } catch {
-        # If we can't get the result object, check job state
-        $jobState = $j.State
+    } else {
+        # Fallback: no structured result object retrieved
         if ($jobState -eq 'Failed') {
             Log ("SUMMARY: Job Id {0} FAILED. See output above for details." -f $j.Id)
-        } elseif ($jobState -eq 'Completed') {
+        } elseif ($jobState -eq 'Stopped') {
+            Log ("SUMMARY: Job Id {0} STOPPED. See output above for details." -f $j.Id)
+        } else {
             Log ("SUMMARY: Job Id {0} completed. See output above for details." -f $j.Id)
         }
     }
