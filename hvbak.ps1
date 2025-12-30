@@ -848,3 +848,4 @@ foreach ($j in $perVmJobs) {
 }
 
 Log "All operations completed."
+exit 0
