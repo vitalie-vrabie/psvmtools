@@ -664,10 +664,66 @@ $consoleHandler = [ConsoleCancelEventHandler]{
     param($sender, $e)
     try {
         $global:VmbkpCancelled = $true
-        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Ctrl+C received: stopping per-vm jobs and cleaning up temp folders..."
-        foreach ($j in $perVmJobs) { try { Stop-Job -Job $j -Force -ErrorAction SilentlyContinue } catch {} }
-        try { Remove-Item -Path (Join-Path $TempRoot '*') -Recurse -Force -ErrorAction SilentlyContinue } catch {}
-    } catch {}
+        Write-Output ""
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  *** Ctrl+C received: Initiating graceful shutdown ***"
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Stopping all background jobs..."
+        
+        # Stop all PowerShell background jobs
+        foreach ($j in $perVmJobs) { 
+            try { 
+                Stop-Job -Job $j -Force -ErrorAction SilentlyContinue 
+                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Stopped job: $($j.Name) (ID: $($j.Id))"
+            } catch {}
+        }
+        
+        # Kill all 7z.exe processes that might be running from this script
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Terminating any running 7z.exe processes..."
+        try {
+            $sevenZipProcesses = Get-Process -Name "7z" -ErrorAction SilentlyContinue
+            if ($sevenZipProcesses) {
+                foreach ($proc in $sevenZipProcesses) {
+                    try {
+                        # Check if the process command line contains our temp or destination paths to avoid killing unrelated 7z processes
+                        $procCmd = (Get-CimInstance Win32_Process -Filter "ProcessId = $($proc.Id)" -ErrorAction SilentlyContinue).CommandLine
+                        if ($procCmd -and ($procCmd -like "*$TempRoot*" -or $procCmd -like "*$DateDestination*")) {
+                            $proc.Kill()
+                            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Killed 7z.exe process (PID: $($proc.Id))"
+                        }
+                    } catch {
+                        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Failed to kill 7z.exe (PID: $($proc.Id)): $_"
+                    }
+                }
+            } else {
+                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  No 7z.exe processes found"
+            }
+        } catch {
+            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Error checking for 7z processes: $_"
+        }
+        
+        # Clean up temp folders
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Cleaning up temporary folders..."
+        try {
+            $tempPattern = Join-Path $TempRoot '*'
+            $tempItems = Get-ChildItem -Path $TempRoot -ErrorAction SilentlyContinue
+            if ($tempItems) {
+                foreach ($item in $tempItems) {
+                    try {
+                        Remove-Item -Path $item.FullName -Recurse -Force -ErrorAction SilentlyContinue
+                        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Removed: $($item.Name)"
+                    } catch {}
+                }
+            } else {
+                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  No temp items to clean up"
+            }
+        } catch {
+            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Error during temp cleanup: $_"
+        }
+        
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  *** Shutdown complete - Exiting ***"
+        Write-Output ""
+    } catch {
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Error in Ctrl+C handler: $_"
+    }
     $e.Cancel = $true
 }
 
@@ -708,6 +764,20 @@ try {
     }
 } finally {
     try { [Console]::remove_CancelKeyPress($consoleHandler) } catch {}
+    
+    # If cancelled, do final cleanup
+    if ($global:VmbkpCancelled) {
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Performing final cleanup after cancellation..."
+        
+        # Remove any remaining jobs
+        foreach ($j in $perVmJobs) {
+            try { Remove-Job -Job $j -Force -ErrorAction SilentlyContinue } catch {}
+        }
+        
+        Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  All background jobs removed"
+        Log "Operation cancelled by user. Exiting."
+        exit 130  # Standard exit code for Ctrl+C termination
+    }
 }
 
 # Final processing - get results and any remaining output
