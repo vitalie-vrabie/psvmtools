@@ -93,6 +93,11 @@ $ShutdownTimeoutSeconds = 180
 $PollIntervalSeconds = 5
 $TempRoot = $TempFolder
 
+# Cancellation sentinel for this run (shared with child jobs)
+$RunId = [guid]::NewGuid().ToString('N')
+$script:CancelFile = Join-Path $TempRoot ("hvbak_cancel_{0}.flag" -f $RunId)
+if (Test-Path -LiteralPath $script:CancelFile) { Remove-Item -LiteralPath $script:CancelFile -Force -ErrorAction SilentlyContinue }
+
 # Ensure temp root exists
 try {
     if (-not (Test-Path -Path $TempRoot)) {
@@ -149,52 +154,42 @@ foreach ($vm in $vms) {
 
     Log ("Starting per-vm job for: {0}" -f $vmName)
 
-    $perVmJob = Start-Job -ArgumentList $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount -ScriptBlock {
+    $perVmJob = Start-Job -ArgumentList $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount, $script:CancelFile -ScriptBlock {
         param(
-            $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount
+            $vmName, $safeVmName, $DateDestination, $TempRoot, $sevenZip, $ForceTurnOff, $GuestCredential, $PollIntervalSeconds, $ShutdownTimeoutSeconds, $KeepCount, $CancelFile
         )
-        
-        # Set up a trap to catch job stopping/termination
-        trap {
-            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job termination detected for $vmName, initiating cleanup..."
-            # Set a flag that we've been cancelled
-            $script:JobCancelled = $true
-            # Re-throw to trigger the finally block
-            throw $_
-        }
 
         # Do not create any log files; write messages to console only
-        function LocalLog { 
-            param($t) 
+        function LocalLog {
+            param($t)
             $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
             # Sanitize the message to avoid XML serialization issues
             $sanitized = $t -replace '[^\x20-\x7E\r\n\t]', '?'
             Write-Output "$ts  $sanitized"
         }
 
-        LocalLog ("Per-vm job started for {0}" -f $vmName)
-        
-        # Initialize cancellation flag
-        $script:JobCancelled = $false
-
-        # Function to check if job should be cancelled
-        function ShouldCancel {
-            # PowerShell background jobs don't have a reliable way to check cancellation from inside
-            # Instead, we'll check if a sentinel file exists or if an error was thrown
-            # For now, we'll rely on the try-catch mechanism and Stop-Job triggering exceptions
-            # This function serves as a placeholder for explicit cancellation checks
-            return $false
+        function Assert-NotCancelled {
+            param([string]$Phase)
+            if (Test-Path -LiteralPath $CancelFile) {
+                LocalLog ("Cancellation detected ({0}); aborting {1}" -f (Split-Path -Leaf $CancelFile), $Phase)
+                throw "Operation cancelled by user"
+            }
         }
+
+        LocalLog ("Per-vm job started for {0}" -f $vmName)
+
+        $result = [PSCustomObject]@{ VMName = $vmName; TempPath = $null; DestArchive = $null; Success = $false; Message = $null }
 
         # Track resources that need cleanup
         $snapshotName = $null
         $wasRunning = $false
         $vmTemp = $null
-        # Timestamp to use for per-VM temp folder name; defaults to now and updated from checkpoint when available
         $checkpointTs = (Get-Date).ToString("yyyyMMddHHmmss")
         $vmWasTurnedOff = $false
 
         try {
+            Assert-NotCancelled "startup"
+
             # determine VM state and whether it was running
             $vm = Get-VM -Name $vmName -ErrorAction Stop
             $initialState = $vm.State
@@ -220,6 +215,8 @@ foreach ($vm in $vms) {
             $result.TempPath = $vmTemp
             $archivePattern = "$safeVmName*.7z"
             $destArchivePath = $null
+
+            Assert-NotCancelled "before checkpoint"
 
             # create checkpoint (try production, fallback standard)
             if ($wasRunning) {
@@ -252,9 +249,10 @@ foreach ($vm in $vms) {
                 }
             }
 
+            Assert-NotCancelled "before export"
+
             # Export VM to per-vm folder
             try {
-                # Reflect long-running export phase in top progress
                 LocalLog ("Exporting VM {0} to {1}" -f $vmName, $vmTemp)
                 Export-VM -Name $vmName -Path $vmTemp -ErrorAction Stop
                 LocalLog ("Export completed for {0}" -f $vmName)
@@ -269,6 +267,8 @@ foreach ($vm in $vms) {
                 throw
             }
 
+            Assert-NotCancelled "after export"
+
             # Remove Virtual Hard Disks directory if present (we only want checkpoint/config)
             try {
                 $vhdFolder = Join-Path -Path $vmTemp -ChildPath "Virtual Hard Disks"
@@ -282,11 +282,7 @@ foreach ($vm in $vms) {
                 LocalLog ("Failed to remove VHDs from export for {0}: {1}" -f $vmName, $_)
             }
             
-            # Check for cancellation before proceeding to cleanup and archiving
-            if ($script:JobCancelled) {
-                LocalLog ("Cancellation detected before cleanup, aborting for {0}" -f $vmName)
-                throw "Operation cancelled by user"
-            }
+            Assert-NotCancelled "before snapshot removal / restart"
 
             # remove snapshot if we created one
             if ($snapshotName) {
@@ -316,6 +312,8 @@ foreach ($vm in $vms) {
                     LocalLog ("Failed to start VM {0}: {1}" -f $vmName, $_)
                 }
             }
+
+            Assert-NotCancelled "before 7z"
 
             # Create a temp 7z archive name inside shared TempRoot
             $tempArchive = Join-Path $TempRoot ("{0}_{1}.7z" -f $safeVmName, (Get-Date).ToString("yyyyMMddHHmmss"))
@@ -481,7 +479,6 @@ foreach ($vm in $vms) {
             $result.Success = $false
             if (-not $result.Message) { $result.Message = $_.ToString() }
         } finally {
-            # GRACEFUL CLEANUP: Ensure resources are cleaned up even if export was cancelled
             LocalLog ("Starting cleanup phase for {0}" -f $vmName)
 
             # 1. Remove snapshot if it still exists
@@ -612,7 +609,7 @@ foreach ($vm in $vms) {
                         LocalLog ("Found 1 archive for {0}: {1}. No cleanup needed." -f $vmName, $allVmArchives[0].Name)
                     } elseif ($KeepCount -eq 2) {
                         LocalLog ("Found 2 archives for {0}: {1} and {2}. No cleanup needed." -f 
-                            $vmName, $allVmArchives[0].Name, $allVmArchives[1].Name)
+                            $vmName, $allVmArchives[0].Name, $allVm Archives[1].Name)
                     } else {
                         LocalLog ("Found {0} archives for {1}. No cleanup needed." -f $KeepCount, $vmName)
                     }
@@ -687,24 +684,20 @@ $consoleHandler = [ConsoleCancelEventHandler]{
     param($sender, $e)
     try {
         $global:VmbkpCancelled = $true
+        # Signal cancellation for all child jobs
+        try { New-Item -Path $script:CancelFile -ItemType File -Force | Out-Null } catch {}
+
         Write-Output ""
         Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  *** Ctrl+C received: Initiating graceful shutdown ***"
         Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Stopping all background jobs and triggering cleanup..."
-        
-        # Stop all PowerShell background jobs - this will trigger their finally blocks
-        foreach ($j in $perVmJobs) { 
+
+        foreach ($j in $perVmJobs) {
             try {
-                # Get job state before stopping
                 $jobState = $j.State
                 Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Stopping job: $($j.Name) (ID: $($j.Id), State: $jobState)"
-                
-                # Stop the job - this triggers the finally block in the job
                 Stop-Job -Job $j -ErrorAction SilentlyContinue
-                
-                # Give the job a moment to execute its finally block
                 Start-Sleep -Milliseconds 500
-                
-                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job stopped: $($j.Name)"
+                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job stop requested: $($j.Name)"
             } catch {
                 Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Error stopping job $($j.Id): $_"
             }
@@ -858,7 +851,9 @@ try {
     }
 } finally {
     try { [Console]::remove_CancelKeyPress($consoleHandler) } catch {}
-    
+
+    try { if (Test-Path -LiteralPath $script:CancelFile) { Remove-Item -LiteralPath $script:CancelFile -Force -ErrorAction SilentlyContinue } } catch {}
+
     # If cancelled, do final cleanup
     if ($global:VmbkpCancelled) {
         Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Performing final cleanup after cancellation..."
