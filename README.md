@@ -1,4 +1,4 @@
-# PSVMTools - Complete Distribution Package
+# PSVMTools - PowerShell VM Tools
 
 **Version:** 1.0.0  
 **Product Name:** PSVMTools (PowerShell VM Tools)  
@@ -12,35 +12,29 @@
 PSVMTools is a professional PowerShell module for backing up Hyper-V virtual machines. It provides the `vmbak` cmdlet for automated, parallel VM backups with checkpoint support and 7-Zip compression.
 
 ### Key Features:
-- ? Live VM backups using Production checkpoints
-- ? Parallel processing of multiple VMs
-- ? 7-Zip compression with multithreading
-- ? Automatic cleanup (keeps 2 most recent backups)
-- ? Progress tracking with real-time status
-- ? Graceful cancellation (Ctrl+C support)
-- ? Low-priority compression (Idle CPU class)
+- ?? Live VM backups using Production checkpoints
+- ?? Parallel processing of multiple VMs
+- ??? 7-Zip compression with multithreading
+- ?? Automatic cleanup (keeps 2 most recent backups)
+- ?? Progress tracking with real-time status
+- ?? Graceful cancellation (Ctrl+C support)
+- ?? Low-priority compression (Idle CPU class)
 
 ---
 
-## ?? For End Users - Installation
+## ?? Installation
 
-### Option 1: PowerShell Installer (Easiest)
-1. Download the release package
-2. Right-click `PSVMTools-Setup.bat`
-3. Select **"Run as Administrator"**
-4. Done!
+### MSI Installer
 
-### Option 2: EXE Installer
-1. Download `PSVMTools-Setup-1.0.0.exe`
-2. Double-click to install
-3. Follow the wizard
-4. Done!
-
-### Option 2: MSI Installer
 1. Download `PSVMTools-Setup-1.0.0.msi`
 2. Double-click to install
 3. Follow the wizard
 4. Done!
+
+**Silent install:**
+```cmd
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
 
 After installation:
 ```powershell
@@ -55,24 +49,32 @@ vmbak -NamePattern "*"
 
 ---
 
-## ?? For Developers - Building
+## ??? Building the MSI Installer
 
-### Build All Installers
+### Prerequisites
+
+Install WiX Toolset v3.14.1 or later:
+
+**Option 1: WinGet**
 ```powershell
-.\Build-All-Installers.ps1
+winget install --id WiXToolset.WiXToolset --accept-package-agreements --accept-source-agreements
 ```
 
-### Build Specific Installer
+**Option 2: Direct Download**
+Download from https://wixtoolset.org/releases/
+
+**Option 3: Chocolatey**
 ```powershell
-# PowerShell self-extractor only
-.\Build-PSVMTools-Installer.ps1
+choco install wixtoolset
+```
 
-# NSIS EXE only (requires NSIS)
-makensis PSVMTools-Installer.nsi
+### Build the MSI
 
-# WiX MSI only (requires WiX Toolset)
+```powershell
 .\Build-WixInstaller.ps1
 ```
+
+The MSI installer will be created at: `dist\PSVMTools-Setup-1.0.0.msi`
 
 **Full build documentation:** See [BUILD_GUIDE.md](BUILD_GUIDE.md)
 
@@ -85,12 +87,9 @@ PSVMTools/
 ??? vmbak.ps1                          # Core backup script
 ??? vmbak.psm1                         # PowerShell module
 ??? vmbak.psd1                         # Module manifest
-??? Install-vmbak.ps1                  # Manual installer
-??? Uninstall-vmbak.ps1                # Manual uninstaller
 ?
-??? Build-PSVMTools-Installer.ps1      # Builds self-extracting installer
-??? Build-All-Installers.ps1           # Builds all installer types
-??? PSVMTools-Installer.nsi            # NSIS installer script
+??? Build-WixInstaller.ps1             # Builds MSI installer
+??? PSVMTools-Installer.wxs            # WiX installer definition
 ?
 ??? README_VMBAK_MODULE.md             # Module documentation
 ??? QUICKSTART.md                      # Quick start guide
@@ -99,54 +98,28 @@ PSVMTools/
 ??? LICENSE.txt                        # MIT license
 ?
 ??? dist/                              # Build output (created by scripts)
-    ??? PSVMTools-Setup.ps1           # Self-extracting installer
-    ??? PSVMTools-Setup.bat           # Installer launcher
-    ??? PSVMTools-Uninstall.bat       # Uninstaller
-    ??? PSVMTools-Setup-1.0.0.exe     # NSIS installer (if built)
-    ??? PSVMTools-1.0.0-Complete.zip  # Complete package
+    ??? PSVMTools-Setup-1.0.0.msi     # MSI installer
 ```
 
 ---
 
-## ?? Distribution Options
+## ?? Distribution
 
 ### For GitHub Releases
 
-Create three distribution options:
-
-1. **PSVMTools-1.0.0-Complete.zip**
-   - Complete package with all methods
-   - Best for users who want choices
-
-2. **PSVMTools-1.0.0-PowerShell.zip**
-   - PowerShell installer only
-   - Lightweight, no dependencies
-
-3. **PSVMTools-Setup-1.0.0.exe**
-   - Traditional Windows installer
-   - Best for enterprise/IT departments
-
-3. **PSVMTools-Setup-1.0.0.msi**
-   - Windows Installer (MSI) package
-   - Best for enterprise/IT departments
+Distribute the MSI installer:
+- **PSVMTools-Setup-1.0.0.msi** - Windows Installer package
 
 ### For Enterprise IT Departments
 
-**Recommended:** NSIS EXE Installer
-**Recommended:** MSI Installer
-- Professional installer experience
+**MSI Installer Benefits:**
 - Industry-standard Windows Installer
 - Add/Remove Programs integration
-- Silent install support: `/S`
 - Silent install: `msiexec /i PSVMTools-Setup-1.0.0.msi /quiet`
+- Silent uninstall: `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet`
 - Group Policy deployment ready
-
-### For Quick Sharing
-
-**Recommended:** PowerShell Installer
-- Just 3 files (Setup.bat, Setup.ps1, Uninstall.bat)
-- No external dependencies
-- Works everywhere
+- SCCM/Intune compatible
+- Transactional installation with rollback support
 
 ---
 
@@ -154,35 +127,26 @@ Create three distribution options:
 
 ### Build Commands
 ```powershell
-# Build everything
-.\Build-All-Installers.ps1
+# Build MSI installer
+.\Build-WixInstaller.ps1
 
-# Clean build
-.\Build-All-Installers.ps1 -CleanFirst
-
-# Skip NSIS (faster)
-.\Build-All-Installers.ps1 -SkipNSIS
+# Specify output path
+.\Build-WixInstaller.ps1 -OutputPath "C:\Release"
 ```
 
 ### Installation Commands
 ```powershell
-# PowerShell installer
-.\PSVMTools-Setup.bat
-
-# NSIS installer
-.\PSVMTools-Setup-1.0.0.exe
-
-# MSI installer
+# Interactive install
 msiexec /i PSVMTools-Setup-1.0.0.msi
 
-# Silent PowerShell install
-powershell.exe -ExecutionPolicy Bypass -File "PSVMTools-Setup.ps1" -Action Install -Scope System
-
-# Silent NSIS install
-PSVMTools-Setup-1.0.0.exe /S
-
-# Silent MSI install
+# Silent install
 msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+
+# Silent install with logging
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
+
+# Silent uninstall
+msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart
 ```
 
 ### Usage Commands
@@ -211,7 +175,7 @@ Get-Help vmbak -Full
 |----------|-------------|-----------------|
 | [README_VMBAK_MODULE.md](README_VMBAK_MODULE.md) | Module features and usage | End Users |
 | [QUICKSTART.md](QUICKSTART.md) | Quick start guide | End Users |
-| [BUILD_GUIDE.md](BUILD_GUIDE.md) | Building installers | Developers |
+| [BUILD_GUIDE.md](BUILD_GUIDE.md) | Building the MSI installer | Developers |
 | [PACKAGE_README.md](PACKAGE_README.md) | Package overview | Distributors |
 | [LICENSE.txt](LICENSE.txt) | MIT license | Everyone |
 
@@ -236,8 +200,8 @@ Get-Help vmbak -Full
 
 ## ?? Support
 
-- **GitHub Issues:** https://github.com/vitalie-vrabie/scripts/issues
-- **GitHub Repository:** https://github.com/vitalie-vrabie/scripts
+- **GitHub Issues:** https://github.com/vitalie-vrabie/psvmtools/issues
+- **GitHub Repository:** https://github.com/vitalie-vrabie/psvmtools
 - **Documentation:** See docs folder after installation
 
 ---
@@ -253,25 +217,26 @@ Copyright (c) 2025 Vitalie Vrabie
 ## ?? Getting Started
 
 ### For End Users
-1. Download the installer (any type)
+1. Download the MSI installer
 2. Run as Administrator
 3. Type `vmbak` to see help
 4. Start backing up VMs!
 
 ### For Developers
 1. Clone the repository
-2. Run `.\Build-All-Installers.ps1`
-3. Find built installers in `dist/` folder
-4. Test and distribute!
+2. Install WiX Toolset
+3. Run `.\Build-WixInstaller.ps1`
+4. Find MSI installer in `dist/` folder
+5. Test and distribute!
 
 ---
 
-## ?? Version History
+## ? Version History
 
 ### Version 1.0.0 (2025)
 - Initial release
 - Core backup functionality
-- Multiple installer types
+- MSI installer with WiX Toolset
 - Complete documentation
 - PowerShell module integration
 
@@ -281,13 +246,13 @@ Copyright (c) 2025 Vitalie Vrabie
 
 - **Zero Configuration:** Works out of the box
 - **Professional:** Enterprise-ready features
-- **Flexible:** Multiple installation methods
 - **Well Documented:** Comprehensive guides
 - **Open Source:** MIT licensed
+- **Enterprise Ready:** MSI installer with Group Policy support
 
 ---
 
 **Thank you for using PSVMTools!** ??
 
 For questions, issues, or contributions, visit:  
-https://github.com/vitalie-vrabie/scripts
+https://github.com/vitalie-vrabie/psvmtools

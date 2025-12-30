@@ -1,59 +1,43 @@
-# PSVMTools - Installation Guide
-## Building and Distributing the Installer Package
+# PSVMTools - Build Guide
+## Building the MSI Installer
 
 ---
 
-## ?? Quick Start - Building the Installer
+## ?? Quick Start
 
-### Build All Installers (Recommended)
+### Prerequisites
+
+Install WiX Toolset v3.14.1 or later:
+
+**Option 1: WinGet (Recommended)**
+```powershell
+winget install --id WiXToolset.WiXToolset --accept-package-agreements --accept-source-agreements
+```
+
+**Option 2: Direct Download**
+Download from https://wixtoolset.org/releases/
+
+**Option 3: Chocolatey**
+```powershell
+choco install wixtoolset
+```
+
+### Build the MSI Installer
 
 ```powershell
 # From the repository root directory
-.\Build-All-Installers.ps1
+.\Build-WixInstaller.ps1
 ```
 
 This will create:
-- ? Self-extracting PowerShell installer
-- ? WiX MSI installer (if WiX is installed)
-- ? Complete ZIP package
-- ? All files in the `dist` folder
+- ? WiX MSI installer
+- ?? Output in the `dist` folder
 
-**Output:** `dist/` folder with all installer types
+**Output:** `dist/PSVMTools-Setup-1.0.0.msi`
 
 ---
 
-## ?? Available Installer Types
-
-### 1. PowerShell Self-Extracting Installer (No Dependencies)
-
-**Best for:** Maximum compatibility, no external dependencies needed
-
-**Files:**
-- `dist/PSVMTools-Setup.bat` - Double-click to install
-- `dist/PSVMTools-Setup.ps1` - PowerShell installer script
-- `dist/PSVMTools-Uninstall.bat` - Uninstaller
-
-**Size:** ~100 KB (all files embedded)
-
-**Build Command:**
-```powershell
-.\Build-PSVMTools-Installer.ps1
-```
-
-**To Install:**
-1. Copy `PSVMTools-Setup.bat` to target machine
-2. Right-click ? **Run as Administrator**
-3. Done!
-
-**Advantages:**
-- ? No external dependencies
-- ? Single self-contained script
-- ? Works on any Windows with PowerShell 5.1+
-- ? Easy to distribute via email/USB/network
-
----
-
-### 2. WiX MSI Installer (Professional)
+## ?? MSI Installer (Professional)
 
 **Best for:** Professional deployment, traditional Windows installer experience
 
@@ -62,19 +46,15 @@ This will create:
 
 **Size:** ~300 KB
 
-**Prerequisites:**
-- Download WiX Toolset from https://wixtoolset.org/releases/
-- Or install via Chocolatey: `choco install wixtoolset`
-
 **Build Command:**
 ```powershell
-# Option 1: Using build script
-.\Build-All-Installers.ps1
-
-# Option 2: Direct WiX build
+# Using build script
 .\Build-WixInstaller.ps1
 
-# Option 3: Manual WiX build
+# With custom output path
+.\Build-WixInstaller.ps1 -OutputPath "C:\Release"
+
+# Manual WiX build
 candle.exe PSVMTools-Installer.wxs
 light.exe -ext WixUIExtension -out dist\PSVMTools-Setup-1.0.0.msi PSVMTools-Installer.wixobj
 ```
@@ -91,77 +71,30 @@ light.exe -ext WixUIExtension -out dist\PSVMTools-Setup-1.0.0.msi PSVMTools-Inst
 - ? Transactional installation (rollback on failure)
 - ? Add/Remove Programs integration
 - ? Group Policy deployment support
+- ? SCCM/Intune compatible
 - ? Start Menu shortcuts
 - ? Silent install: `msiexec /i PSVMTools-Setup-1.0.0.msi /quiet`
-- ? Uninstall: `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet`
+- ? Silent uninstall: `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet`
 
 ---
 
-### 3. Complete Package (ZIP)
-
-**Best for:** Distribution that includes all methods and documentation
-
-**File:**
-- `dist/PSVMTools-1.0.0-Complete.zip`
-
-**Contents:**
-- All module files
-- PowerShell installer
-- Documentation
-- License
-
-**To Use:**
-1. Extract ZIP on target machine
-2. Choose installation method:
-   - Run `installer/PSVMTools-Setup.bat` (PowerShell)
-   - Or manually run `Install-vmbak.ps1`
-
----
-
-## ??? Build Options
-
-### Clean Build
-```powershell
-# Remove old builds and start fresh
-.\Build-All-Installers.ps1 -CleanFirst
-```
-
-### Skip WiX (Faster Build)
-```powershell
-# Build only PowerShell installer
-.\Build-All-Installers.ps1 -SkipWix
-```
-
-### Build Only PowerShell Installer
-```powershell
-.\Build-PSVMTools-Installer.ps1
-```
+## ?? Build Options
 
 ### Custom Output Path
 ```powershell
-.\Build-PSVMTools-Installer.ps1 -OutputPath "C:\MyBuilds"
+.\Build-WixInstaller.ps1 -OutputPath "C:\MyBuilds"
 ```
 
----
-
-## ?? Installation Comparison
-
-| Feature | PowerShell Installer | WiX MSI Installer | Manual Install |
-|---------|---------------------|------------------|----------------|
-| **File Size** | ~100 KB | ~300 KB | Varies |
-| **Dependencies** | None | None | None |
-| **Admin Required** | Yes | Yes | Yes |
-| **Start Menu** | No | Yes | No |
-| **Add/Remove Programs** | No | Yes | No |
-| **Silent Install** | Yes (`-Action Install`) | Yes (`/quiet`) | Yes |
-| **Distribution** | 3 files | 1 file | Multiple files |
-| **Build Requirements** | None | WiX | None |
+### Skip WiX Check (if WiX path is custom)
+```powershell
+.\Build-WixInstaller.ps1 -SkipWixCheck
+```
 
 ---
 
 ## ?? Usage After Installation
 
-Regardless of installation method, after installation:
+After installation, the module is available system-wide:
 
 ```powershell
 # Display help
@@ -182,103 +115,125 @@ Get-Help vmbak -Full
 
 ---
 
-## ??? Uninstallation
+## ? Uninstallation
 
-### PowerShell Installer
-```powershell
-# Run uninstaller
-.\PSVMTools-Uninstall.bat
-```
+### Using Add/Remove Programs
+- Open **Settings ? Apps**
+- Find **PSVMTools**
+- Click **Uninstall**
 
-### MSI Installer
-- Use **Add/Remove Programs** in Windows Settings
-- Or run the uninstaller from Start Menu
-- Or use silent uninstall: `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet`
+### Using Start Menu
+- Open Start Menu
+- Find **PSVMTools**
+- Click **Uninstall PSVMTools**
 
-### Manual
-```powershell
-.\Uninstall-vmbak.ps1 -Scope System
+### Using Command Line
+```cmd
+# Silent uninstall
+msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart
+
+# Interactive uninstall
+msiexec /x PSVMTools-Setup-1.0.0.msi
 ```
 
 ---
 
 ## ?? Silent Installation (Automated Deployment)
 
-### PowerShell Installer
-```powershell
-# Silent system-wide install
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "PSVMTools-Setup.ps1" -Action Install -Scope System
-
-# Silent user install
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "PSVMTools-Setup.ps1" -Action Install -Scope User
-```
-
-### MSI Installer
+### Basic Silent Install
 ```cmd
-# Silent install
-msiexec /i PSVMTools-Setup-1.0.0.msi /quiet
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
 
-# Silent uninstall
-msiexec /x PSVMTools-Setup-1.0.0.msi /quiet
+### Silent Install with Logging
+```cmd
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
+```
+
+### Network Installation
+```cmd
+msiexec /i \\server\share\PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
+
+### Properties
+```cmd
+# Install to custom location (if supported)
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet INSTALLDIR="C:\CustomPath"
 ```
 
 ---
 
-## ?? Distribution Best Practices
+## ?? Enterprise Deployment
 
-### For IT Department / Enterprise
-**Recommended:** MSI Installer
-- Single file distribution
-- Professional UI
-- Add/Remove Programs integration
-- Group Policy deployment friendly
+### Group Policy Deployment
 
-### For GitHub / Open Source
-**Recommended:** Complete ZIP Package
-- Includes all installation methods
-- Users can choose their preferred method
-- Full documentation included
+1. **Prepare MSI:**
+   - Place MSI on network share
+   - Ensure domain computers have read access
 
-### For Quick Sharing / Testing
-**Recommended:** PowerShell Self-Extractor
-- Minimal file count
-- No dependencies
-- Easy to send via email/Slack
+2. **Create GPO:**
+   - Open Group Policy Management
+   - Create new GPO or edit existing
+   - Link to target OU
 
----
+3. **Add Software:**
+   - Navigate to: `Computer Configuration ? Policies ? Software Settings ? Software Installation`
+   - Right-click ? New ? Package
+   - Browse to network share and select MSI
+   - Choose **Assigned** deployment method
 
-## ?? Testing the Installer
+4. **Apply:**
+   - GPO will apply on next computer startup
+   - Software installs automatically
 
-### Test PowerShell Installer
+### SCCM/ConfigMgr Deployment
+
+1. **Import MSI:**
+   - Import MSI into Software Library
+   - Create Application
+
+2. **Configure:**
+   - **Install command:** `msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart`
+   - **Uninstall command:** `msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart`
+   - **Detection method:** Check for file or registry key
+
+3. **Deploy:**
+   - Deploy to device collections
+   - Set deployment schedule
+   - Monitor installation status
+
+### Intune Deployment
+
+1. **Upload:**
+   - Go to Apps ? All apps ? Add
+   - Select Line-of-business app
+   - Upload MSI file
+
+2. **Configure:**
+   - Set install/uninstall commands
+   - Configure detection rules
+   - Set requirements
+
+3. **Assign:**
+   - Assign to groups (Required/Available)
+   - Set deployment schedule
+   - Track installation status
+
+### PowerShell DSC
+
 ```powershell
-# Build
-.\Build-PSVMTools-Installer.ps1
-
-# Test install (as Admin)
-cd dist
-.\PSVMTools-Setup.bat
-
-# Verify
-vmbak
-
-# Test uninstall
-.\PSVMTools-Uninstall.bat
-```
-
-### Test MSI Installer
-```powershell
-# Build
-.\Build-WixInstaller.ps1
-
-# Test install
-cd dist
-.\PSVMTools-Setup-1.0.0.msi
-
-# Verify
-vmbak
-
-# Test uninstall (from Add/Remove Programs or)
-msiexec /x PSVMTools-Setup-1.0.0.msi /quiet
+Configuration InstallPSVMTools {
+    Import-DscResource -ModuleName PSDesiredStateConfiguration
+    
+    Node "localhost" {
+        Package PSVMTools {
+            Ensure = "Present"
+            Path = "\\server\share\PSVMTools-Setup-1.0.0.msi"
+            Name = "PSVMTools"
+            ProductId = "{A3C5E8F1-9D4B-4A2C-B6E7-8F3D9C1A5B2E}"
+        }
+    }
+}
 ```
 
 ---
@@ -288,24 +243,30 @@ msiexec /x PSVMTools-Setup-1.0.0.msi /quiet
 ### "WiX not found"
 **Solution:** 
 - Install WiX Toolset from https://wixtoolset.org/releases/
-- Or use `-SkipWix` flag to skip MSI build
+- Or use WinGet: `winget install WiXToolset.WiXToolset`
 
 ### "File not found" errors
 **Solution:**
 - Run build from repository root directory
-- Ensure all required files are present
-- Try clean build: `-CleanFirst`
+- Ensure all required files are present:
+  - vmbak.ps1
+  - vmbak.psm1
+  - vmbak.psd1
+  - QUICKSTART.md
+  - PSVMTools-Installer.wxs
 
 ### "Access denied" during build
 **Solution:**
 - Close any files in `dist` folder
-- Run as Administrator if building to protected location
+- Delete `dist` folder and try again
+- Run PowerShell as Administrator if building to protected location
 
-### PowerShell execution policy errors
+### WiX build errors
 **Solution:**
 ```powershell
-# Allow script execution
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+# Clean build
+Remove-Item -Path "dist" -Recurse -Force -ErrorAction SilentlyContinue
+.\Build-WixInstaller.ps1
 ```
 
 ---
@@ -314,44 +275,132 @@ Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 When updating to a new version:
 
-1. Update version in `vmbak.psd1`:
+1. **Update module manifest** (`vmbak.psd1`):
    ```powershell
    ModuleVersion = '1.1.0'
    ```
 
-2. Update version in `PSVMTools-Installer.nsi`:
-   ```nsis
-   VIProductVersion "1.1.0.0"
-   OutFile "dist\PSVMTools-Setup-1.1.0.exe"
+2. **Update WiX installer** (`PSVMTools-Installer.wxs`):
+   ```xml
+   <Product Id="*" 
+            Name="PSVMTools" 
+            Version="1.1.0" 
+            ...>
    ```
 
-3. Update version in build scripts
-
-4. Rebuild all installers:
+3. **Update build script** (`Build-WixInstaller.ps1`):
    ```powershell
-   .\Build-All-Installers.ps1 -CleanFirst
+   $msiFile = Join-Path -Path $OutputPath -ChildPath "PSVMTools-Setup-1.1.0.msi"
+   ```
+
+4. **Rebuild installer:**
+   ```powershell
+   Remove-Item -Path "dist" -Recurse -Force -ErrorAction SilentlyContinue
+   .\Build-WixInstaller.ps1
    ```
 
 ---
 
-## ?? Summary
+## ?? Testing the Installer
 
-**Quick Command to Build Everything:**
+### Test Installation
 ```powershell
-.\Build-All-Installers.ps1
+# Build
+.\Build-WixInstaller.ps1
+
+# Install
+cd dist
+msiexec /i PSVMTools-Setup-1.0.0.msi
+
+# Verify
+vmbak
+Get-Module vmbak -ListAvailable
+
+# Check Start Menu
+explorer "shell:programs\PSVMTools"
+
+# Check Add/Remove Programs
+appwiz.cpl
 ```
 
-**Output Location:**
-```
-dist/
-??? PSVMTools-Setup.ps1           # Self-extracting installer
-??? PSVMTools-Setup.bat           # Installer launcher
-??? PSVMTools-Uninstall.bat       # Uninstaller
-??? PSVMTools-Setup-1.0.0.msi     # MSI installer (if built)
-??? PSVMTools-1.0.0-Complete.zip  # Complete package
+### Test Uninstallation
+```powershell
+# Uninstall via command
+msiexec /x PSVMTools-Setup-1.0.0.msi
+
+# Verify removal
+Get-Module vmbak -ListAvailable
+# Should return nothing
 ```
 
-**Distribute any one of these based on your needs!** ??
+### Test Silent Installation
+```powershell
+# Silent install
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
+
+# Check log
+Get-Content install.log -Tail 20
+
+# Verify
+vmbak
+```
+
+---
+
+## ?? MSI Properties
+
+### Product Information
+- **Product Name:** PSVMTools
+- **Manufacturer:** Vitalie Vrabie
+- **Version:** 1.0.0
+- **Upgrade Code:** A3C5E8F1-9D4B-4A2C-B6E7-8F3D9C1A5B2E (constant)
+- **Product Code:** Auto-generated per version
+
+### Installation Paths
+- **Program Files:** `C:\Program Files\PSVMTools`
+- **PowerShell Module:** `C:\Program Files\WindowsPowerShell\Modules\vmbak`
+- **Start Menu:** `Start Menu\Programs\PSVMTools`
+
+### Features
+- Transactional installation
+- Rollback on failure
+- Add/Remove Programs integration
+- Start Menu shortcuts
+- Silent install/uninstall
+- Upgrade support
+
+---
+
+## ?? Distribution
+
+### For GitHub Releases
+
+Create a release with:
+- **PSVMTools-Setup-1.0.0.msi** - MSI installer
+
+### Release Notes Template
+```markdown
+## PSVMTools v1.0.0
+
+### Installation
+
+Download and run the MSI installer:
+- **PSVMTools-Setup-1.0.0.msi** (300 KB)
+
+#### Interactive Installation
+Double-click the MSI file
+
+#### Silent Installation
+```cmd
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
+
+### Requirements
+- Windows Server 2016+ or Windows 10+
+- Hyper-V installed
+- 7-Zip installed
+- Administrator privileges
+```
 
 ---
 
@@ -364,4 +413,26 @@ dist/
 
 ---
 
-**Need help?** Check the GitHub repository: https://github.com/vitalie-vrabie/scripts
+## ?? Summary
+
+**Build Command:**
+```powershell
+.\Build-WixInstaller.ps1
+```
+
+**Output:**
+```
+dist/
+??? PSVMTools-Setup-1.0.0.msi
+```
+
+**Install Command:**
+```cmd
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
+
+**Distribute the MSI installer for professional Windows deployments!** ?
+
+---
+
+**Need help?** Check the GitHub repository: https://github.com/vitalie-vrabie/psvmtools

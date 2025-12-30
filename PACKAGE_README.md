@@ -1,68 +1,31 @@
 # PSVMTools - PowerShell VM Backup Tools
-## Installation Package
+## MSI Installation Package
 
 Version 1.0.0
 
 ### Overview
 
-PSVMTools is a comprehensive PowerShell module for backing up Hyper-V virtual machines using checkpoints and 7-Zip compression. This package contains everything needed to install and use the `vmbak` cmdlet.
+PSVMTools is a comprehensive PowerShell module for backing up Hyper-V virtual machines using checkpoints and 7-Zip compression. This MSI installer provides a professional Windows Installer package for enterprise deployment.
 
 ---
 
 ## Package Contents
 
-This installer package includes:
+This MSI installer includes:
 
 - **vmbak.ps1** - Main backup script
 - **vmbak.psm1** - PowerShell module
 - **vmbak.psd1** - Module manifest
 - **Documentation** - Quick start guide and comprehensive documentation
-- **Installer/Uninstaller** - Automated installation tools
+- **Start Menu Shortcuts** - Easy access to documentation and uninstaller
 
 ---
 
-## Installation Methods
+## Installation
 
-### Method 1: PowerShell Self-Extracting Installer (Recommended)
+### MSI Installer (Windows Installer)
 
-The PowerShell-based installer embeds all files and requires no external dependencies.
-
-**Steps:**
-1. Right-click `PSVMTools-Setup.bat`
-2. Select **"Run as Administrator"**
-3. Follow the on-screen prompts
-
-**Alternative (PowerShell):**
-```powershell
-# Run as Administrator
-.\PSVMTools-Setup.ps1 -Action Install -Scope System
-```
-
-**Features:**
-- ? No external dependencies
-- ? Self-contained single-file installer
-- ? Automatic module registration
-- ? Built-in uninstaller
-- ? Works on any Windows system with PowerShell 5.1+
-
----
-
-### Method 2: MSI Installer (Windows Installer)
-
-If you prefer a traditional Windows installer, use the WiX-built MSI package.
-
-**Prerequisites:**
-- Download and install WiX Toolset from https://wixtoolset.org/releases/
-- Or install via Chocolatey: `choco install wixtoolset`
-
-**To Build the MSI Installer:**
-```powershell
-# 1. Install WiX Toolset from https://wixtoolset.org/releases/
-# 2. Run the build script:
-.\Build-WixInstaller.ps1
-# OR use the master build script:
-.\Build-All-Installers.ps1
-```
+Professional Windows Installer package built with WiX Toolset.
 
 **To Install:**
 1. Double-click `PSVMTools-Setup-1.0.0.msi`
@@ -75,17 +38,16 @@ If you prefer a traditional Windows installer, use the WiX-built MSI package.
 - ? Start Menu shortcuts
 - ? Add/Remove Programs integration
 - ? Group Policy deployment support
+- ? SCCM/Intune compatible
 - ? Silent install support
 
----
+**Silent Installation:**
+```cmd
+# Basic silent install
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
 
-### Method 3: Manual Installation
-
-For advanced users or automated deployments.
-
-```powershell
-# Run as Administrator
-.\Install-vmbak.ps1 -Scope System
+# Silent install with logging
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v install.log
 ```
 
 ---
@@ -135,25 +97,23 @@ Get-Help vmbak -Full
 
 ## Uninstallation
 
-### Using Batch File:
-1. Right-click `PSVMTools-Uninstall.bat`
-2. Select **"Run as Administrator"**
-
-### Using PowerShell:
-```powershell
-# Run as Administrator
-.\PSVMTools-Setup.ps1 -Action Uninstall
-```
-
 ### Using Add/Remove Programs:
 1. Open Settings ? Apps
 2. Find "PSVMTools"
 3. Click Uninstall
 
-### Manual Uninstallation:
-```powershell
-# Run as Administrator
-.\Uninstall-vmbak.ps1 -Scope System
+### Using Start Menu:
+1. Open Start Menu
+2. Navigate to PSVMTools folder
+3. Click "Uninstall PSVMTools"
+
+### Using Command Line:
+```cmd
+# Interactive uninstall
+msiexec /x PSVMTools-Setup-1.0.0.msi
+
+# Silent uninstall
+msiexec /x PSVMTools-Setup-1.0.0.msi /quiet /norestart
 ```
 
 ---
@@ -162,75 +122,117 @@ Get-Help vmbak -Full
 
 ```
 PSVMTools/
-??? Build-PSVMTools-Installer.ps1    # Builds the self-extracting installer
-??? Build-WixInstaller.ps1           # Builds the MSI installer
-??? PSVMTools-Installer.wxs          # WiX installer definition
-??? dist/                            # Output folder for built installers
-?   ??? PSVMTools-Setup.ps1         # Self-extracting installer
-?   ??? PSVMTools-Setup.bat         # Batch wrapper (run as admin)
-?   ??? PSVMTools-Uninstall.bat     # Uninstaller batch file
-?   ??? PSVMTools-Setup-1.0.0.msi   # MSI installer
-??? vmbak.ps1                        # Main backup script
-??? vmbak.psm1                       # PowerShell module
-??? vmbak.psd1                       # Module manifest
-??? Install-vmbak.ps1                # Manual installer
-??? Uninstall-vmbak.ps1              # Manual uninstaller
-??? README_VMBAK_MODULE.md           # Module documentation
-??? QUICKSTART.md                    # Quick start guide
-??? LICENSE.txt                      # License information
-??? PACKAGE_README.md                # This file
+??? Build-WixInstaller.ps1             # Builds the MSI installer
+??? PSVMTools-Installer.wxs            # WiX installer definition
+??? dist/                              # Output folder for built installers
+?   ??? PSVMTools-Setup-1.0.0.msi     # MSI installer
+??? vmbak.ps1                          # Main backup script
+??? vmbak.psm1                         # PowerShell module
+??? vmbak.psd1                         # Module manifest
+??? README_VMBAK_MODULE.md             # Module documentation
+??? QUICKSTART.md                      # Quick start guide
+??? LICENSE.txt                        # License information
+??? PACKAGE_README.md                  # This file
 ```
 
 ---
 
-## Building the Installers
+## Building the MSI Installer
 
-### Build Self-Extracting PowerShell Installer:
+### Prerequisites
+
+Install WiX Toolset v3.14.1 or later:
+
+**Option 1: WinGet**
 ```powershell
-# Run from the repository root
-.\Build-PSVMTools-Installer.ps1
-
-# Output will be in ./dist folder
-# Files created:
-#   - PSVMTools-Setup.ps1 (self-extracting installer)
-#   - PSVMTools-Setup.bat (batch wrapper)
-#   - PSVMTools-Uninstall.bat (uninstaller)
+winget install --id WiXToolset.WiXToolset --accept-package-agreements --accept-source-agreements
 ```
 
-### Build MSI EXE Installer:
-```bash
-# After installing WiX Toolset:
+**Option 2: Direct Download**
+Download from https://wixtoolset.org/releases/
+
+**Option 3: Chocolatey**
+```powershell
+choco install wixtoolset
+```
+
+### Build Command
+
+```powershell
+# Run from the repository root
 .\Build-WixInstaller.ps1
 
-# Or use the master build script:
-.\Build-All-Installers.ps1
-
-# Output: dist/PSVMTools-Setup-1.0.0.msi
+# Output will be in ./dist folder
+# File created: PSVMTools-Setup-1.0.0.msi
 ```
 
 ---
 
 ## Distribution
 
-### For Self-Extracting Installer:
-Distribute the `dist` folder containing:
-- PSVMTools-Setup.bat
-- PSVMTools-Setup.ps1
-- PSVMTools-Uninstall.bat
+Distribute the MSI file:
+- **PSVMTools-Setup-1.0.0.msi** - Windows Installer package
 
-### For MSI Installer:
-Distribute the single file:
-- PSVMTools-Setup-1.0.0.msi
+### Enterprise Deployment
+
+**Group Policy:**
+1. Place MSI on network share
+2. Create GPO for software installation
+3. Assign to computers
+4. Automatic deployment on startup
+
+**SCCM/ConfigMgr:**
+1. Import MSI into Software Library
+2. Create Application
+3. Deploy to collections
+4. Monitor installation status
+
+**Intune:**
+1. Upload MSI as Line-of-Business app
+2. Configure install/uninstall commands
+3. Assign to groups
+4. Track installation status
+
+---
+
+## Silent Installation Examples
+
+### Basic Silent Install
+```cmd
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
+
+### Silent Install with Logging
+```cmd
+msiexec /i PSVMTools-Setup-1.0.0.msi /quiet /norestart /l*v "%TEMP%\psvmtools-install.log"
+```
+
+### Network Installation
+```cmd
+msiexec /i \\fileserver\share\PSVMTools-Setup-1.0.0.msi /quiet /norestart
+```
+
+### PowerShell Remote Deployment
+```powershell
+$computers = @("server1", "server2", "server3")
+$msiPath = "\\fileserver\share\PSVMTools-Setup-1.0.0.msi"
+
+foreach ($computer in $computers) {
+    Invoke-Command -ComputerName $computer -ScriptBlock {
+        param($path)
+        Start-Process msiexec.exe -ArgumentList "/i `"$path`" /quiet /norestart" -Wait
+    } -ArgumentList $msiPath
+}
+```
 
 ---
 
 ## Troubleshooting
 
-### "Execution policy" errors:
-```powershell
-# Set execution policy (run as Administrator)
-Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
-```
+### "Access denied" errors:
+- Ensure you're running as Administrator
+- Check antivirus hasn't blocked the installer
+- Verify you have write access to Program Files
 
 ### Module not found after installation:
 ```powershell
@@ -239,12 +241,10 @@ Get-Module vmbak -ListAvailable
 
 # Manually import if needed
 Import-Module vmbak -Force
-```
 
-### "Access denied" errors:
-- Ensure you're running as Administrator
-- Check antivirus hasn't blocked the installer
-- Verify you have write access to Program Files
+# Verify installation path
+$env:PSModulePath -split ';'
+```
 
 ### 7-Zip not found:
 ```powershell
@@ -252,11 +252,20 @@ Import-Module vmbak -Force
 # Or ensure 7z.exe is in your PATH
 ```
 
+### Installation Logs:
+```cmd
+# Install with verbose logging
+msiexec /i PSVMTools-Setup-1.0.0.msi /l*v "%TEMP%\install.log"
+
+# View log
+notepad "%TEMP%\install.log"
+```
+
 ---
 
 ## Support
 
-- GitHub: https://github.com/vitalie-vrabie/scripts
+- GitHub: https://github.com/vitalie-vrabie/psvmtools
 - Documentation: See README_VMBAK_MODULE.md
 - Quick Start: See QUICKSTART.md
 
@@ -274,12 +283,12 @@ Copyright (c) 2025 Vitalie Vrabie
 
 ### Version 1.0.0 (2025)
 - Initial release
-- Self-extracting PowerShell installer
 - WiX-based MSI installer (Windows Installer)
 - Complete documentation
 - Automatic module registration
 - Start Menu integration
 - Add/Remove Programs support
+- Enterprise deployment ready
 
 ---
 
