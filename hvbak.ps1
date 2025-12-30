@@ -185,38 +185,50 @@ foreach ($vm in $vms) {
 
         function Stop-ExportProcesses {
             param(
+                [string]$VmName,
+                [int[]]$BaselineVmwpPids,
                 [string]$ExportRoot
             )
 
-            if (-not $ExportRoot) { return }
-
+            # Best-effort stop of underlying Hyper-V export workers.
+            # Export-VM is executed by vmms/vmwp; stopping the PowerShell job is not always enough.
             try {
-                $exportRootPrefix = [System.IO.Path]::GetFullPath($ExportRoot)
-            } catch {
-                $exportRootPrefix = $ExportRoot
-            }
-
-            # Try to kill vmwp/vmms processes that are exporting into our temp path.
-            # This is best-effort: we only target processes whose CommandLine references our export directory.
-            try {
-                $candidates = Get-CimInstance Win32_Process -Filter "Name='vmwp.exe' OR Name='vmms.exe'" -ErrorAction SilentlyContinue
-                foreach ($p in ($candidates | Where-Object { $_.CommandLine -and ($_.CommandLine -like "*${exportRootPrefix}*") })) {
-                    try {
-                        LocalLog ("Stopping export worker process: {0} (PID: {1})" -f $p.Name, $p.ProcessId)
-                        Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
-                    } catch {
+                # 1) Prefer killing vmwp.exe that started after we began exporting this VM
+                $newVmwp = @()
+                try {
+                    $vmwpNow = Get-Process -Name vmwp -ErrorAction SilentlyContinue
+                    if ($vmwpNow) {
+                        $baseline = @($BaselineVmwpPids | Where-Object { $_ })
+                        $newVmwp = $vmwpNow | Where-Object { $baseline -notcontains $_.Id }
                     }
+                } catch {}
+
+                foreach ($p in $newVmwp) {
+                    try {
+                        LocalLog ("Stopping vmwp.exe (PID: {0}) created during export for {1}" -f $p.Id, $VmName)
+                        Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+                    } catch {}
+                }
+
+                # 2) As a fallback, kill any vmwp/vmms processes whose command line references our export path (may be empty on some systems)
+                if ($ExportRoot) {
+                    try {
+                        $exportRootPrefix = [System.IO.Path]::GetFullPath($ExportRoot)
+                    } catch {
+                        $exportRootPrefix = $ExportRoot
+                    }
+
+                    try {
+                        $candidates = Get-CimInstance Win32_Process -Filter "Name='vmwp.exe' OR Name='vmms.exe'" -ErrorAction SilentlyContinue
+                        foreach ($c in ($candidates | Where-Object { $_.CommandLine -and ($_.CommandLine -like "*${exportRootPrefix}*") })) {
+                            try {
+                                LocalLog ("Stopping export worker (by path match): {0} (PID: {1})" -f $c.Name, $c.ProcessId)
+                                Stop-Process -Id $c.ProcessId -Force -ErrorAction SilentlyContinue
+                            } catch {}
+                        }
+                    } catch {}
                 }
             } catch {
-            }
-        }
-
-        function IsCancelled {
-            try {
-                if ($script:JobCancelled) { return $true }
-                return (Test-Path -LiteralPath $CancelSentinel)
-            } catch {
-                return $false
             }
         }
 
@@ -318,6 +330,10 @@ foreach ($vm in $vms) {
             try {
                 LocalLog ("Exporting VM {0} to {1}" -f $vmName, $vmTemp)
 
+                # Capture baseline vmwp.exe PIDs so we can stop export workers created by this export
+                $baselineVmwpPids = @()
+                try { $baselineVmwpPids = @(Get-Process -Name vmwp -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id) } catch { $baselineVmwpPids = @() }
+
                 # Run Export-VM in a child job so we can stop it promptly on Ctrl+C cancellation
                 $exportJob = $null
                 try {
@@ -332,11 +348,11 @@ foreach ($vm in $vms) {
                             LocalLog ("Cancellation detected during Export-VM, stopping export job for {0}" -f $vmName)
                             try { Stop-Job -Job $exportJob -Force -ErrorAction SilentlyContinue } catch {}
 
+                            # Attempt to stop the underlying Hyper-V export worker as well
+                            try { Stop-ExportProcesses -VmName $vmName -BaselineVmwpPids $baselineVmwpPids -ExportRoot $vmTemp } catch {}
+
                             # Best-effort cleanup of partial export output
                             try {
-                                # Attempt to stop the underlying Hyper-V export worker as well
-                                Stop-ExportProcesses -ExportRoot $vmTemp
-
                                 if ($vmTemp -and (Test-Path -LiteralPath $vmTemp)) {
                                     LocalLog ("Cancellation cleanup: Removing incomplete export folder: {0}" -f $vmTemp)
                                     Remove-Item -LiteralPath $vmTemp -Recurse -Force -ErrorAction SilentlyContinue
