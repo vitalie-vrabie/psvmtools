@@ -32,7 +32,7 @@ PowerShellVersion = '5.1'
 RequiredModules = @('Hyper-V')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Invoke-VMBackup')
+FunctionsToExport = @('Invoke-VMBackup', 'Repair-VhdAcl')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -41,7 +41,7 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @('hvbak', 'hv-bak')
+AliasesToExport = @('hvbak', 'hv-bak', 'fix-vhd-acl')
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{

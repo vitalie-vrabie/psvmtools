@@ -70,6 +70,7 @@ english.ModuleInstall=Installing PowerShell module...
 Source: "hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
 Source: "hvbak.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
 Source: "hvbak.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
+Source: "fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\hvbak"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme

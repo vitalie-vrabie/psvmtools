@@ -33,6 +33,9 @@ function Invoke-VMBackup {
     .PARAMETER GuestCredential
       PSCredential for in-guest WinRM shutdown attempts (not currently used in graceful shutdown logic). Optional.
 
+    .PARAMETER KeepCount
+      Number of backup copies to keep per VM (older backups are deleted). Default: 2
+
     .EXAMPLE
       hvbak -NamePattern "*"
       Exports all VMs to %USERPROFILE%\hvbak-archives\YYYYMMDD using default temp folder
@@ -44,6 +47,10 @@ function Invoke-VMBackup {
     .EXAMPLE
       hvbak -NamePattern "srv-*" -Destination "D:\backups" -ForceTurnOff:$false
       Exports VMs matching "srv-*" to D:\backups\YYYYMMDD without forcing power off on checkpoint failure.
+
+    .EXAMPLE
+      hvbak -NamePattern "web-*" -KeepCount 5
+      Exports VMs matching "web-*" and keeps the 5 most recent backups, deleting older ones.
 
     .NOTES
       - Run elevated (Administrator) on the Hyper-V host for best results.
@@ -70,7 +77,11 @@ function Invoke-VMBackup {
         [switch]$ForceTurnOff = $true,
 
         [Parameter(Mandatory = $false)]
-        [System.Management.Automation.PSCredential]$GuestCredential
+        [System.Management.Automation.PSCredential]$GuestCredential,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 100)]
+        [int]$KeepCount = 2
     )
 
     # Display help if no NamePattern provided
@@ -93,6 +104,7 @@ function Invoke-VMBackup {
         Destination = $Destination
         TempFolder = $TempFolder
         ForceTurnOff = $ForceTurnOff
+        KeepCount = $KeepCount
     }
 
     if ($GuestCredential) {
@@ -103,9 +115,103 @@ function Invoke-VMBackup {
     & $scriptPath @params
 }
 
+function Repair-VhdAcl {
+    <#
+    .SYNOPSIS
+      Fix VHD/VHDX ACLs for Hyper-V after copy/restore from backup.
+
+    .DESCRIPTION
+      Repairs file permissions on VHD/VHDX files to allow Hyper-V VMs to access them.
+      
+      Modes:
+        - Default (no VhdFolder or VhdListCsv): enumerate Get-VM and fix attached VHDs.
+        - -VhdFolder <path>: recursively process *.vhd, *.vhdx under the folder.
+        - -VhdListCsv <path>: CSV with columns Path and optional VMId (GUID without braces).
+      
+      Use -WhatIf to preview actions without making changes.
+
+    .PARAMETER WhatIf
+      Preview actions without making changes.
+
+    .PARAMETER VhdFolder
+      Path to folder containing VHD/VHDX files to fix recursively.
+
+    .PARAMETER VhdListCsv
+      Path to CSV file with columns: Path (required), VMId (optional GUID without braces).
+
+    .PARAMETER LogFile
+      Path to log file. Default: C:\Temp\FixVhdAcl.log
+
+    .EXAMPLE
+      Repair-VhdAcl -WhatIf
+      Preview ACL fixes for all VMs on the host
+
+    .EXAMPLE
+      Repair-VhdAcl -VhdFolder "D:\Restores"
+      Fix ACLs for all VHD/VHDX files in D:\Restores recursively
+
+    .EXAMPLE
+      Repair-VhdAcl -VhdListCsv "C:\temp\vhds.csv"
+      Fix ACLs for VHDs listed in CSV file
+
+    .EXAMPLE
+      Repair-VhdAcl
+      Fix ACLs for all VHDs attached to VMs on this host
+
+    .NOTES
+      - Run elevated (Administrator) required
+      - Takes ownership and grants permissions to SYSTEM, Administrators, and VM account
+      - Available as 'Repair-VhdAcl' and 'fix-vhd-acl' commands
+    #>
+
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    param(
+        [Parameter(Mandatory = $false)]
+        [switch]$WhatIf,
+
+        [Parameter(Mandatory = $false)]
+        [string]$VhdFolder,
+
+        [Parameter(Mandatory = $false)]
+        [string]$VhdListCsv,
+
+        [Parameter(Mandatory = $false)]
+        [string]$LogFile = "$env:TEMP\FixVhdAcl.log"
+    )
+
+    # Get the path to the actual script
+    $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath "fix-vhd-acl.ps1"
+    
+    if (-not (Test-Path $scriptPath)) {
+        Write-Error "fix-vhd-acl.ps1 not found at: $scriptPath"
+        return
+    }
+
+    # Build parameter splatting
+    $params = @{
+        LogFile = $LogFile
+    }
+
+    if ($WhatIf) {
+        $params.WhatIf = $true
+    }
+
+    if ($VhdFolder) {
+        $params.VhdFolder = $VhdFolder
+    }
+
+    if ($VhdListCsv) {
+        $params.VhdListCsv = $VhdListCsv
+    }
+
+    # Execute the script
+    & $scriptPath @params
+}
+
 # Create aliases for shorter commands
 New-Alias -Name hvbak -Value Invoke-VMBackup -Force
 New-Alias -Name hv-bak -Value Invoke-VMBackup -Force
+New-Alias -Name fix-vhd-acl -Value Repair-VhdAcl -Force
 
-# Export the function and aliases
-Export-ModuleMember -Function Invoke-VMBackup -Alias hvbak, hv-bak
+# Export the functions and aliases
+Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl -Alias hvbak, hv-bak, fix-vhd-acl
