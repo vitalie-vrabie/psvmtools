@@ -667,9 +667,11 @@ try {
         # Update root progress only when changed
         if (-not $global:VmbkpCancelled -and ($overallPercent -ne $lastOverallPercent -or $runningCount -ne $lastRunningCount)) {
             try {
-                Write-Progress -Id $progressRootId -Activity "VM backup batch" -Status ("Running {0} job(s). Overall {1}%." -f $runningCount, $overallPercent) -PercentComplete $overallPercent
+                Write-Progress -Id $progressRootId -Activity "VM backup batch" -Status ("Running {0} job(s). Overall {1}%." -f $runningCount, $overallPercent) -PercentComplete $overallPercent -ErrorAction SilentlyContinue
                 $progressInitialized = $true
-            } catch {}
+            } catch {
+                # Silently ignore any Write-Progress errors
+            }
             $lastOverallPercent = $overallPercent
             $lastRunningCount = $runningCount
         }
@@ -685,7 +687,11 @@ try {
                 if ($prev.Percent -eq $st.Percent -and $prev.Phase -eq $st.Phase) { $shouldUpdate = $false }
             }
             if (-not $global:VmbkpCancelled -and $shouldUpdate) {
-                try { Write-Progress -Id $id -ParentId $progressRootId -Activity $st.Vm -Status $st.Phase -PercentComplete $st.Percent } catch {}
+                try { 
+                    Write-Progress -Id $id -ParentId $progressRootId -Activity $st.Vm -Status $st.Phase -PercentComplete $st.Percent -ErrorAction SilentlyContinue
+                } catch {
+                    # Silently ignore any Write-Progress errors
+                }
                 $lastVmStates[$st.SafeVm] = @{ Percent = $st.Percent; Phase = $st.Phase }
             }
         }
@@ -701,10 +707,17 @@ try {
     }
 } finally {
     try { [Console]::remove_CancelKeyPress($consoleHandler) } catch {}
+    # Complete all progress bars to clean up the display
     if ($progressInitialized) {
-        try { Write-Progress -Id $progressRootId -Completed } catch {}
-        foreach ($id in $perVmIds.Values) { try { Write-Progress -Id $id -Completed } catch {} }
+        try { Write-Progress -Id $progressRootId -Activity "VM backup batch" -Completed -ErrorAction SilentlyContinue } catch {}
+        foreach ($id in $perVmIds.Values) { 
+            try { Write-Progress -Id $id -Activity "VM" -Completed -ErrorAction SilentlyContinue } catch {} 
+        }
     }
+    # Clean up any orphaned status files
+    try {
+        Get-ChildItem -Path (Join-Path $TempRoot 'vmbkp_status_*.json') -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+    } catch {}
 }
 
 # Final processing of results (defensive)
