@@ -631,7 +631,15 @@ foreach ($vm in $vms) {
             }
         }
 
-        return $result
+        # Convert result to serialization-safe format before returning
+        $safeResult = @{
+            VMName      = [string]$result.VMName
+            TempPath    = [string]($result.TempPath -as [string])
+            DestArchive = [string]($result.DestArchive -as [string])
+            Success     = [bool]$result.Success
+            Message     = [string]($result.Message -as [string])
+        }
+        return $safeResult
     }
 
     $perVmJobs += $perVmJob
