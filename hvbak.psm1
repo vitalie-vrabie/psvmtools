@@ -15,7 +15,7 @@ function Invoke-VMBackup {
         - Uses per-vm background jobs (named/perVmJob) to run each VM's workflow concurrently.
         - No throttling: all per-vm jobs are started immediately. Only the external 7z process is set to Idle priority.
         - Implements graceful cleanup in a finally block: removes checkpoints, restarts VMs, and cleans up incomplete exports even if the export is cancelled via Hyper-V Manager or Ctrl+C.
-        - Per-job logs are written to the shared TempRoot (E:\vmbkp.tmp) to survive per-VM folder deletion.
+        - Per-job logs are written to the shared TempRoot to survive per-VM folder deletion.
         - Supports Ctrl+C cancellation: stops all background jobs, kills related 7z.exe processes, and removes temp contents.
 
     .PARAMETER NamePattern
@@ -23,6 +23,9 @@ function Invoke-VMBackup {
 
     .PARAMETER Destination
       Root destination folder for backups. A date-stamped subfolder (YYYYMMDD) is created automatically. Default: R:\vhd
+
+    .PARAMETER TempFolder
+      Temporary folder for VM exports during backup processing. Default: %TEMP%\hvbak
 
     .PARAMETER ForceTurnOff
       If checkpoint creation fails for a running VM, force it off to allow export. Default: $true
@@ -32,11 +35,11 @@ function Invoke-VMBackup {
 
     .EXAMPLE
       hvbak -NamePattern "*"
-      Exports all VMs to R:\vhd\YYYYMMDD
+      Exports all VMs to R:\vhd\YYYYMMDD using default temp folder
 
     .EXAMPLE
-      hv-bak -NamePattern "srv-*" -Destination "D:\backups"
-      Exports VMs matching "srv-*" to D:\backups\YYYYMMDD using the hyphenated alias.
+      hv-bak -NamePattern "srv-*" -Destination "D:\backups" -TempFolder "E:\temp"
+      Exports VMs matching "srv-*" to D:\backups\YYYYMMDD using E:\temp as temporary folder
 
     .EXAMPLE
       hvbak -NamePattern "srv-*" -Destination "D:\backups" -ForceTurnOff:$false
@@ -46,7 +49,7 @@ function Invoke-VMBackup {
       - Run elevated (Administrator) on the Hyper-V host for best results.
       - Requires 7-Zip (7z.exe must be in PATH or installed in standard location).
       - Each per-VM job runs independently; exports can proceed in parallel without throttling.
-      - Temp folder (E:\vmbkp.tmp) and destination (R:\vhd by default) must be accessible.
+      - Temp folder and destination must be accessible and have sufficient space.
       - Graceful cleanup ensures VMs are restarted and checkpoints removed even on cancellation or failure.
       - Archives are created in 7z format with fast compression for better multithreading.
       - Available as both 'hvbak' and 'hv-bak' commands.
@@ -59,6 +62,9 @@ function Invoke-VMBackup {
 
         [Parameter(Mandatory = $false)]
         [string]$Destination = "R:\vhd",
+
+        [Parameter(Mandatory = $false)]
+        [string]$TempFolder = "$env:TEMP\hvbak",
 
         [Parameter(Mandatory = $false)]
         [switch]$ForceTurnOff = $true,
@@ -85,6 +91,7 @@ function Invoke-VMBackup {
     $params = @{
         NamePattern = $NamePattern
         Destination = $Destination
+        TempFolder = $TempFolder
         ForceTurnOff = $ForceTurnOff
     }
 
