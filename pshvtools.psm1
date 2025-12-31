@@ -9,8 +9,7 @@ function Invoke-VMBackup {
     .DESCRIPTION
       For each VM matching the provided NamePattern this script:
         - Attempts a Production checkpoint (falls back to a standard checkpoint).
-        - Exports VM configuration and snapshots to a per-VM temp folder.
-        - Exports only the checkpoint/config (VHDs removed if present).
+        - Exports VM configuration, checkpoints/snapshots, and VHD/VHDX disks to a per-VM temp folder.
         - Archives the per-VM export using 7z format and removes the per-VM temp folder as soon as that VM's archive completes.
         - Uses per-vm background jobs (named/perVmJob) to run each VM's workflow concurrently.
         - No throttling: all per-vm jobs are started immediately. Only the external 7z process is set to Idle priority.

@@ -7,7 +7,6 @@
   For each VM matching the provided NamePattern this script:
     - Attempts a Production checkpoint (falls back to a standard checkpoint).
     - Exports VM configuration and snapshots to a per-VM temp folder.
-    - Exports only the checkpoint/config (VHDs removed if present).
     - Archives the per-VM export using 7z format and removes the per-VM temp folder as soon as that VM's archive completes.
     - Uses per-vm background jobs (named/perVmJob) to run each VM's workflow concurrently.
     - No throttling: all per-vm jobs are started immediately. Only the external 7z process is set to Idle priority.
@@ -430,19 +429,9 @@ foreach ($vm in $vms) {
                 throw "Operation cancelled by user"
             }
 
-            # Remove Virtual Hard Disks directory if present (we only want checkpoint/config)
-            try {
-                $vhdFolder = Join-Path -Path $vmTemp -ChildPath "Virtual Hard Disks"
-                if (Test-Path -Path $vhdFolder) {
-                    Remove-Item -Path $vhdFolder -Recurse -Force -ErrorAction SilentlyContinue
-                    LocalLog ("Removed 'Virtual Hard Disks' from export for {0}" -f $vmName)
-                } else {
-                    LocalLog ("No VHDs present in export for {0}" -f $vmName)
-                }
-            } catch {
-                LocalLog ("Failed to remove VHDs from export for {0}: {1}" -f $vmName, $_)
-            }
-            
+            # Do NOT remove Virtual Hard Disks (VHD/VHDX) from the export.
+            # Full VM export (including VHDs) is preserved in the archive.
+
             if (IsCancelled) {
                 LocalLog ("Cancellation detected before snapshot removal, aborting for {0}" -f $vmName)
                 throw "Operation cancelled by user"

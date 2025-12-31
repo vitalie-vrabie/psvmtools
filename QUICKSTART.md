@@ -8,11 +8,6 @@
 3. Follow the wizard
 4. Done!
 
-### PowerShell Installer
-1. Extract `PSHVTools-Setup-1.0.0.zip`
-2. Run `Install.ps1` as Administrator
-3. Done!
-
 ## ?? Available Commands
 
 After installation, the **pshvtools** module provides:
@@ -99,16 +94,15 @@ hvbak -NamePattern "prod-*" `
 **What gets backed up:**
 - VM configuration
 - VM checkpoints/snapshots
-- **Excludes:** VHD/VHDX files (only config is backed up)
+- **VHD/VHDX files**
 
 **How backups work:**
 1. Creates checkpoint (Production or Standard)
-2. Exports VM configuration and checkpoint
-3. Removes VHD files from export
-4. Compresses to 7z archive
-5. Removes checkpoint
-6. Restarts VM if it was running
-7. Cleans up old backups based on KeepCount
+2. Exports VM (configuration + checkpoints + VHDs)
+3. Compresses to 7z archive
+4. Removes checkpoint
+5. Restarts VM if it was running
+6. Cleans up old backups based on KeepCount
 
 **Archive naming:**
 - Format: `VMName_yyyyMMddHHmmss.7z`
