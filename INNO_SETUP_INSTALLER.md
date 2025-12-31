@@ -37,7 +37,7 @@ Build-InnoSetupInstaller.bat
 
 ### Output
 
-- **File:** `dist\PSHVTools-Setup-1.0.0.exe`
+- **File:** `dist\PSHVTools-Setup-1.0.1.exe`
 - **Type:** Native Windows EXE with GUI wizard
 
 ## Installer Features
@@ -65,7 +65,7 @@ Build-InnoSetupInstaller.bat
 
 ### Interactive Installation
 
-1. Double-click `PSHVTools-Setup-1.0.0.exe`
+1. Double-click `PSHVTools-Setup-1.0.1.exe`
 2. Click "Next" through the wizard
 3. Review system requirements check
 4. Accept license agreement
@@ -75,7 +75,7 @@ Build-InnoSetupInstaller.bat
 ### Silent Installation
 
 ```cmd
-PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
+PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
 ```
 
 ## Uninstallation
@@ -104,4 +104,4 @@ PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
 |------|-------------|
 | `PSHVTools-Installer.iss` | Inno Setup script |
 | `Build-InnoSetupInstaller.bat` | Build script |
-| `dist\PSHVTools-Setup-1.0.0.exe` | Output installer |
+| `dist\PSHVTools-Setup-1.0.1.exe` | Output installer |

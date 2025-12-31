@@ -1,6 +1,6 @@
 # PSHVTools - PowerShell Hyper-V Tools
 
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** pshvtools  
 **Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`  
@@ -29,7 +29,7 @@ PSHVTools is a professional PowerShell module for backing up and managing Hyper-
 
 ### GUI Installer (Recommended for End Users)
 
-1. Download `PSHVTools-Setup-1.0.0.exe`
+1. Download `PSHVTools-Setup-1.0.1.exe`
 2. Double-click to run the installer
 3. Follow the wizard
 4. Done!
@@ -43,12 +43,12 @@ PSHVTools is a professional PowerShell module for backing up and managing Hyper-
 
 **Silent install:**
 ```cmd
-PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
+PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
 ```
 
 ### PowerShell Installer (Alternative)
 
-1. Download and extract `PSHVTools-Setup-1.0.0.zip`
+1. Download and extract `PSHVTools-Setup-1.0.1.zip`
 2. Right-click `Install.ps1` ? "Run with PowerShell" (as Administrator)
 3. Done!
 
@@ -147,9 +147,9 @@ Build-Release.bat clean
 ```
 
 **Output:**
-- `dist\PSHVTools-Setup-1.0.0.exe` - GUI installer (1.9 MB)
+- `dist\PSHVTools-Setup-1.0.1.exe` - GUI installer (1.9 MB)
 - `release\PSHVTools-v1.0.0.zip` - Source package
-- `dist\PSHVTools-Setup-1.0.0\` - PowerShell installer
+- `dist\PSHVTools-Setup-1.0.1\` - PowerShell installer
 
 **Full build documentation:** See [BUILD_GUIDE.md](BUILD_GUIDE.md)
 
@@ -182,9 +182,9 @@ PSHVTools/
 ?   ??? PSHVTools-v1.0.0/             # Source package
 ?   ??? PSHVTools-v1.0.0.zip          # Source ZIP
 ??? dist/                              # Installer output (generated)
-    ??? PSHVTools-Setup-1.0.0.exe     # GUI installer
-    ??? PSHVTools-Setup-1.0.0/        # PowerShell installer
-    ??? PSHVTools-Setup-1.0.0.zip     # PowerShell installer ZIP
+    ??? PSHVTools-Setup-1.0.1.exe     # GUI installer
+    ??? PSHVTools-Setup-1.0.1/        # PowerShell installer
+    ??? PSHVTools-Setup-1.0.1.zip     # PowerShell installer ZIP
 ```
 
 ---
@@ -194,9 +194,7 @@ PSHVTools/
 ### For GitHub Releases
 
 Distribute:
-1. **PSHVTools-Setup-1.0.0.exe** - GUI installer (recommended for end users)
-2. **PSHVTools-v1.0.0.zip** - Source package (for developers)
-3. **PSHVTools-Setup-1.0.0.zip** - PowerShell installer (alternative)
+1. **PSHVTools-Setup-1.0.1.exe** - GUI installer (recommended for end users)
 
 ### For Enterprise IT Departments
 
@@ -210,7 +208,7 @@ Distribute:
 **Installation Commands:**
 ```powershell
 # GUI installer (silent)
-PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
+PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
 
 # PowerShell installer (silent)
 .\Install.ps1 -Silent
@@ -275,7 +273,7 @@ Build-Release.bat clean
 ### Installation Commands
 ```powershell
 # GUI installer (interactive)
-.\PSHVTools-Setup-1.0.0.exe
+.\PSHVTools-Setup-1.0.1.exe
 
 # PowerShell installer (interactive)
 .\Install.ps1
@@ -355,7 +353,7 @@ Copyright (c) 2025 Vitalie Vrabie
 ## ?? Getting Started
 
 ### For End Users
-1. Download `PSHVTools-Setup-1.0.0.exe`
+1. Download `PSHVTools-Setup-1.0.1.exe`
 2. Run the installer
 3. Import the module: `Import-Module pshvtools`
 4. Start backing up VMs: `hvbak -NamePattern "*"`
@@ -370,51 +368,5 @@ Copyright (c) 2025 Vitalie Vrabie
 
 ## ?? Version History
 
-### Version 1.0.0 (2025)
-- Initial release
-- Core backup functionality with parallel processing
-- Configurable backup retention (KeepCount parameter)
-- VHD/VHDX permission repair utility
-- GUI installer with Inno Setup
-- PowerShell installer alternative
-- Improved error diagnostics
-- Complete documentation
-- Enterprise deployment support
-
----
-
-## ? Highlights
-
-- **Zero Configuration:** Works out of the box
-- **Professional:** Enterprise-ready features
-- **Well Documented:** Comprehensive guides
-- **Open Source:** MIT licensed
-- **Flexible Installation:** GUI or PowerShell installer
-- **Powerful:** Parallel backups with checkpoints
-- **Reliable:** Graceful error handling and cleanup
-- **Utilities Included:** VHD permission repair tool
-
----
-
-## ? Uninstallation
-
-### GUI Installer
-- Use "Add or Remove Programs" in Windows
-- Or run `unins000.exe` from installation folder
-- Or use Start Menu uninstaller shortcut
-
-### PowerShell Installer
-```powershell
-# Run from installer directory
-.\Install.ps1 -Uninstall
-
-# Or manually delete:
-Remove-Item "C:\Program Files\WindowsPowerShell\Modules\pshvtools" -Recurse -Force
-```
-
----
-
-**Thank you for using PSHVTools!** ??
-
-For questions, issues, or contributions, visit:  
-https://github.com/vitalie-vrabie/pshvtools
+### Version 1.0.1 (2025)
+- Maintenance release

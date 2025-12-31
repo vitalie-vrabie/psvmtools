@@ -3,7 +3,7 @@
 ## ?? Installation
 
 ### GUI Installer (Recommended)
-1. Download `PSHVTools-Setup-1.0.0.exe`
+1. Download `PSHVTools-Setup-1.0.1.exe`
 2. Double-click to run
 3. Follow the wizard
 4. Done!

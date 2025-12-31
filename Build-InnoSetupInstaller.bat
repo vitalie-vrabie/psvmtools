@@ -150,16 +150,19 @@ echo ========================================
 echo   EXE Installer Build Successful!
 echo ========================================
 
-set "EXE_FILE=%SCRIPT_DIR%\dist\PSHVTools-Setup-1.0.0.exe"
+REM Keep this in sync with #define MyAppVersion in PSHVTools-Installer.iss
+set "APP_VERSION=1.0.1"
+
+set "EXE_FILE=%SCRIPT_DIR%\dist\PSHVTools-Setup-%APP_VERSION%.exe"
 
 if exist "%EXE_FILE%" (
     for %%A in ("%EXE_FILE%") do set "FILE_SIZE=%%~zA"
     set /a "FILE_SIZE_KB=!FILE_SIZE! / 1024"
     set /a "FILE_SIZE_MB=!FILE_SIZE! / 1048576"
-    
+
     echo.
     echo Output:
-    echo   File: dist\PSHVTools-Setup-1.0.0.exe
+    echo   File: dist\PSHVTools-Setup-%APP_VERSION%.exe
     echo   Size: !FILE_SIZE_MB! MB (!FILE_SIZE_KB! KB)
     echo.
     echo Features:
@@ -179,15 +182,16 @@ echo   Installation Instructions
 echo ========================================
 echo.
 echo For end users:
-echo   1. Double-click PSHVTools-Setup-1.0.0.exe
+echo   1. Double-click PSHVTools-Setup-%APP_VERSION%.exe
 echo   2. Follow the installation wizard
 echo   3. Done!
 echo.
 echo Silent installation:
-echo   PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
+echo   PSHVTools-Setup-%APP_VERSION%.exe /VERYSILENT /NORESTART
+
 echo.
 echo Silent with log:
-echo   PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART /LOG="install.log"
+echo   PSHVTools-Setup-%APP_VERSION%.exe /VERYSILENT /NORESTART /LOG="install.log"
 echo.
 echo Uninstall:
 echo   - Use Add/Remove Programs
