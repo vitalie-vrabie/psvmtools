@@ -16,6 +16,7 @@ function Invoke-VMBackup {
         - Implements graceful cleanup in a finally block: removes checkpoints, restarts VMs, and cleans up incomplete exports even if the export is cancelled via Hyper-V Manager or Ctrl+C.
         - Per-job logs are written to the shared TempRoot to survive per-VM folder deletion.
         - Supports Ctrl+C cancellation: stops all background jobs, kills related 7z.exe processes, and removes temp contents.
+        - Supports optional 7-Zip thread capping via ThreadCap (uses 7z -mmt=<n>).
 
     .PARAMETER NamePattern
       Wildcard pattern to match VM names (e.g., "*" for all VMs, "web-*" for VMs starting with "web-").
@@ -34,6 +35,9 @@ function Invoke-VMBackup {
 
     .PARAMETER KeepCount
       Number of backup copies to keep per VM (older backups are deleted). Default: 2
+
+    .PARAMETER ThreadCap
+      Optional maximum number of threads for 7-Zip compression (1-1024). Default: uses 7z defaults.
 
     .EXAMPLE
       hvbak -NamePattern "*"
@@ -80,7 +84,11 @@ function Invoke-VMBackup {
 
         [Parameter(Mandatory = $false)]
         [ValidateRange(1, 100)]
-        [int]$KeepCount = 2
+        [int]$KeepCount = 2,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 1024)]
+        [int]$ThreadCap
     )
 
     # Display help if no NamePattern provided
@@ -108,6 +116,10 @@ function Invoke-VMBackup {
 
     if ($GuestCredential) {
         $params.GuestCredential = $GuestCredential
+    }
+
+    if ($ThreadCap) {
+        $params.ThreadCap = $ThreadCap
     }
 
     # Execute the script
