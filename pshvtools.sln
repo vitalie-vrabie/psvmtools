@@ -3,25 +3,41 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 
-Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "scripts", "scripts\\scripts.psproj", "{6D1C5E44-5C59-4C77-82A5-0D39D8686BF6}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{B2D7987F-4C7C-4F10-9C1A-A0F9F5CDE3C7}"
+	ProjectSection(SolutionItems) = preProject
+		fix-vhd-acl.ps1 = fix-vhd-acl.ps1
+		hvbak.ps1 = hvbak.ps1
+		Install-PSHVTools.ps1 = Install-PSHVTools.ps1
+		Uninstall-PSHVTools.ps1 = Uninstall-PSHVTools.ps1
+		pshvtools.psd1 = pshvtools.psd1
+		pshvtools.psm1 = pshvtools.psm1
+	EndProjectSection
 EndProject
-Project("{F5034706-568F-408A-B7B3-4D38C6DB8A32}") = "installer", "installer\\installer.psproj", "{A63E49A8-493F-4C08-84A0-010F7B92B582}"
+
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{7D32AC1D-4B40-44EA-8B38-0A2AC2D243D5}"
+	ProjectSection(SolutionItems) = preProject
+		PSHVTools-Installer.iss = PSHVTools-Installer.iss
+		Build-InnoSetupInstaller.bat = Build-InnoSetupInstaller.bat
+		INNO_SETUP_INSTALLER.md = INNO_SETUP_INSTALLER.md
+	EndProjectSection
+EndProject
+
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{EA75FA0B-BB91-4E78-AD74-9FFB4E56B50F}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		QUICKSTART.md = QUICKSTART.md
+		BUILD_GUIDE.md = BUILD_GUIDE.md
+		CHANGELOG.md = CHANGELOG.md
+		LICENSE.txt = LICENSE.txt
+		PROJECT_SUMMARY.md = PROJECT_SUMMARY.md
+		INNO_SETUP_INSTALLER.md = INNO_SETUP_INSTALLER.md
+	EndProjectSection
 EndProject
 
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6D1C5E44-5C59-4C77-82A5-0D39D8686BF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6D1C5E44-5C59-4C77-82A5-0D39D8686BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6D1C5E44-5C59-4C77-82A5-0D39D8686BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6D1C5E44-5C59-4C77-82A5-0D39D8686BF6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A63E49A8-493F-4C08-84A0-010F7B92B582}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A63E49A8-493F-4C08-84A0-010F7B92B582}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A63E49A8-493F-4C08-84A0-010F7B92B582}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A63E49A8-493F-4C08-84A0-010F7B92B582}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

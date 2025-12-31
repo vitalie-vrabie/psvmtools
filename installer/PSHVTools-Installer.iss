@@ -36,8 +36,8 @@ SolidCompression=yes
 WizardStyle=modern
 WizardSizePercent=100,100
 DisableWelcomePage=no
-LicenseFile=LICENSE.txt
-InfoBeforeFile=QUICKSTART.md
+LicenseFile=installer\LICENSE.txt
+InfoBeforeFile=installer\QUICKSTART.md
 
 ; Privileges and compatibility
 PrivilegesRequired=admin
@@ -67,10 +67,10 @@ english.ModuleInstall=Installing PowerShell module...
 
 [Files]
 ; Module files - install to PowerShell modules directory
-Source: "hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
-Source: "pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
-Source: "pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
-Source: "fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "scripts\hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "scripts\pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "scripts\pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "scripts\fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme

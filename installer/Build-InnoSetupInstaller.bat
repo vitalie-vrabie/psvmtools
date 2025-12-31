@@ -11,9 +11,12 @@ echo   Creates Professional GUI Wizard EXE
 echo ========================================
 echo.
 
-REM Get script directory
+REM Get script directory (installer folder)
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+
+REM Repo root is parent of installer folder
+for %%I in ("%SCRIPT_DIR%\..") do set "REPO_ROOT=%%~fI"
 
 REM Check for Inno Setup
 echo Checking for Inno Setup...
@@ -63,35 +66,35 @@ echo Validating files...
 
 set "MISSING_FILES="
 
-if not exist "%SCRIPT_DIR%\hvbak.ps1" (
-    echo   [MISSING] hvbak.ps1
+if not exist "%REPO_ROOT%\scripts\hvbak.ps1" (
+    echo   [MISSING] scripts\hvbak.ps1
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] hvbak.ps1
+    echo   [OK] scripts\hvbak.ps1
 )
 
-if not exist "%SCRIPT_DIR%\pshvtools.psm1" (
-    echo   [MISSING] pshvtools.psm1
+if not exist "%REPO_ROOT%\scripts\pshvtools.psm1" (
+    echo   [MISSING] scripts\pshvtools.psm1
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] pshvtools.psm1
+    echo   [OK] scripts\pshvtools.psm1
 )
 
-if not exist "%SCRIPT_DIR%\pshvtools.psd1" (
-    echo   [MISSING] pshvtools.psd1
+if not exist "%REPO_ROOT%\scripts\pshvtools.psd1" (
+    echo   [MISSING] scripts\pshvtools.psd1
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] pshvtools.psd1
+    echo   [OK] scripts\pshvtools.psd1
 )
 
-if not exist "%SCRIPT_DIR%\fix-vhd-acl.ps1" (
-    echo   [MISSING] fix-vhd-acl.ps1
+if not exist "%REPO_ROOT%\scripts\fix-vhd-acl.ps1" (
+    echo   [MISSING] scripts\fix-vhd-acl.ps1
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] fix-vhd-acl.ps1
+    echo   [OK] scripts\fix-vhd-acl.ps1
 )
 
-if not exist "%SCRIPT_DIR%\QUICKSTART.md" (
+if not exist "%REPO_ROOT%\QUICKSTART.md" (
     echo   [MISSING] QUICKSTART.md
     set "MISSING_FILES=1"
 ) else (
@@ -99,13 +102,13 @@ if not exist "%SCRIPT_DIR%\QUICKSTART.md" (
 )
 
 if not exist "%SCRIPT_DIR%\PSHVTools-Installer.iss" (
-    echo   [MISSING] PSHVTools-Installer.iss
+    echo   [MISSING] installer\PSHVTools-Installer.iss
     set "MISSING_FILES=1"
 ) else (
-    echo   [OK] PSHVTools-Installer.iss
+    echo   [OK] installer\PSHVTools-Installer.iss
 )
 
-if not exist "%SCRIPT_DIR%\LICENSE.txt" (
+if not exist "%REPO_ROOT%\LICENSE.txt" (
     echo   [MISSING] LICENSE.txt
     set "MISSING_FILES=1"
 ) else (
@@ -118,14 +121,14 @@ if defined MISSING_FILES (
     exit /b 1
 )
 
-REM Create dist directory if it doesn't exist
-if not exist "%SCRIPT_DIR%\dist" (
-    mkdir "%SCRIPT_DIR%\dist"
+REM Create dist directory (at repo root) if it doesn't exist
+if not exist "%REPO_ROOT%\dist" (
+    mkdir "%REPO_ROOT%\dist"
     echo Created dist directory
 )
 
 REM Check for icon file (optional)
-if not exist "%SCRIPT_DIR%\icon.ico" (
+if not exist "%REPO_ROOT%\icon.ico" (
     echo.
     echo [NOTE] icon.ico not found, will use default Inno Setup icon
     echo [NOTE] You can add a custom icon.ico file to customize the installer
@@ -153,7 +156,7 @@ echo ========================================
 REM Keep this in sync with #define MyAppVersion in PSHVTools-Installer.iss
 set "APP_VERSION=1.0.1"
 
-set "EXE_FILE=%SCRIPT_DIR%\dist\PSHVTools-Setup-%APP_VERSION%.exe"
+set "EXE_FILE=%REPO_ROOT%\dist\PSHVTools-Setup-%APP_VERSION%.exe"
 
 if exist "%EXE_FILE%" (
     for %%A in ("%EXE_FILE%") do set "FILE_SIZE=%%~zA"

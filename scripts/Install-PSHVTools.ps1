@@ -36,11 +36,17 @@ $SourceFiles = @(
     'fix-vhd-acl.ps1'
 )
 
+# Base directory for source files:
+# - .ps1 scripts, module manifest (.psd1), and module implementation (.psm1)
+#   live next to this installer script in the scripts folder
+$ScriptsSourceDir = $ScriptDir
+
 # Verify source files exist
 Write-Host "Checking source files..." -ForegroundColor Yellow
 $MissingFiles = @()
 foreach ($file in $SourceFiles) {
-    $FilePath = Join-Path $ScriptDir $file
+    $FilePath = Join-Path $ScriptsSourceDir $file
+
     if (-not (Test-Path $FilePath)) {
         $MissingFiles += $file
         Write-Host "  [MISSING] $file" -ForegroundColor Red
@@ -73,7 +79,7 @@ Write-Host ""
 Write-Host "Copying module files..." -ForegroundColor Yellow
 try {
     foreach ($file in $SourceFiles) {
-        $SourcePath = Join-Path $ScriptDir $file
+        $SourcePath = Join-Path $ScriptsSourceDir $file
         $DestPath = Join-Path $InstallPath $file
         Copy-Item -Path $SourcePath -Destination $DestPath -Force
         Write-Host "  [OK] Copied $file" -ForegroundColor Green
