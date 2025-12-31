@@ -26,7 +26,7 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 
 ; Output settings
-OutputDir=dist
+OutputDir=..\dist
 OutputBaseFilename=PSHVTools-Setup-{#MyAppVersion}
 ; SetupIconFile=icon.ico (commented out - optional custom icon)
 Compression=lzma2/max
@@ -36,8 +36,8 @@ SolidCompression=yes
 WizardStyle=modern
 WizardSizePercent=100,100
 DisableWelcomePage=no
-LicenseFile=installer\LICENSE.txt
-InfoBeforeFile=installer\QUICKSTART.md
+LicenseFile=..\LICENSE.txt
+InfoBeforeFile=..\QUICKSTART.md
 
 ; Privileges and compatibility
 PrivilegesRequired=admin
@@ -67,18 +67,18 @@ english.ModuleInstall=Installing PowerShell module...
 
 [Files]
 ; Module files - install to PowerShell modules directory
-Source: "scripts\hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
-Source: "scripts\pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
-Source: "scripts\pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
-Source: "scripts\fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
-Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
-Source: "QUICKSTART.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "BUILD_GUIDE.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "PROJECT_SUMMARY.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "..\QUICKSTART.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\BUILD_GUIDE.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\PROJECT_SUMMARY.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Start Menu shortcuts
