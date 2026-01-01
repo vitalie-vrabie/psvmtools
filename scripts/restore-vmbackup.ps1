@@ -1,3 +1,5 @@
+File: scripts\restore-vmbackup.ps1
+````````powershell
 <#
 .SYNOPSIS
   Restores a Hyper-V VM from a hvbak 7z backup archive.
@@ -338,15 +340,33 @@ function Get-ImportCandidates {
 
     $candidates = New-Object System.Collections.Generic.List[string]
 
-    # 1) As-is
     if ($ExportRoot) { $candidates.Add($ExportRoot) }
 
-    # 2) If export root contains "Virtual Machines" folder, keep it as candidate (some layouts work with root)
     $vmFolder = Join-Path -Path $ExportRoot -ChildPath 'Virtual Machines'
-    if (Test-Path -LiteralPath $vmFolder) { $candidates.Add($vmFolder) }
+    if (Test-Path -LiteralPath $vmFolder) {
+        $candidates.Add($vmFolder)
 
-    # 3) If ExportRoot itself is a dated staging dir containing a per-VM folder,
-    # support nested export roots like: <staging>\<vmname>\Virtual Machines\*.vmcx
+        # Some exports nest config under a GUID folder inside "Virtual Machines".
+        try {
+            $subDirs = Get-ChildItem -LiteralPath $vmFolder -Directory -ErrorAction SilentlyContinue
+            foreach ($d in $subDirs) {
+                # Candidate: GUID folder itself
+                $candidates.Add($d.FullName)
+
+                # Candidate: vmcx file path(s)
+                $vmcxFiles = Get-ChildItem -LiteralPath $d.FullName -File -Filter '*.vmcx' -ErrorAction SilentlyContinue
+                foreach ($f in $vmcxFiles) {
+                    $candidates.Add($f.FullName)
+                }
+            }
+
+            # Candidate: any vmcx directly under "Virtual Machines"
+            $directVmcx = Get-ChildItem -LiteralPath $vmFolder -File -Filter '*.vmcx' -ErrorAction SilentlyContinue
+            foreach ($f in $directVmcx) { $candidates.Add($f.FullName) }
+        } catch {}
+    }
+
+    # If ExportRoot itself contains VM subfolders, include their common layouts
     try {
         $childVmFolders = Get-ChildItem -LiteralPath $ExportRoot -Directory -ErrorAction SilentlyContinue
         foreach ($d in $childVmFolders) {
@@ -354,6 +374,18 @@ function Get-ImportCandidates {
             if (Test-Path -LiteralPath $nestedVmFolder) {
                 $candidates.Add($d.FullName)
                 $candidates.Add($nestedVmFolder)
+
+                try {
+                    $subDirs = Get-ChildItem -LiteralPath $nestedVmFolder -Directory -ErrorAction SilentlyContinue
+                    foreach ($sd in $subDirs) {
+                        $candidates.Add($sd.FullName)
+                        $vmcxFiles = Get-ChildItem -LiteralPath $sd.FullName -File -Filter '*.vmcx' -ErrorAction SilentlyContinue
+                        foreach ($f in $vmcxFiles) { $candidates.Add($f.FullName) }
+                    }
+
+                    $directVmcx = Get-ChildItem -LiteralPath $nestedVmFolder -File -Filter '*.vmcx' -ErrorAction SilentlyContinue
+                    foreach ($f in $directVmcx) { $candidates.Add($f.FullName) }
+                } catch {}
             }
         }
     } catch {}
@@ -377,8 +409,7 @@ function Test-ImportPath {
     param([Parameter(Mandatory = $true)][string]$Path)
 
     try {
-        # Compare-VM validates the path layout without importing.
-        # It returns a VMCompatibilityReport when the path is recognized.
+        # Compare-VM can validate both folder and .vmcx paths.
         $null = Compare-VM -Path $Path -ErrorAction Stop
         return $true
     } catch {
