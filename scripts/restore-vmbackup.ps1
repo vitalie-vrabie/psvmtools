@@ -358,6 +358,17 @@ try {
     Write-Log "Using backup: $BackupPath"
 
     $leaf = Split-Path -Path $BackupPath -Leaf
+
+    # Determine target VM name early to avoid expensive extraction if it would be blocked by an existing VM.
+    $targetName = $VmName
+    if ([string]::IsNullOrWhiteSpace($targetName)) {
+        $targetName = ($leaf -split '_\d{14}\.7z$')[0]
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($targetName)) {
+        Remove-ExistingVmIfNeeded -TargetName $targetName -Force:$Force
+    }
+
     $restoreId = (Get-Date).ToString('yyyyMMddHHmmss')
     $stagingDir = Join-Path -Path $StagingRoot -ChildPath ("restore_{0}_{1}" -f ($leaf -replace '\.7z$',''), $restoreId)
 
@@ -369,17 +380,6 @@ try {
 
     $exportRoot = Find-ExportRoot -StagingDir $stagingDir
     Write-Log "Detected export root: $exportRoot"
-
-    # Determine imported VM name from export (best-effort). If multiple, Import-VM returns the actual object.
-    # For collision checks, use -VmName if provided, else try to infer from archive name.
-    $targetName = $VmName
-    if (-not $targetName) {
-        $targetName = ($leaf -split '_\d{14}\.7z$')[0]
-    }
-
-    if ($targetName) {
-        Remove-ExistingVmIfNeeded -TargetName $targetName -Force:$Force
-    }
 
     $vm = Import-FromExport -ExportRoot $exportRoot -ImportMode $ImportMode -VmStorageRoot $VmStorageRoot
     if (-not $vm) {
