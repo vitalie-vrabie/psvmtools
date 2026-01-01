@@ -105,6 +105,36 @@ if ($PSBoundParameters.Count -eq 0) {
     return
 }
 
+function Resolve-BackupPathInput {
+    param(
+        [Parameter(Mandatory = $true)][string]$InputPath
+    )
+
+    $resolved = $null
+    try { $resolved = (Resolve-Path -LiteralPath $InputPath -ErrorAction Stop).Path } catch {}
+
+    if (-not $resolved) {
+        throw "BackupPath not found: $InputPath"
+    }
+
+    $item = Get-Item -LiteralPath $resolved -ErrorAction Stop
+
+    if ($item.PSIsContainer) {
+        $latestArchive = Get-ChildItem -LiteralPath $item.FullName -Recurse -File -Filter '*.7z' -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+
+        if (-not $latestArchive) {
+            throw "BackupPath points to a folder but no .7z archives were found under: $($item.FullName)"
+        }
+
+        Write-Log "BackupPath is a folder. Selected newest archive: $($latestArchive.FullName)"
+        return $latestArchive.FullName
+    }
+
+    return $item.FullName
+}
+
 # Implicitly use -Latest when VmName is provided and BackupPath is not.
 $useLatest = $Latest -or (-not [string]::IsNullOrWhiteSpace($VmName) -and [string]::IsNullOrWhiteSpace($BackupPath))
 
@@ -324,7 +354,7 @@ try {
         throw "BackupPath is required. Specify -BackupPath, or specify -VmName to restore the latest backup."
     }
 
-    $BackupPath = (Resolve-Path -LiteralPath $BackupPath).Path
+    $BackupPath = Resolve-BackupPathInput -InputPath $BackupPath
     Write-Log "Using backup: $BackupPath"
 
     $leaf = Split-Path -Path $BackupPath -Leaf
