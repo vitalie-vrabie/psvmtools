@@ -154,7 +154,21 @@ echo   EXE Installer Build Successful!
 echo ========================================
 
 REM Keep this in sync with #define MyAppVersion in PSHVTools-Installer.iss
-set "APP_VERSION=1.0.1"
+REM (Auto-detect from the installer script to avoid hardcoded drift)
+set "APP_VERSION="
+
+for /f "usebackq tokens=3" %%V in (`findstr /r /c:"^#define MyAppVersion \"[0-9][0-9.]*\"" "%SCRIPT_DIR%\PSHVTools-Installer.iss"`) do (
+    set "APP_VERSION=%%~V"
+)
+
+REM Trim surrounding quotes if present
+set "APP_VERSION=%APP_VERSION:"=%"
+
+if not defined APP_VERSION (
+    echo.
+    echo [WARNING] Unable to detect MyAppVersion from PSHVTools-Installer.iss. Falling back to 1.0.2
+    set "APP_VERSION=1.0.2"
+)
 
 set "EXE_FILE=%REPO_ROOT%\dist\PSHVTools-Setup-%APP_VERSION%.exe"
 
@@ -177,6 +191,10 @@ if exist "%EXE_FILE%" (
     echo   - Start Menu shortcuts
     echo   - Uninstaller included
     echo   - Add/Remove Programs integration
+) else (
+    echo.
+    echo [WARNING] Build succeeded but expected output was not found:
+    echo   %EXE_FILE%
 )
 
 echo.
