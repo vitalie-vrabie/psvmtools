@@ -145,7 +145,7 @@ if ($useLatest -and [string]::IsNullOrWhiteSpace($VmName)) {
 function Write-Log {
     param([Parameter(Mandatory = $true)][string]$Message)
     $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-    Write-Output "$ts  $Message"
+    Write-Host "$ts  $Message"
 }
 
 function Get-SevenZipPath {
