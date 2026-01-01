@@ -106,6 +106,10 @@ if ($PSBoundParameters.Count -eq 0) {
     return
 }
 
+if ($Latest -and [string]::IsNullOrWhiteSpace($VmName)) {
+    throw "VmName is required when using -Latest. Example: hvrestore -VmName 'MyVM' -Latest"
+}
+
 function Write-Log {
     param([Parameter(Mandatory = $true)][string]$Message)
     $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')

@@ -281,6 +281,11 @@ function Restore-VMBackup {
         return
     }
 
+    if ($Latest -and [string]::IsNullOrWhiteSpace($VmName)) {
+        Write-Error "VmName is required when using -Latest. Example: hvrestore -VmName 'MyVM' -Latest"
+        return
+    }
+
     $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath "restore-vmbackup.ps1"
     if (-not (Test-Path $scriptPath)) {
         Write-Error "restore-vmbackup.ps1 not found at: $scriptPath"
