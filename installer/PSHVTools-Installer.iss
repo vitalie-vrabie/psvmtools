@@ -254,6 +254,27 @@ begin
   end;
 end;
 
+function VerifyInstalledModule(): Boolean;
+var
+  ResultCode: Integer;
+  PsArgs: String;
+  InstallPath: String;
+begin
+  InstallPath := ExpandConstant('{commonpf64}\\WindowsPowerShell\\Modules\\pshvtools');
+
+  PsArgs :=
+    '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ' +
+    '"$ErrorActionPreference=\"Stop\"; ' +
+    '$p=\"' + InstallPath + '\"; ' +
+    '$files=@(\"pshvtools.psd1\",\"pshvtools.psm1\",\"hvbak.ps1\",\"fix-vhd-acl.ps1\",\"restore-vmbackup.ps1\"); ' +
+    'foreach($f in $files){ $fp=Join-Path $p $f; if(-not (Test-Path -LiteralPath $fp)){ throw \"Missing file: $fp\" } }; ' +
+    '$null=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $p \"restore-vmbackup.ps1\"), [ref]$null, [ref]$null); ' +
+    'Import-Module pshvtools -Force -ErrorAction Stop; exit 0"';
+
+  Result := Exec('powershell.exe', PsArgs, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := Result and (ResultCode = 0);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
@@ -264,6 +285,16 @@ begin
     Exec('powershell.exe',
       '-NoProfile -NonInteractive -Command "Import-Module pshvtools -ErrorAction SilentlyContinue"',
       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+    // Harden: fail fast if install is corrupted/partial
+    if not VerifyInstalledModule() then
+    begin
+      MsgBox('PSHVTools installation verification failed.' + #13#10 +
+        'The module files may be incomplete or corrupted.' + #13#10 + #13#10 +
+        'Try re-running the installer as Administrator, or disable antivirus temporarily during install.',
+        mbError, MB_OK);
+      Abort;
+    end;
   end;
 end;
 
