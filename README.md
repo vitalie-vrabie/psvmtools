@@ -3,7 +3,7 @@
 **Version:** 1.0.1  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** pshvtools  
-**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`  
+**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, `Restore-VMBackup`, and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`, `hvrestore`  
 **License:** MIT
 
 ---
@@ -22,6 +22,7 @@ PSHVTools is a professional PowerShell module for backing up and managing Hyper-
 - ??? Low-priority compression (Idle CPU class)
 - ?? VHD/VHDX permission repair utility
 - ?? Improved error diagnostics
+-  Restore/import from `hvbak` `.7z` backups (with optional network switch mapping)
 
 ---
 
@@ -117,6 +118,22 @@ fix-vhd-acl -VhdFolder "D:\Restores"
 
 # Fix VHDs from CSV list
 fix-vhd-acl -VhdListCsv "C:\temp\vhds.csv"
+```
+
+### Restoring VMs
+
+```powershell
+# Restore the latest backup for a VM
+hvrestore -VmName "MyVM" -Latest
+
+# Restore all VMs from backup
+hvrestore -VmName "*"
+
+# Restore VM and start after
+hvrestore -VmName "MyVM" -Latest -StartAfterRestore:$true
+
+# Restore VM with new ID (recommended)
+hvrestore -VmName "MyVM" -Latest -ImportMode Copy
 ```
 
 ---
@@ -254,6 +271,29 @@ fix-vhd-acl
 Repair-VhdAcl -VhdFolder "D:\Restores"
 ```
 
+### Restore-VMBackup (alias: hvrestore)
+Restores a VM from an `hvbak` `.7z` archive by extracting to a staging folder and importing into Hyper-V.
+
+**Parameters (common):**
+- `BackupPath` - Path to a `.7z` archive
+- `VmName`, `BackupRoot`, `Latest` - Restore most recent archive for a VM
+- `ImportMode` - `Copy` (default), `Register`, or `Restore`
+- `VmStorageRoot` - Destination root for VM files in `Copy` mode
+- `VSwitchName` - Connect adapters to a switch after import
+- `NoNetwork` - Disconnect adapters after import
+- `Force` - Remove existing VM with the same name before import
+- `StartAfterRestore` - Start the VM after restore
+
+**Examples:**
+```powershell
+# Restore a specific archive (recommended: Copy + GenerateNewId)
+hvrestore -BackupPath "D:\hvbak-archives\20260101\MyVM_20260101123456.7z" `
+  -ImportMode Copy -VmStorageRoot "D:\Hyper-V" -VSwitchName "vSwitch" -StartAfterRestore
+
+# Restore the latest backup for a VM
+Restore-VMBackup -VmName "MyVM" -BackupRoot "D:\hvbak-archives" -Latest -NoNetwork -Force
+```
+
 ---
 
 ## ?? Quick Reference
@@ -296,12 +336,16 @@ Get-Command -Module pshvtools
 # Backup VMs
 hvbak -NamePattern "*"
 
+# Restore from backup
+hvrestore -VmName "MyVM" -Latest
+
 # Fix VHD permissions
 fix-vhd-acl -WhatIf
 
 # Get detailed help
 Get-Help Invoke-VMBackup -Full
 Get-Help Repair-VhdAcl -Full
+Get-Help Restore-VMBackup -Full
 ```
 
 ---
@@ -346,7 +390,7 @@ Get-Help Repair-VhdAcl -Full
 
 MIT License - See [LICENSE.txt](LICENSE.txt) for full details
 
-Copyright (c) 2025 Vitalie Vrabie
+Copyright (c) 2026 Vitalie Vrabie
 
 ---
 

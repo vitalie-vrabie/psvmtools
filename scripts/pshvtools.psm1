@@ -219,10 +219,95 @@ function Repair-VhdAcl {
     & $scriptPath @params
 }
 
+function Restore-VMBackup {
+    <#
+    .SYNOPSIS
+      Restore a Hyper-V VM from a hvbak .7z backup.
+
+    .DESCRIPTION
+      Wrapper around restore-vmbackup.ps1.
+      Use -BackupPath to restore a specific archive, or -VmName/-Latest to restore the most recent archive.
+
+    .EXAMPLE
+      Restore-VMBackup -BackupPath "D:\hvbak-archives\20260101\MyVM_20260101123456.7z" -ImportMode Copy -VmStorageRoot "D:\Hyper-V"
+
+    .EXAMPLE
+      hvrestore -VmName "MyVM" -BackupRoot "D:\hvbak-archives" -Latest -VSwitchName "vSwitch" -StartAfterRestore
+    #>
+
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param(
+        [Parameter(Mandatory = $false, ParameterSetName = 'Path')]
+        [string]$BackupPath,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Latest')]
+        [string]$VmName,
+
+        [Parameter(Mandatory = $false, ParameterSetName = 'Latest')]
+        [string]$BackupRoot = "$env:USERPROFILE\hvbak-archives",
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Latest')]
+        [switch]$Latest,
+
+        [Parameter(Mandatory = $false)]
+        [string]$StagingRoot = "$env:TEMP\hvbak-restore",
+
+        [Parameter(Mandatory = $false)]
+        [string]$VmStorageRoot = "$env:ProgramData\Microsoft\Windows\Hyper-V",
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Copy', 'Register', 'Restore')]
+        [string]$ImportMode = 'Copy',
+
+        [Parameter(Mandatory = $false)]
+        [string]$VSwitchName,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$NoNetwork,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$StartAfterRestore,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$KeepStaging
+    )
+
+    $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath "restore-vmbackup.ps1"
+    if (-not (Test-Path $scriptPath)) {
+        Write-Error "restore-vmbackup.ps1 not found at: $scriptPath"
+        return
+    }
+
+    $params = @{
+        StagingRoot = $StagingRoot
+        VmStorageRoot = $VmStorageRoot
+        ImportMode = $ImportMode
+        VSwitchName = $VSwitchName
+        NoNetwork = $NoNetwork
+        Force = $Force
+        StartAfterRestore = $StartAfterRestore
+        KeepStaging = $KeepStaging
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq 'Latest') {
+        $params.VmName = $VmName
+        $params.BackupRoot = $BackupRoot
+        $params.Latest = $true
+    } else {
+        $params.BackupPath = $BackupPath
+    }
+
+    & $scriptPath @params
+}
+
 # Create aliases for shorter commands
 New-Alias -Name hvbak -Value Invoke-VMBackup -Force
 New-Alias -Name hv-bak -Value Invoke-VMBackup -Force
 New-Alias -Name fix-vhd-acl -Value Repair-VhdAcl -Force
+New-Alias -Name hvrestore -Value Restore-VMBackup -Force
 
 # Export the functions and aliases
-Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl -Alias hvbak, hv-bak, fix-vhd-acl
+Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl, Restore-VMBackup -Alias hvbak, hv-bak, fix-vhd-acl, hvrestore

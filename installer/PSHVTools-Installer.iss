@@ -18,7 +18,7 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 AppComments={#MyAppDescription}
-AppCopyright=Copyright (C) 2025 {#MyAppPublisher}
+AppCopyright=Copyright (C) 2026 {#MyAppPublisher}
 
 ; Installation directories
 DefaultDirName={autopf}\{#MyAppName}

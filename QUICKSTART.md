@@ -21,6 +21,10 @@ After installation, the **pshvtools** module provides:
 - `Repair-VhdAcl` - Full cmdlet name
 - `fix-vhd-acl` - Short alias
 
+### Restore Commands
+- `Restore-VMBackup` - Full cmdlet name
+- `hvrestore` - Short alias
+
 All commands work identically!
 
 ## ?? Quick Start
@@ -50,6 +54,11 @@ Get-Help hvbak -Examples
 fix-vhd-acl
 Get-Help Repair-VhdAcl -Full
 Get-Help fix-vhd-acl -Examples
+
+# Display help for restore
+hvrestore
+Get-Help Restore-VMBackup -Full
+Get-Help hvrestore -Examples
 ```
 
 ## ?? Backing Up VMs
@@ -158,6 +167,36 @@ The `fix-vhd-acl` command:
 - When VMs can't start due to permission errors
 - After moving VHDs to different folders
 
+## ?? Restoring VMs
+
+### Basic Usage
+
+```powershell
+# Restore from a specific archive
+hvrestore -BackupPath "D:\backups\20260101\MyVM_20260101123456.7z" -ImportMode Copy -VmStorageRoot "D:\Hyper-V"
+
+# Restore latest backup for a VM
+hvrestore -VmName "MyVM" -BackupRoot "D:\backups" -Latest
+```
+
+### Common Options
+
+```powershell
+# Restore and connect networking
+hvrestore -VmName "MyVM" -BackupRoot "D:\backups" -Latest -VSwitchName "vSwitch" -StartAfterRestore
+
+# Restore for investigation / avoid network collisions
+hvrestore -VmName "MyVM" -BackupRoot "D:\backups" -Latest -NoNetwork
+
+# Replace an existing VM with the same name
+hvrestore -VmName "MyVM" -BackupRoot "D:\backups" -Latest -Force
+```
+
+**ImportMode notes:**
+- `Copy` (default): safest for test restores; uses new VM ID and copies files to `VmStorageRoot`.
+- `Register`: registers the extracted VM in-place (no copy).
+- `Restore`: attempts an in-place restore keeping the original VM ID (may conflict if VM already exists).
+
 ## ?? Testing the Installation
 
 ```powershell
@@ -171,15 +210,12 @@ Import-Module pshvtools
 Get-Command -Module pshvtools
 
 # Check aliases
-Get-Alias hvbak, hv-bak, fix-vhd-acl
+Get-Alias hvbak, hv-bak, fix-vhd-acl, hvrestore
 
 # Display help for each command
 hvbak
 fix-vhd-acl
-
-# Test with -WhatIf
-hvbak -NamePattern "*" -WhatIf  # Oops! hvbak doesn't support -WhatIf
-fix-vhd-acl -WhatIf  # This one does!
+hvrestore
 ```
 
 ## ?? Understanding Progress

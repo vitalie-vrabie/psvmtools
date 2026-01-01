@@ -208,7 +208,7 @@ powershell -ExecutionPolicy Bypass -File Install.ps1 -Uninstall
 
 MIT License - See [LICENSE.txt](LICENSE.txt) for details
 
-Copyright (c) 2025 Vitalie Vrabie
+Copyright (c) 2026 Vitalie Vrabie
 
 ---
 
