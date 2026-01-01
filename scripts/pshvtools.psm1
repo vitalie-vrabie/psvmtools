@@ -275,6 +275,12 @@ function Restore-VMBackup {
         [switch]$KeepStaging
     )
 
+    # Show help and return if no parameters are provided
+    if ($PSBoundParameters.Count -eq 0) {
+        Get-Help Restore-VMBackup -Full
+        return
+    }
+
     $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath "restore-vmbackup.ps1"
     if (-not (Test-Path $scriptPath)) {
         Write-Error "restore-vmbackup.ps1 not found at: $scriptPath"

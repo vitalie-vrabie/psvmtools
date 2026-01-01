@@ -101,6 +101,12 @@ param(
 
 Set-StrictMode -Version Latest
 
+# Display help if no parameters provided
+if ($PSBoundParameters.Count -eq 0) {
+    Get-Help $MyInvocation.MyCommand.Path -Full
+    return
+}
+
 function Write-Log {
     param([Parameter(Mandatory = $true)][string]$Message)
     $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
