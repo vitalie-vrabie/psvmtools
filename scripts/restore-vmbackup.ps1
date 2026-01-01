@@ -57,7 +57,6 @@
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
     [Parameter(Mandatory = $false, ParameterSetName = 'Path')]
-    [ValidateNotNullOrEmpty()]
     [string]$BackupPath,
 
     [Parameter(Mandatory = $true, ParameterSetName = 'Latest')]
