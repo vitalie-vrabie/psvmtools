@@ -287,26 +287,29 @@ function Restore-VMBackup {
         return
     }
 
-    $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath "restore-vmbackup.ps1"
-    if (-not (Test-Path $scriptPath)) {
+    $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath 'restore-vmbackup.ps1'
+    if (-not (Test-Path -LiteralPath $scriptPath)) {
         Write-Error "restore-vmbackup.ps1 not found at: $scriptPath"
         return
     }
 
-    $params = @{
-        BackupPath = $BackupPath
-        VmName = $VmName
-        BackupRoot = $BackupRoot
-        Latest = $useLatest
-        StagingRoot = $StagingRoot
-        VmStorageRoot = $VmStorageRoot
-        ImportMode = $ImportMode
-        VSwitchName = $VSwitchName
-        NoNetwork = $NoNetwork
-        Force = $Force
-        StartAfterRestore = $StartAfterRestore
-        KeepStaging = $KeepStaging
-    }
+    # Only pass parameters that were explicitly provided (and computed Latest)
+    $params = @{}
+
+    if ($PSBoundParameters.ContainsKey('BackupPath')) { $params.BackupPath = $BackupPath }
+    if ($PSBoundParameters.ContainsKey('VmName')) { $params.VmName = $VmName }
+    if ($PSBoundParameters.ContainsKey('BackupRoot')) { $params.BackupRoot = $BackupRoot }
+    if ($useLatest) { $params.Latest = $true }
+
+    if ($PSBoundParameters.ContainsKey('StagingRoot')) { $params.StagingRoot = $StagingRoot }
+    if ($PSBoundParameters.ContainsKey('VmStorageRoot')) { $params.VmStorageRoot = $VmStorageRoot }
+    if ($PSBoundParameters.ContainsKey('ImportMode')) { $params.ImportMode = $ImportMode }
+    if ($PSBoundParameters.ContainsKey('VSwitchName')) { $params.VSwitchName = $VSwitchName }
+
+    if ($NoNetwork.IsPresent) { $params.NoNetwork = $true }
+    if ($Force.IsPresent) { $params.Force = $true }
+    if ($StartAfterRestore.IsPresent) { $params.StartAfterRestore = $true }
+    if ($KeepStaging.IsPresent) { $params.KeepStaging = $true }
 
     & $scriptPath @params
 }
