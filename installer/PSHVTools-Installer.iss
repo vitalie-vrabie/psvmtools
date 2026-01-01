@@ -266,7 +266,9 @@ begin
     '$p=\"' + InstallPath + '\"; ' +
     '$files=@(\"pshvtools.psd1\",\"pshvtools.psm1\",\"hvbak.ps1\",\"fix-vhd-acl.ps1\",\"restore-vmbackup.ps1\"); ' +
     'foreach($f in $files){ $fp=Join-Path $p $f; if(-not (Test-Path -LiteralPath $fp)){ throw (\"Missing file: {0}\" -f $fp) } }; ' +
-    '$null=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $p \"restore-vmbackup.ps1\"), [ref]$null, [ref]$null); ' +
+    '$tokens=$null; $errors=$null; ' +
+    '$null=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $p \"restore-vmbackup.ps1\"), [ref]$tokens, [ref]$errors); ' +
+    'if($errors -and $errors.Count -gt 0){ $msg=($errors | Format-List * | Out-String); throw (\"restore-vmbackup.ps1 parse errors:`n{0}\" -f $msg) }; ' +
     'Import-Module pshvtools -Force -ErrorAction Stop; exit 0"';
 
   Result := Exec('powershell.exe', PsArgs, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
@@ -276,6 +278,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
+  ModulePath: String;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -287,9 +290,15 @@ begin
     // Harden: fail fast if install is corrupted/partial
     if not VerifyInstalledModule() then
     begin
+      ModulePath := ExpandConstant('{commonpf64}\\WindowsPowerShell\\Modules\\pshvtools');
+
       MsgBox('PSHVTools installation verification failed.' + #13#10 +
-        'The module files may be incomplete or corrupted.' + #13#10 + #13#10 +
-        'Try re-running the installer as Administrator, or disable antivirus temporarily during install.',
+        'To see the exact reason, run this in an elevated PowerShell:' + #13#10 + #13#10 +
+        '  $p=""' + ModulePath + '""' + #13#10 +
+        '  $tokens=$null; $errors=$null' + #13#10 +
+        '  [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $p ""restore-vmbackup.ps1""), [ref]$tokens, [ref]$errors) | Out-Null' + #13#10 +
+        '  $errors | Format-List *' + #13#10 + #13#10 +
+        'Common cause: the installed restore-vmbackup.ps1 was modified by another process (AV/EDR) or partially written.',
         mbError, MB_OK);
       Abort;
     end;
