@@ -141,9 +141,6 @@ function Repair-VhdAcl {
       
       Use -WhatIf to preview actions without making changes.
 
-    .PARAMETER WhatIf
-      Preview actions without making changes.
-
     .PARAMETER VhdFolder
       Path to folder containing VHD/VHDX files to fix recursively.
 
@@ -175,11 +172,8 @@ function Repair-VhdAcl {
       - Available as 'Repair-VhdAcl' and 'fix-vhd-acl' commands
     #>
 
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
-        [Parameter(Mandatory = $false)]
-        [switch]$WhatIf,
-
         [Parameter(Mandatory = $false)]
         [string]$VhdFolder,
 
@@ -203,7 +197,8 @@ function Repair-VhdAcl {
         LogFile = $LogFile
     }
 
-    if ($WhatIf) {
+    # Forward -WhatIf from the built-in common parameter
+    if ($PSBoundParameters.ContainsKey('WhatIf')) {
         $params.WhatIf = $true
     }
 
