@@ -12,6 +12,21 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### Fixed
 
+## [1.0.4] - 2026-01-02
+
+### Added
+- Restore: reliable 7-Zip extraction runner with captured output logs.
+- Restore: extraction progress in console during restore.
+
+### Changed
+- Restore: improved cancellation handling and prevented orphaned 7z processes.
+- Restore: when using `-DestinationRoot` with in-place register, extraction can skip per-run staging folder.
+- Logs: 7z extraction log file name is prefixed with VM/archive name.
+
+### Fixed
+- Restore: fixed formatting bug that could throw while writing the 7z header log line.
+- Repair: fixed `Repair-VhdAcl` wrapper `-WhatIf` parameter conflict.
+
 ## [1.0.3] - 2026-01-02
 
 ### Added
