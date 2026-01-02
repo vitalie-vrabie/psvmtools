@@ -1,5 +1,5 @@
-File: scripts\restore-vmbackup.ps1
-````````powershell
+#requires -Version 5.1
+
 <#
 .SYNOPSIS
   Restores a Hyper-V VM from a hvbak 7z backup archive.
