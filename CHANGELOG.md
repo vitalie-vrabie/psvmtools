@@ -9,9 +9,11 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 ### Added
 - `Restore-VMBackup` command (alias: `hvrestore`) to extract and import VMs from `hvbak` `.7z` backups.
 - Include archive file name in 7-Zip progress output for concurrent backup jobs.
+- `Restore-OrphanedVMs` command (alias: `hvrecover`) to scan the Hyper-V `Virtual Machines` config folder for orphaned VMs and re-register them.
 
 ### Changed
 - Retention cleanup explicitly includes the freshly created archive in the per-VM archive list before counting/sorting/deleting.
+- Orphaned VM recovery is non-interactive by default (lowered `ConfirmImpact`; `-Confirm` still supported).
 
 ## [1.0.2] - 2026-03-15
 

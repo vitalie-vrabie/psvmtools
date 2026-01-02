@@ -3,7 +3,7 @@
 ## ?? Installation
 
 ### GUI Installer (Recommended)
-1. Download `PSHVTools-Setup-1.0.1.exe`
+1. Download `PSHVTools-Setup-1.0.2.exe`
 2. Double-click to run
 3. Follow the wizard
 4. Done!
@@ -24,6 +24,10 @@ After installation, the **pshvtools** module provides:
 ### Restore Commands
 - `Restore-VMBackup` - Full cmdlet name
 - `hvrestore` - Short alias
+
+### Recovery Commands
+- `Restore-OrphanedVMs` - Full cmdlet name
+- `hvrecover` - Short alias
 
 All commands work identically!
 
@@ -55,10 +59,15 @@ fix-vhd-acl
 Get-Help Repair-VhdAcl -Full
 Get-Help fix-vhd-acl -Examples
 
-# Display help for restore
+# Display help for restore (from .7z backups)
 hvrestore
 Get-Help Restore-VMBackup -Full
 Get-Help hvrestore -Examples
+
+# Display help for orphaned VM recovery (re-register)
+hvrecover
+Get-Help Restore-OrphanedVMs -Full
+Get-Help hvrecover -Examples
 ```
 
 ## ?? Backing Up VMs
@@ -197,6 +206,21 @@ hvrestore -VmName "MyVM" -BackupRoot "D:\backups" -Latest -Force
 - `Register`: registers the extracted VM in-place (no copy).
 - `Restore`: attempts an in-place restore keeping the original VM ID (may conflict if VM already exists).
 
+## ?? Recovering Orphaned VMs (re-register)
+
+Use this when VM files exist on disk, but the VM is missing from Hyper-V Manager / `Get-VM`.
+
+```powershell
+# Preview what would be registered (default scans ProgramData\...\Hyper-V\Virtual Machines)
+hvrecover -WhatIf
+
+# Scan a custom storage root (auto-detects the 'Virtual Machines' folder if present)
+hvrecover -VmConfigRoot "D:\Hyper-V"
+
+# Include legacy XML configs if you have very old VMs
+hvrecover -VmConfigRoot "D:\Hyper-V" -IncludeXml
+```
+
 ## ?? Testing the Installation
 
 ```powershell
@@ -210,12 +234,13 @@ Import-Module pshvtools
 Get-Command -Module pshvtools
 
 # Check aliases
-Get-Alias hvbak, hv-bak, fix-vhd-acl, hvrestore
+Get-Alias hvbak, hv-bak, fix-vhd-acl, hvrestore, hvrecover
 
 # Display help for each command
 hvbak
 fix-vhd-acl
 hvrestore
+hvrecover
 ```
 
 ## ?? Understanding Progress
@@ -416,10 +441,14 @@ fix-vhd-acl -WhatIf
 # Explore all parameters
 Get-Help Invoke-VMBackup -Parameter *
 Get-Help Repair-VhdAcl -Parameter *
+Get-Help Restore-VMBackup -Parameter *
+Get-Help Restore-OrphanedVMs -Parameter *
 
 # See examples
 Get-Help hvbak -Examples
 Get-Help fix-vhd-acl -Examples
+Get-Help hvrestore -Examples
+Get-Help hvrecover -Examples
 
 # View online help (if available)
 Get-Help Invoke-VMBackup -Online

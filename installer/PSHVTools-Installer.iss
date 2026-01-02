@@ -76,6 +76,7 @@ Source: "..\scripts\restore-orphaned-vms.ps1"; DestDir: "{commonpf64}\WindowsPow
 
 ; Documentation files - install to application directory
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "..\RELEASE_NOTES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\QUICKSTART.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion

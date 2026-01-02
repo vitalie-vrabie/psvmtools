@@ -34,7 +34,8 @@ $SourceFiles = @(
     'pshvtools.psm1',
     'pshvtools.psd1',
     'fix-vhd-acl.ps1',
-    'restore-vmbackup.ps1'
+    'restore-vmbackup.ps1',
+    'restore-orphaned-vms.ps1'
 )
 
 # Base directory for source files:

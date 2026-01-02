@@ -32,12 +32,12 @@ Download from: https://jrsoftware.org/isdl.php
 ### Quick Build
 
 ```cmd
-Build-InnoSetupInstaller.bat
+installer\Build-InnoSetupInstaller.bat
 ```
 
 ### Output
 
-- **File:** `dist\PSHVTools-Setup-1.0.1.exe`
+- **File:** `dist\PSHVTools-Setup-1.0.2.exe`
 - **Type:** Native Windows EXE with GUI wizard
 
 ## Installer Features
@@ -65,17 +65,23 @@ Build-InnoSetupInstaller.bat
 
 ### Interactive Installation
 
-1. Double-click `PSHVTools-Setup-1.0.1.exe`
+1. Double-click `PSHVTools-Setup-1.0.2.exe`
 2. Click "Next" through the wizard
 3. Review system requirements check
 4. Accept license agreement
 5. Click "Install"
 6. Done
 
+After install, available commands include:
+- `hvbak` (backup)
+- `hvrestore` (restore from `.7z` backups)
+- `hvrecover` (recover orphaned VMs by re-registering configs)
+- `fix-vhd-acl` (repair VHD permissions)
+
 ### Silent Installation
 
 ```cmd
-PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
+PSHVTools-Setup-1.0.2.exe /VERYSILENT /NORESTART
 ```
 
 ## Uninstallation
@@ -104,4 +110,4 @@ PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
 |------|-------------|
 | `PSHVTools-Installer.iss` | Inno Setup script |
 | `Build-InnoSetupInstaller.bat` | Build script |
-| `dist\PSHVTools-Setup-1.0.1.exe` | Output installer |
+| `dist\PSHVTools-Setup-1.0.2.exe` | Output installer |

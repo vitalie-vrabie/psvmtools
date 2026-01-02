@@ -1,16 +1,16 @@
 # PSHVTools - PowerShell Hyper-V Tools
 
-**Version:** 1.0.1  
+**Version:** 1.0.2  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** pshvtools  
-**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, `Restore-VMBackup`, and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`, `hvrestore`  
+**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, `Restore-VMBackup`, `Restore-OrphanedVMs` and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`, `hvrestore`, `hvrecover`  
 **License:** MIT
 
 ---
 
 ## ?? What is PSHVTools?
 
-PSHVTools is a professional PowerShell module for backing up and managing Hyper-V virtual machines. It provides cmdlets for automated, parallel VM backups with checkpoint support, 7-Zip compression, and VHD permission repair utilities.
+PSHVTools is a professional PowerShell module for backing up and managing Hyper-V virtual machines. It provides cmdlets for automated, parallel VM backups with checkpoint support, 7-Zip compression, VHD permission repair utilities, and VM recovery tools.
 
 ### Key Features:
 - ? Live VM backups using Production checkpoints
@@ -21,8 +21,8 @@ PSHVTools is a professional PowerShell module for backing up and managing Hyper-
 - ? Graceful cancellation (Ctrl+C support)
 - ??? Low-priority compression (Idle CPU class)
 - ?? VHD/VHDX permission repair utility
-- ?? Improved error diagnostics
--  Restore/import from `hvbak` `.7z` backups (with optional network switch mapping)
+- ?? Restore/import from `hvbak` `.7z` backups (with optional network switch mapping)
+- ?? Recover orphaned VMs by re-registering configs found on disk (scan `Virtual Machines` folder)
 
 ---
 
@@ -30,7 +30,7 @@ PSHVTools is a professional PowerShell module for backing up and managing Hyper-
 
 ### GUI Installer (Recommended for End Users)
 
-1. Download `PSHVTools-Setup-1.0.1.exe`
+1. Download `PSHVTools-Setup-1.0.2.exe`
 2. Double-click to run the installer
 3. Follow the wizard
 4. Done!
@@ -44,12 +44,12 @@ PSHVTools is a professional PowerShell module for backing up and managing Hyper-
 
 **Silent install:**
 ```cmd
-PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
+PSHVTools-Setup-1.0.2.exe /VERYSILENT /NORESTART
 ```
 
 ### PowerShell Installer (Alternative)
 
-1. Download and extract `PSHVTools-Setup-1.0.1.zip`
+1. Download and extract `PSHVTools-Setup-1.0.2.zip`
 2. Right-click `Install.ps1` ? "Run with PowerShell" (as Administrator)
 3. Done!
 
@@ -71,12 +71,17 @@ Import-Module pshvtools
 # Get help
 Get-Help Invoke-VMBackup -Full
 Get-Help Repair-VhdAcl -Full
+Get-Help Restore-VMBackup -Full
+Get-Help Restore-OrphanedVMs -Full
 
 # Backup VMs
 hvbak -NamePattern "*"
 
 # Fix VHD permissions
 fix-vhd-acl -WhatIf
+
+# Recover orphaned VMs
+hvrecover -WhatIf
 ```
 
 **Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)
@@ -120,20 +125,27 @@ fix-vhd-acl -VhdFolder "D:\Restores"
 fix-vhd-acl -VhdListCsv "C:\temp\vhds.csv"
 ```
 
-### Restoring VMs
+### Restoring VMs from Backup
 
 ```powershell
 # Restore the latest backup for a VM
 hvrestore -VmName "MyVM" -Latest
-
-# Restore all VMs from backup
-hvrestore -VmName "*"
 
 # Restore VM and start after
 hvrestore -VmName "MyVM" -Latest -StartAfterRestore:$true
 
 # Restore VM with new ID (recommended)
 hvrestore -VmName "MyVM" -Latest -ImportMode Copy
+```
+
+### Recovering Orphaned VMs (re-register)
+
+```powershell
+# Scan the default Hyper-V config location (Virtual Machines) and show what would be registered
+hvrecover -WhatIf
+
+# Scan a custom storage root (auto-detects the 'Virtual Machines' folder if present)
+hvrecover -VmConfigRoot "D:\Hyper-V" 
 ```
 
 ---
@@ -154,85 +166,13 @@ hvrestore -VmName "MyVM" -Latest -ImportMode Copy
 
 ```cmd
 # Build GUI EXE installer (recommended)
-Build-InnoSetupInstaller.bat
-
-# Build PowerShell installer packages
-Build-Release.bat package
-
-# Clean build outputs
-Build-Release.bat clean
+installer\Build-InnoSetupInstaller.bat
 ```
 
 **Output:**
-- `dist\PSHVTools-Setup-1.0.1.exe` - GUI installer (1.9 MB)
-- `release\PSHVTools-v1.0.0.zip` - Source package
-- `dist\PSHVTools-Setup-1.0.1\` - PowerShell installer
+- `dist\PSHVTools-Setup-1.0.2.exe` - GUI installer
 
 **Full build documentation:** See [BUILD_GUIDE.md](BUILD_GUIDE.md)
-
----
-
-## ?? Repository Structure
-
-```
-PSHVTools/
-??? hvbak.ps1                          # Core backup script
-??? pshvtools.psm1                     # PowerShell module
-??? pshvtools.psd1                     # Module manifest
-??? fix-vhd-acl.ps1                    # VHD permission repair utility
-??? Install-PSHVTools.ps1              # PowerShell installation script
-??? Uninstall-PSHVTools.ps1            # Uninstallation script
-?
-??? PSHVTools.csproj                   # MSBuild project
-??? PSHVTools-Installer.iss            # Inno Setup script
-??? Build-InnoSetupInstaller.bat       # GUI installer builder
-??? Build-Release.bat                  # PowerShell installer builder
-??? Build-Installer.bat                # Installer package builder
-??? Create-InstallerScript.ps1         # Script generator
-?
-??? QUICKSTART.md                      # Quick start guide
-??? BUILD_GUIDE.md                     # Build instructions
-??? PROJECT_SUMMARY.md                 # Project overview
-??? LICENSE.txt                        # MIT license
-?
-??? release/                           # Build output (generated)
-?   ??? PSHVTools-v1.0.0/             # Source package
-?   ??? PSHVTools-v1.0.0.zip          # Source ZIP
-??? dist/                              # Installer output (generated)
-    ??? PSHVTools-Setup-1.0.1.exe     # GUI installer
-    ??? PSHVTools-Setup-1.0.1/        # PowerShell installer
-    ??? PSHVTools-Setup-1.0.1.zip     # PowerShell installer ZIP
-```
-
----
-
-## ?? Distribution
-
-### For GitHub Releases
-
-Distribute:
-1. **PSHVTools-Setup-1.0.1.exe** - GUI installer (recommended for end users)
-
-### For Enterprise IT Departments
-
-**Both installers support:**
-- ? Silent installation
-- ? Administrator privileges verification
-- ? System requirements check
-- ? Clean uninstallation
-- ? No dependencies (except Hyper-V and 7-Zip)
-
-**Installation Commands:**
-```powershell
-# GUI installer (silent)
-PSHVTools-Setup-1.0.1.exe /VERYSILENT /NORESTART
-
-# PowerShell installer (silent)
-.\Install.ps1 -Silent
-
-# Uninstall
-.\Install.ps1 -Uninstall
-```
 
 ---
 
@@ -278,6 +218,26 @@ hvrestore -BackupPath "D:\hvbak-archives\20260101\MyVM_20260101123456.7z" `
 Restore-VMBackup -VmName "MyVM" -BackupRoot "D:\hvbak-archives" -Latest -NoNetwork -Force
 ```
 
+### Restore-OrphanedVMs (alias: hvrecover)
+Scans Hyper-V VM configuration folders (`Virtual Machines`) for VM configs present on disk but not registered, and re-registers them in-place.
+
+**Parameters:**
+- `WhatIf` - Preview changes without applying them
+- `VmConfigRoot` - Path to root folder for VM configs (default: `C:\ProgramData\Microsoft\Windows\Hyper-V\Virtual Machines`)
+- `LogFile` - Log file path (default: `$env:TEMP\RecoverOrphanedVMs.log`)
+
+**Examples:**
+```powershell
+# Preview orphaned VM recovery actions
+hvrecover -WhatIf
+
+# Recover orphaned VMs found in default location
+hvrecover
+
+# Recover orphaned VMs from a custom folder
+hvrecover -VmConfigRoot "D:\Hyper-V\Custom VMs"
+```
+
 ### Repair-VhdAcl (alias: fix-vhd-acl)
 Repairs file permissions on VHD/VHDX files for Hyper-V access.
 
@@ -312,13 +272,10 @@ Build-Release.bat clean
 
 ### Installation Commands
 ```powershell
-# GUI installer (interactive)
-.\PSHVTools-Setup-1.0.1.exe
+# GUI installer (silent)
+PSHVTools-Setup-1.0.2.exe /VERYSILENT /NORESTART
 
-# PowerShell installer (interactive)
-.\Install.ps1
-
-# Silent install
+# PowerShell installer (silent)
 .\Install.ps1 -Silent
 
 # Uninstall
@@ -339,6 +296,9 @@ hvbak -NamePattern "*"
 # Restore from backup
 hvrestore -VmName "MyVM" -Latest
 
+# Recover orphaned VMs
+hvrecover -WhatIf
+
 # Fix VHD permissions
 fix-vhd-acl -WhatIf
 
@@ -346,6 +306,7 @@ fix-vhd-acl -WhatIf
 Get-Help Invoke-VMBackup -Full
 Get-Help Repair-VhdAcl -Full
 Get-Help Restore-VMBackup -Full
+Get-Help Restore-OrphanedVMs -Full
 ```
 
 ---
@@ -397,7 +358,7 @@ Copyright (c) 2026 Vitalie Vrabie
 ## ?? Getting Started
 
 ### For End Users
-1. Download `PSHVTools-Setup-1.0.1.exe`
+1. Download `PSHVTools-Setup-1.0.2.exe`
 2. Run the installer
 3. Import the module: `Import-Module pshvtools`
 4. Start backing up VMs: `hvbak -NamePattern "*"`
@@ -412,5 +373,5 @@ Copyright (c) 2026 Vitalie Vrabie
 
 ## ?? Version History
 
-### Version 1.0.1 (2025)
-- Maintenance release
+### Version 1.0.2 (2026)
+- Restore improvements and added orphaned VM recovery (`Restore-OrphanedVMs` / `hvrecover`).

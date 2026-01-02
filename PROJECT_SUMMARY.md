@@ -2,7 +2,7 @@
 
 ## What We've Built
 
-A PowerShell module + Inno Setup GUI installer for **PSHVTools**  Hyper-V VM backup and restore utilities.
+A PowerShell module + Inno Setup GUI installer for **PSHVTools**  Hyper-V VM backup, restore, and recovery utilities.
 
 ---
 
@@ -14,6 +14,7 @@ A PowerShell module + Inno Setup GUI installer for **PSHVTools**  Hyper-V VM ba
 - `scripts\pshvtools.psd1` - Module manifest
 - `scripts\fix-vhd-acl.ps1` - VHD/VHDX permission repair utility
 - `scripts\restore-vmbackup.ps1` - Restore/import from `hvbak` backups
+- `scripts\restore-orphaned-vms.ps1` - Recover orphaned VMs by scanning `Virtual Machines` and re-registering missing configs
 
 ### 2. Build System (Inno Setup)
 - `installer\PSHVTools-Installer.iss` - Inno Setup installer script
@@ -41,14 +42,15 @@ installer\Build-InnoSetupInstaller.bat
 ```
 
 **Output:**
-- `dist\PSHVTools-Setup-1.0.1.exe`
+- `dist\PSHVTools-Setup-1.0.2.exe`
 
 ---
 
 ## ?? Module Commands
 
 - Backup: `Invoke-VMBackup` (aliases: `hvbak`, `hv-bak`)
-- Restore: `Restore-VMBackup` (alias: `hvrestore`)
+- Restore from backup: `Restore-VMBackup` (alias: `hvrestore`)
+- Recover orphaned VMs: `Restore-OrphanedVMs` (alias: `hvrecover`)
 - VHD ACL repair: `Repair-VhdAcl` (alias: `fix-vhd-acl`)
 
 ---
@@ -63,9 +65,15 @@ installer\Build-InnoSetupInstaller.bat
 2) Install and test:
 ```powershell
 Import-Module pshvtools
+
+# backup
 hvbak -NamePattern "*"
+
 # restore latest for a VM
 hvrestore -VmName "MyVM" -Latest -NoNetwork
+
+# recover orphaned VMs (preview)
+hvrecover -WhatIf
 ```
 
 ---

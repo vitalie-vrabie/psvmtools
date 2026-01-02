@@ -10,10 +10,10 @@
 Prerequisite: **Inno Setup 6**
 
 ```cmd
-Build-InnoSetupInstaller.bat
+installer\Build-InnoSetupInstaller.bat
 ```
 
-**Output:** `dist/PSHVTools-Setup-1.0.0.exe`
+**Output:** `dist\PSHVTools-Setup-1.0.2.exe`
 
 ---
 
@@ -27,7 +27,25 @@ Build-InnoSetupInstaller.bat
 ## Silent Installation (end users)
 
 ```cmd
-PSHVTools-Setup-1.0.0.exe /VERYSILENT /NORESTART
+PSHVTools-Setup-1.0.2.exe /VERYSILENT /NORESTART
+```
+
+---
+
+## Smoke Test After Install
+
+```powershell
+Import-Module pshvtools
+Get-Command -Module pshvtools
+
+# Backup
+hvbak -NamePattern "*"
+
+# Restore (from hvbak archives)
+hvrecover -WhatIf
+
+# Recover orphaned VMs (re-register configs)
+hvrecover -WhatIf
 ```
 
 ---
