@@ -1,8 +1,8 @@
 ; PSHVTools Inno Setup Script
 ; Creates a professional Windows installer with GUI wizard
-; Version 1.0.3
+; Version 1.0.4
 
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 
 [Setup]
 ; Basic application information
