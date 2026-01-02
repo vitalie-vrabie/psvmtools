@@ -2,6 +2,9 @@
 
 Release date: 2026-03-15
 
+> This is the release notes for the tagged release `v1.0.2`.
+> For ongoing development toward the next release (e.g. v1.0.3), see `CHANGELOG.md` under **[Unreleased]**.
+
 ## Highlights
 
 - Added orphaned VM recovery: `Restore-OrphanedVMs` (alias: `hvrecover`) to scan the Hyper-V `Virtual Machines` configuration folder for VMs present on disk but missing from `Get-VM`, and re-register them.
