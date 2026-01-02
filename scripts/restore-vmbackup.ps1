@@ -315,38 +315,24 @@ function Expand-BackupArchive {
     try {
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
         $logWriter = New-Object System.IO.StreamWriter($logPath, $false, $utf8NoBom)
-
-        $onOut = [System.Diagnostics.DataReceivedEventHandler]{
-            param($sender, $e)
-            if ($null -ne $e.Data) {
-                try { $logWriter.WriteLine($e.Data); $logWriter.Flush() } catch {}
-            }
-        }
-        $onErr = [System.Diagnostics.DataReceivedEventHandler]{
-            param($sender, $e)
-            if ($null -ne $e.Data) {
-                try { $logWriter.WriteLine($e.Data); $logWriter.Flush() } catch {}
-            }
-        }
+        $logWriter.WriteLine("[{0}] 7z.exe: {1} {2}" -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'), $SevenZip, $argString)
+        $logWriter.Flush()
 
         try {
             if (-not $proc.Start()) {
-                throw "Failed to start 7-Zip process. FilePath='$SevenZip' Args=$argString"
+                throw "Failed to start 7-Zip process."
             }
         } catch {
+            $logWriter.WriteLine("[{0}] START ERROR: {1}" -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'), $_.Exception.Message)
+            $logWriter.Flush()
             throw "Failed to start 7-Zip process. FilePath='$SevenZip' Args=$argString Error=$($_.Exception.Message)"
         }
 
         $script:SevenZipProcess = $proc
 
-        try {
-            $proc.add_OutputDataReceived($onOut)
-            $proc.add_ErrorDataReceived($onErr)
-            $proc.BeginOutputReadLine()
-            $proc.BeginErrorReadLine()
-        } catch {
-            # If event hookup fails, still continue; output may be missing from the log.
-        }
+        # Read streams synchronously on background tasks to avoid deadlocks with BeginOutputReadLine.
+        $outTask = [System.Threading.Tasks.Task[string]]::Run([Func[string]]{ $proc.StandardOutput.ReadToEnd() })
+        $errTask = [System.Threading.Tasks.Task[string]]::Run([Func[string]]{ $proc.StandardError.ReadToEnd() })
 
         while (-not $proc.HasExited) {
             if ($script:RestoreCancelled) {
@@ -356,8 +342,19 @@ function Expand-BackupArchive {
             Start-Sleep -Milliseconds 200
         }
 
-        # Ensure async readers drain
+        # Ensure process + stream reads complete
         try { $proc.WaitForExit() } catch {}
+        try { $outTask.Wait() } catch {}
+        try { $errTask.Wait() } catch {}
+
+        $stdout = $null
+        $stderr = $null
+        try { $stdout = $outTask.Result } catch {}
+        try { $stderr = $errTask.Result } catch {}
+
+        if ($stdout) { $logWriter.WriteLine($stdout) }
+        if ($stderr) { $logWriter.WriteLine($stderr) }
+        $logWriter.Flush()
 
         $exitCode = $proc.ExitCode
         if ($exitCode -ne 0) {
@@ -365,6 +362,13 @@ function Expand-BackupArchive {
         }
     }
     finally {
+        # If something threw and 7z is still running, kill it to avoid orphan background processes.
+        try {
+            if ($proc -and -not $proc.HasExited) {
+                try { $proc.Kill() } catch {}
+            }
+        } catch {}
+
         try { if ($logWriter) { $logWriter.Flush(); $logWriter.Dispose() } } catch {}
         try { if ($proc) { $proc.Dispose() } } catch {}
     }
