@@ -299,7 +299,12 @@ function Expand-BackupArchive {
     $args = @('x', '-y', '-bsp1', "-o$OutDir", $BackupPath)
     $argString = ($args | ForEach-Object { if ($_ -match '\\s') { '"' + $_ + '"' } else { $_ } }) -join ' '
 
-    $logPath = Join-Path -Path $OutDir -ChildPath '7z-extract.log'
+    $archiveLeaf = Split-Path -Path $BackupPath -Leaf
+    $logPrefix = [System.IO.Path]::GetFileNameWithoutExtension($archiveLeaf)
+    if ([string]::IsNullOrWhiteSpace($logPrefix)) { $logPrefix = 'restore' }
+    $logPrefix = $logPrefix -replace '[\\/:*?"<>|]', '_'
+
+    $logPath = Join-Path -Path $OutDir -ChildPath ("{0}-7z-extract.log" -f $logPrefix)
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $SevenZip
