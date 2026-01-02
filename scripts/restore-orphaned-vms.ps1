@@ -50,7 +50,7 @@
   - Requires the Hyper-V PowerShell module
 #>
 
-[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Low')]
 param(
     [Parameter(Mandatory = $false)]
     [string[]]$VmConfigRoot = @("$env:ProgramData\Microsoft\Windows\Hyper-V\Virtual Machines"),
