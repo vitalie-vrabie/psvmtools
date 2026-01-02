@@ -72,6 +72,7 @@ Source: "..\scripts\pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Mo
 Source: "..\scripts\pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 Source: "..\scripts\fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 Source: "..\scripts\restore-vmbackup.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\restore-orphaned-vms.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
@@ -266,7 +267,7 @@ begin
     '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ' +
     '"$ErrorActionPreference=''Stop''; ' +
     '$p=''' + InstallPath + '''; ' +
-    '$files=@(''pshvtools.psd1'',''pshvtools.psm1'',''hvbak.ps1'',''fix-vhd-acl.ps1'',''restore-vmbackup.ps1''); ' +
+    '$files=@(''pshvtools.psd1'',''pshvtools.psm1'',''hvbak.ps1'',''fix-vhd-acl.ps1'',''restore-vmbackup.ps1'',''restore-orphaned-vms.ps1''); ' +
     'foreach($f in $files){ $fp=Join-Path $p $f; if(-not (Test-Path -LiteralPath $fp)){ throw (''Missing file: {0}'' -f $fp) } }; ' +
     'Test-ModuleManifest -Path (Join-Path $p ''pshvtools.psd1'') | Out-Null; exit 0"';
 
@@ -290,7 +291,8 @@ begin
         'This usually indicates missing files or a permissions/AV issue.' + #13#10 + #13#10 +
         'Verify these files exist:' + #13#10 +
         '  ' + ModulePath + '\\pshvtools.psd1' + #13#10 +
-        '  ' + ModulePath + '\\restore-vmbackup.ps1' + #13#10 + #13#10 +
+        '  ' + ModulePath + '\\restore-vmbackup.ps1' + #13#10 +
+        '  ' + ModulePath + '\\restore-orphaned-vms.ps1' + #13#10 + #13#10 +
         'Then run in an elevated PowerShell to diagnose parse errors:' + #13#10 +
         '  $p=""' + ModulePath + '""' + #13#10 +
         '  $tokens=$null; $errors=$null' + #13#10 +

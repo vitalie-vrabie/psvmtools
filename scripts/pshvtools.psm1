@@ -314,11 +314,70 @@ function Restore-VMBackup {
     & $scriptPath @params
 }
 
+function Restore-OrphanedVMs {
+    <#
+    .SYNOPSIS
+      Scan Hyper-V VM configuration folders for orphaned VMs and register them.
+
+    .DESCRIPTION
+      Wrapper around restore-orphaned-vms.ps1.
+
+    .EXAMPLE
+      # Preview what would be registered
+      Restore-OrphanedVMs -VmConfigRoot "$env:ProgramData\Microsoft\Windows\Hyper-V" -WhatIf
+
+    .EXAMPLE
+      # Scan custom storage roots
+      hvrecover -VmConfigRoot "D:\Hyper-V","E:\Hyper-V"
+    #>
+
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string[]]$VmConfigRoot = @("$env:ProgramData\Microsoft\Windows\Hyper-V"),
+
+        [Parameter(Mandatory = $false)]
+        [switch]$IncludeXml,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Register', 'Copy')]
+        [string]$Mode = 'Register',
+
+        [Parameter(Mandatory = $false)]
+        [string]$VmStorageRoot = "$env:ProgramData\Microsoft\Windows\Hyper-V",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Force
+    )
+
+    if ($PSBoundParameters.Count -eq 0) {
+        Get-Help Restore-OrphanedVMs -Full
+        return
+    }
+
+    $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath 'restore-orphaned-vms.ps1'
+    if (-not (Test-Path -LiteralPath $scriptPath)) {
+        Write-Error "restore-orphaned-vms.ps1 not found at: $scriptPath"
+        return
+    }
+
+    $params = @{
+    }
+    if ($PSBoundParameters.ContainsKey('VmConfigRoot')) { $params.VmConfigRoot = $VmConfigRoot }
+    if ($IncludeXml.IsPresent) { $params.IncludeXml = $true }
+    if ($PSBoundParameters.ContainsKey('Mode')) { $params.Mode = $Mode }
+    if ($PSBoundParameters.ContainsKey('VmStorageRoot')) { $params.VmStorageRoot = $VmStorageRoot }
+    if ($Force.IsPresent) { $params.Force = $true }
+
+    & $scriptPath @params
+}
+
 # Create aliases for shorter commands
 New-Alias -Name hvbak -Value Invoke-VMBackup -Force
 New-Alias -Name hv-bak -Value Invoke-VMBackup -Force
 New-Alias -Name fix-vhd-acl -Value Repair-VhdAcl -Force
 New-Alias -Name hvrestore -Value Restore-VMBackup -Force
+New-Alias -Name hvrecover -Value Restore-OrphanedVMs -Force
 
 # Export the functions and aliases
-Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl, Restore-VMBackup -Alias hvbak, hv-bak, fix-vhd-acl, hvrestore
+Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl, Restore-VMBackup, Restore-OrphanedVMs -Alias hvbak, hv-bak, fix-vhd-acl, hvrestore, hvrecover
