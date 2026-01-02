@@ -4,6 +4,7 @@ Release date: 2026-03-15
 
 > This is the release notes for the tagged release `v1.0.2`.
 > For ongoing development toward the next release (e.g. v1.0.3), see `CHANGELOG.md` under **[Unreleased]**.
+> When cutting `v1.0.3`, update this file (or add a new `RELEASE_NOTES_v1.0.3.md`) and update checksums.
 
 ## Highlights
 

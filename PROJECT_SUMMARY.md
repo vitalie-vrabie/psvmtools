@@ -42,7 +42,7 @@ installer\Build-InnoSetupInstaller.bat
 ```
 
 **Output:**
-- `dist\PSHVTools-Setup-1.0.2.exe`
+- `dist\PSHVTools-Setup-1.0.3.exe`
 
 ---
 
