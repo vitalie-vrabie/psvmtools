@@ -86,8 +86,12 @@ File: `scripts/remove-gpu-partitions.ps1`
 Removes all GPU partition adapters from Hyper-V VMs matching a wildcard pattern. This is intended to work even if the host has no compatible GPU currently present.
 
 ```powershell
+# Script
 .\scripts\remove-gpu-partitions.ps1 -NamePattern "lab-*"
 .\scripts\remove-gpu-partitions.ps1 -NamePattern "*" -WhatIf
+
+# Module alias (after: Import-Module pshvtools)
+nogpup -NamePattern "lab-*"
 ```
 
 ---

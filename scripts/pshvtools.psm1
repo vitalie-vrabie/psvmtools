@@ -373,12 +373,57 @@ function Restore-OrphanedVMs {
     & $scriptPath @params
 }
 
+function Remove-GpuPartitions {
+    <#
+    .SYNOPSIS
+      Removes all GPU partition adapter assignments from Hyper-V VMs.
+
+    .DESCRIPTION
+      Wrapper around remove-gpu-partitions.ps1.
+
+    .PARAMETER NamePattern
+      Wildcard pattern matching VM names (e.g. "*", "lab-*", "win11*").
+
+    .EXAMPLE
+      nogpup -NamePattern "lab-*"
+    #>
+
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
+    param(
+        [Parameter(Mandatory = $false, Position = 0)]
+        [string]$NamePattern
+    )
+
+    if ([string]::IsNullOrWhiteSpace($NamePattern)) {
+        Get-Help Remove-GpuPartitions -Full
+        return
+    }
+
+    $scriptPath = Join-Path -Path $PSScriptRoot -ChildPath 'remove-gpu-partitions.ps1'
+    if (-not (Test-Path -LiteralPath $scriptPath)) {
+        Write-Error "remove-gpu-partitions.ps1 not found at: $scriptPath"
+        return
+    }
+
+    $params = @{
+        NamePattern = $NamePattern
+    }
+
+    # Forward -WhatIf from common parameter
+    if ($PSBoundParameters.ContainsKey('WhatIf')) {
+        $params.WhatIf = $true
+    }
+
+    & $scriptPath @params
+}
+
 # Create aliases for shorter commands
 New-Alias -Name hvbak -Value Invoke-VMBackup -Force
 New-Alias -Name hv-bak -Value Invoke-VMBackup -Force
 New-Alias -Name fix-vhd-acl -Value Repair-VhdAcl -Force
 New-Alias -Name hvrestore -Value Restore-VMBackup -Force
 New-Alias -Name hvrecover -Value Restore-OrphanedVMs -Force
+New-Alias -Name nogpup -Value Remove-GpuPartitions -Force
 
 # Export the functions and aliases
-Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl, Restore-VMBackup, Restore-OrphanedVMs -Alias hvbak, hv-bak, fix-vhd-acl, hvrestore, hvrecover
+Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl, Restore-VMBackup, Restore-OrphanedVMs, Remove-GpuPartitions -Alias hvbak, hv-bak, fix-vhd-acl, hvrestore, hvrecover, nogpup

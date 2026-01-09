@@ -35,7 +35,8 @@ $SourceFiles = @(
     'pshvtools.psd1',
     'fix-vhd-acl.ps1',
     'restore-vmbackup.ps1',
-    'restore-orphaned-vms.ps1'
+    'restore-orphaned-vms.ps1',
+    'remove-gpu-partitions.ps1'
 )
 
 # Base directory for source files:

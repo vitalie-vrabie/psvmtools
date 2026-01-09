@@ -467,3 +467,20 @@ Get-Help Invoke-VMBackup -Online
 **Happy backing up!** ??
 
 For questions or issues, visit: https://github.com/vitalie-vrabie/pshvtools
+
+## Utility Scripts
+
+### Remove GPU partition adapters
+
+File: `scripts/remove-gpu-partitions.ps1`
+
+```powershell
+# Remove GPU partition adapters from matching VMs
+.\scripts\remove-gpu-partitions.ps1 -NamePattern "lab-*"
+
+# Or, after importing the module, use the short alias
+Import-Module pshvtools
+nogpup -NamePattern "lab-*"
+
+# Preview
+.\scripts\remove-gpu-partitions.ps1 -NamePattern "*" -WhatIf
