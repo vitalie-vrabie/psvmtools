@@ -7,11 +7,19 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 ## [Unreleased]
 
 ### Added
-- Utility: `scripts/remove-gpu-partitions.ps1` to remove all GPU partition adapter assignments from VMs matched by wildcard name.
 
 ### Changed
 
 ### Fixed
+
+## [1.0.5] - 2026-01-09
+
+### Added
+- Utility: `scripts/remove-gpu-partitions.ps1` to remove all GPU partition adapter assignments from VMs matched by wildcard name.
+- Module: `nogpup` alias (wrapper in `pshvtools.psm1`) to run GPU-partition removal via `Import-Module pshvtools`.
+
+### Fixed
+- Backup: improved temp folder handling to avoid duplicate per-VM export folder creation.
 
 ## [1.0.4] - 2026-01-02
 

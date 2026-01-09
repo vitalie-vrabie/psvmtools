@@ -2,9 +2,6 @@
 
 Release date: 2026-01-09
 
-> This is the release notes for the tagged release `v1.0.5`.
-> For ongoing development toward the next release (e.g. v1.0.6), see `CHANGELOG.md` under **[Unreleased]**.
-
 ## Highlights
 
 - Backup: temp folder creation aligned to checkpoint timestamp and de-duplicated to improve export/cleanup reliability.
