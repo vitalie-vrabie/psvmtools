@@ -153,35 +153,29 @@ echo ========================================
 echo   EXE Installer Build Successful!
 echo ========================================
 
-REM Keep this in sync with #define MyAppVersion in PSHVTools-Installer.iss
-REM (Auto-detect from the installer script to avoid hardcoded drift)
+REM Detect MyAppVersion (informational only; output name is versionless)
 set "APP_VERSION="
-
 for /f "usebackq tokens=3" %%V in (`findstr /r /c:"^#define MyAppVersion \"[0-9][0-9.]*\"" "%SCRIPT_DIR%\PSHVTools-Installer.iss"`) do (
     set "APP_VERSION=%%~V"
 )
-
-REM Trim surrounding quotes if present
 set "APP_VERSION=%APP_VERSION:"=%"
 
 if not defined APP_VERSION (
-    echo.
-    echo [WARNING] Unable to detect MyAppVersion from PSHVTools-Installer.iss. Falling back to 1.0.2
-    set "APP_VERSION=1.0.2"
+    set "APP_VERSION=unknown"
 )
 
-set "EXE_FILE=%REPO_ROOT%\dist\PSHVTools-Setup-%APP_VERSION%.exe"
-set "EXE_FILE_Q=%EXE_FILE%"
+set "EXE_FILE=%REPO_ROOT%\dist\PSHVTools-Setup.exe"
 
-if exist "%EXE_FILE_Q%" (
-    for %%A in ("%EXE_FILE_Q%") do set "FILE_SIZE=%%~zA"
+if exist "%EXE_FILE%" (
+    for %%A in ("%EXE_FILE%") do set "FILE_SIZE=%%~zA"
     set /a "FILE_SIZE_KB=!FILE_SIZE! / 1024"
     set /a "FILE_SIZE_MB=!FILE_SIZE! / 1048576"
 
     echo.
     echo Output:
-    echo   File: dist\PSHVTools-Setup-%APP_VERSION%.exe
+    echo   File: dist\PSHVTools-Setup.exe
     echo   Size: !FILE_SIZE_MB! MB (!FILE_SIZE_KB! KB)
+    echo   AppVersion (internal): !APP_VERSION!
     echo.
     echo Features:
     echo   - Professional GUI wizard
@@ -195,7 +189,7 @@ if exist "%EXE_FILE_Q%" (
 ) else (
     echo.
     echo [WARNING] Build succeeded but expected output was not found:
-    echo   %EXE_FILE_Q%
+    echo   "%EXE_FILE%"
 )
 
 echo.
@@ -204,16 +198,16 @@ echo   Installation Instructions
 echo ========================================
 echo.
 echo For end users:
-echo   1. Double-click PSHVTools-Setup-%APP_VERSION%.exe
+echo   1. Double-click PSHVTools-Setup.exe
 echo   2. Follow the installation wizard
 echo   3. Done!
 echo.
 echo Silent installation:
-echo   PSHVTools-Setup-%APP_VERSION%.exe /VERYSILENT /NORESTART
+echo   PSHVTools-Setup.exe /VERYSILENT /NORESTART
 
 echo.
 echo Silent with log:
-echo   PSHVTools-Setup-%APP_VERSION%.exe /VERYSILENT /NORESTART /LOG="install.log"
+echo   PSHVTools-Setup.exe /VERYSILENT /NORESTART /LOG="install.log"
 echo.
 echo Uninstall:
 echo   - Use Add/Remove Programs
