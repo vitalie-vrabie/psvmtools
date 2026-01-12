@@ -12,6 +12,12 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### Fixed
 
+## [1.0.6] - 2026-01-12
+
+### Fixed
+- Backup: retry export by turning off VM when export fails due to GPU-P (GPU partition adapter assignment).
+- Backup: fixed PowerShell parse error in `Get-VM` error handling.
+
 ## [1.0.5] - 2026-01-09
 
 ### Added

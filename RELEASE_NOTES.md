@@ -1,24 +1,21 @@
-# PSHVTools v1.0.5
+# PSHVTools v1.0.6
 
-Release date: 2026-01-09
+Release date: 2026-01-12
 
-> This is the release notes for the tagged release `v1.0.5`.
-> For ongoing development toward the next release (e.g. v1.0.6), see `CHANGELOG.md` under **[Unreleased]**.
+> This is the release notes for the tagged release `v1.0.6`.
+> For ongoing development toward the next release (e.g. v1.0.7), see `CHANGELOG.md` under **[Unreleased]**.
 
 ## Highlights
 
-- Backup: temp folder creation aligned to checkpoint timestamp and de-duplicated to improve export/cleanup reliability.
-- Utility: added GPU partition adapter removal helper and module alias (`nogpup`).
+- Backup: retry export by turning off VM when export fails due to GPU-P (GPU partition adapter assignment).
+- Backup: fixed a PowerShell parse error in `Get-VM` error handling.
 
 ## Changes
 
-### Added
-- Utility: `scripts/remove-gpu-partitions.ps1` to remove GPU partition adapters from VMs matched by wildcard name.
-- Module: `nogpup` alias to run GPU-partition removal through `pshvtools`.
-
 ### Fixed
-- Backup: avoid duplicate per-VM temp export folder creation which could interfere with cleanup.
+- Backup: retry export by turning off VM when export fails due to GPU-P (GPU partition adapter assignment).
+- Backup: fixed PowerShell parse error in `Get-VM` error handling.
 
 ## Installer / packaging
 
-- GUI installer (Inno Setup): `dist\PSHVTools-Setup-1.0.5.exe`
+- GUI installer (Inno Setup): `dist\PSHVTools-Setup-1.0.6.exe`
