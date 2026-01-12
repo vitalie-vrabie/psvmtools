@@ -68,7 +68,7 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 ## [1.0.1] - 2025-12-31
 
 ### Added
-- Inno Setup installer build output: `dist/PSHVTools-Setup-1.0.1.exe`.
+- Inno Setup installer build output: `dist/PSHVTools-Setup.exe`.
 
 ### Changed
 - Backup script archive progress output now identifies the archive file.

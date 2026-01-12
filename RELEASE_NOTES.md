@@ -18,4 +18,4 @@ Release date: 2026-01-12
 
 ## Installer / packaging
 
-- GUI installer (Inno Setup): `dist\PSHVTools-Setup-1.0.6.exe`
+- GUI installer (Inno Setup): `dist\PSHVTools-Setup.exe`

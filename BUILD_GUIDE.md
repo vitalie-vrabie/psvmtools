@@ -13,7 +13,7 @@ Prerequisite: **Inno Setup 6**
 installer\Build-InnoSetupInstaller.bat
 ```
 
-**Output:** `dist\\PSHVTools-Setup-1.0.3.exe`
+**Output:** `dist\\PSHVTools-Setup.exe`
 
 ---
 
@@ -27,7 +27,7 @@ installer\Build-InnoSetupInstaller.bat
 ## Silent Installation (end users)
 
 ```cmd
-PSHVTools-Setup-1.0.3.exe /VERYSILENT /NORESTART
+PSHVTools-Setup.exe /VERYSILENT /NORESTART
 ```
 
 ---

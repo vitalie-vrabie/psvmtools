@@ -27,7 +27,7 @@ DisableProgramGroupPage=yes
 
 ; Output settings
 OutputDir=..\dist
-OutputBaseFilename=PSHVTools-Setup-{#MyAppVersion}
+OutputBaseFilename=PSHVTools-Setup
 ; SetupIconFile=icon.ico (commented out - optional custom icon)
 Compression=lzma2/max
 SolidCompression=yes
