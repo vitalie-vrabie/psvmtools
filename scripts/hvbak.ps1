@@ -164,7 +164,7 @@ if (-not $sevenZip) {
 Log ("7-Zip found: {0}" -f $sevenZip)
 
 # Get matching VMs
-try { $vms = Get-VM -Name $NamePattern -ErrorAction Stop } catch { Log ("Get-VM failed or no VMs match pattern '{0}'": {1}" -f $NamePattern, $_); exit 0 }
+try { $vms = Get-VM -Name $NamePattern -ErrorAction Stop } catch { Log ("Get-VM failed or no VMs match pattern '{0}': {1}" -f $NamePattern, $_); exit 0 }
 if (-not $vms) { Log ("No VMs found matching pattern '{0}'." -f $NamePattern); exit 0 }
 
 Log "Starting all per-vm jobs (no throttling). 7z processes will be set to Idle priority."
