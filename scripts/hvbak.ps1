@@ -185,7 +185,15 @@ foreach ($vm in $vms) {
 
         # Set up a trap to catch job stopping/termination
         trap {
-            Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job termination detected for $vmName, initiating cleanup..."
+            $sentinelPresent = $false
+            try { $sentinelPresent = (Test-Path -LiteralPath $CancelSentinel) } catch { $sentinelPresent = $false }
+
+            if ($sentinelPresent) {
+                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Cancellation signal received for $vmName; cleaning up..."
+            } else {
+                Write-Output "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Job termination detected for $vmName; initiating cleanup..."
+            }
+
             $script:JobCancelled = $true
             # If the job is being stopped, don't convert it into a terminating error that marks the job as Failed.
             # Let the finally/cleanup run and return a regular result object.

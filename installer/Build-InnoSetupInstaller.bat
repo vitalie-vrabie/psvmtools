@@ -174,7 +174,7 @@ if exist "%EXE_FILE%" (
     echo.
     echo Output:
     echo   File: dist\PSHVTools-Setup.exe
-    echo   Size: !FILE_SIZE_MB! MB (!FILE_SIZE_KB! KB)
+    echo   Size: !FILE_SIZE_MB! MB (^!FILE_SIZE_KB^! KB)
     echo   AppVersion (internal): !APP_VERSION!
     echo.
     echo Features:
