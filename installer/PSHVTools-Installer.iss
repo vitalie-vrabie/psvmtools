@@ -112,6 +112,47 @@ begin
   Result := T;
 end;
 
+function TryGetInstalledVersion(var InstalledVersion: String): Boolean;
+var
+  V: String;
+begin
+  Result := False;
+  InstalledVersion := '';
+
+  // Version is written by this installer under HKLM
+  if RegQueryStringValue(HKLM, 'Software\{#MyAppPublisher}\{#MyAppName}', 'Version', V) then
+  begin
+    V := Trim(V);
+    if V <> '' then
+    begin
+      InstalledVersion := NormalizeVersionForCompare(V);
+      Result := True;
+      exit;
+    end;
+  end;
+end;
+
+procedure RequireDevBuildConsent(const CurrentVersion, ReferenceVersion, ReferenceLabel: String);
+var
+  Resp: Integer;
+begin
+  Resp := MsgBox(
+    'Development build warning' + #13#10 + #13#10 +
+    'You are about to install a development build of PSHVTools.' + #13#10 + #13#10 +
+    'Installer version: ' + CurrentVersion + #13#10 +
+    ReferenceLabel + ': ' + ReferenceVersion + #13#10 + #13#10 +
+    'This build may be unstable.' + #13#10 + #13#10 +
+    'Agreement required: [ ] I understand and want to continue.' + #13#10 + #13#10 +
+    'Click Yes to agree and continue, or No to exit Setup.',
+    mbConfirmation, MB_YESNO);
+
+  if Resp <> IDYES then
+  begin
+    MsgBox('Setup was cancelled because the development build warning was not accepted.', mbInformation, MB_OK);
+    Abort;
+  end;
+end;
+
 function ExtractNextVersionPart(var S: String): Integer;
 var
   i: Integer;
@@ -206,9 +247,11 @@ var
   LatestVersion: String;
   CurrentVersion: String;
   Cmp: Integer;
-  Resp: Integer;
+  InstalledVersion: String;
 begin
   CurrentVersion := NormalizeVersionForCompare('{#MyAppVersion}');
+
+  // 1) Online check against latest GitHub release (preferred)
   if TryGetLatestReleaseTag(LatestTag) then
   begin
     LatestVersion := NormalizeVersionForCompare(LatestTag);
@@ -228,21 +271,19 @@ begin
       end;
       if Cmp > 0 then
       begin
-        Resp := MsgBox(
-          'This installer appears to be a development build.' + #13#10 + #13#10 +
-          'Installed version: ' + CurrentVersion + #13#10 +
-          'Latest GitHub release: ' + LatestVersion + #13#10 + #13#10 +
-          'This version is newer than the latest published GitHub release and may be unstable.' + #13#10 + #13#10 +
-          '[ ] I understand and want to continue.' + #13#10 + #13#10 +
-          'Click Yes to agree and continue, or No to exit Setup.',
-          mbConfirmation, MB_YESNO);
-
-        if Resp <> IDYES then
-        begin
-          MsgBox('Setup was cancelled because the development build warning was not accepted.', mbInformation, MB_OK);
-          WizardForm.Close;
-        end;
+        RequireDevBuildConsent(CurrentVersion, LatestVersion, 'Latest GitHub release');
       end;
+    end;
+    exit;
+  end;
+
+  // 2) Fallback when offline / GitHub blocked: compare to currently installed version
+  if TryGetInstalledVersion(InstalledVersion) then
+  begin
+    Cmp := CompareSemVer(CurrentVersion, InstalledVersion);
+    if Cmp > 0 then
+    begin
+      RequireDevBuildConsent(CurrentVersion, InstalledVersion, 'Currently installed version');
     end;
   end;
 end;
