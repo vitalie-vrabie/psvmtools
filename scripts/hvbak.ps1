@@ -420,69 +420,10 @@ foreach ($vm in $vms) {
                 function Invoke-ExportVmOnce {
                     param([string]$CurrentVmName, [string]$CurrentVmTemp)
 
-                    $exportJob = $null
-                    try {
-                        $exportJob = Start-Job -ArgumentList $CurrentVmName, $CurrentVmTemp -ScriptBlock {
-                            param($n, $p)
-                            Import-Module Hyper-V -ErrorAction SilentlyContinue | Out-Null
-                            Export-VM -Name $n -Path $p -ErrorAction Stop
-                        }
-
-                        while ($true) {
-                            if (IsCancelled) {
-                                LocalLog ("Cancellation detected during Export-VM, stopping export job for {0}" -f $CurrentVmName)
-                                try { Stop-Job -Job $exportJob -Force -ErrorAction SilentlyContinue } catch {}
-
-                                try { Stop-ExportProcesses -VmName $CurrentVmName -BaselineVmwpPids $baselineVmwpPids -ExportRoot $CurrentVmTemp } catch {}
-
-                                try { Cleanup-CheckpointIfExists -VmName $CurrentVmName -SnapshotName $snapshotName -SnapshotId $snapshotId } catch {}
-
-                                try {
-                                    if ($CurrentVmTemp -and (Test-Path -LiteralPath $CurrentVmTemp)) {
-                                        LocalLog ("Cancellation cleanup: Removing incomplete export folder: {0}" -f $CurrentVmTemp)
-                                        Remove-Item -LiteralPath $CurrentVmTemp -Recurse -Force -ErrorAction SilentlyContinue
-                                    }
-                                } catch {}
-
-                                $result.Success = $false
-                                $result.Message = "Export-VM cancelled by user"
-                                throw "Operation cancelled by user"
-                            }
-
-                            if ($exportJob.State -in @('Completed','Failed','Stopped')) {
-                                break
-                            }
-
-                            Start-Sleep -Seconds 1
-                        }
-
-                        if ($exportJob.State -eq 'Stopped') {
-                            LocalLog ("Export-VM job was stopped/cancelled for {0}. Cleaning up temp data and failing job." -f $CurrentVmName)
-
-                            try { Cleanup-CheckpointIfExists -VmName $CurrentVmName -SnapshotName $snapshotName -SnapshotId $snapshotId } catch {}
-
-                            try {
-                                if ($CurrentVmTemp -and (Test-Path -LiteralPath $CurrentVmTemp)) {
-                                    Remove-Item -LiteralPath $CurrentVmTemp -Recurse -Force -ErrorAction SilentlyContinue
-                                    LocalLog ("Removed incomplete export folder: {0}" -f $CurrentVmTemp)
-                                }
-                            } catch {}
-
-                            $result.Success = $false
-                            $result.Message = "Export-VM was cancelled/stopped"
-                            throw "Export-VM was cancelled/stopped"
-                        }
-
-                        $null = Receive-Job -Job $exportJob -ErrorAction Stop
-
-                        if ($exportJob.State -ne 'Completed') {
-                            throw "Export-VM job did not complete successfully (state: $($exportJob.State))"
-                        }
-                    } finally {
-                        if ($exportJob) {
-                            try { Remove-Job -Job $exportJob -Force -ErrorAction SilentlyContinue } catch {}
-                        }
-                    }
+                    # Run Export-VM directly inside the per-VM background job.
+                    # This avoids nested Start-Job buffering/late progress rendering in the parent console.
+                    Import-Module Hyper-V -ErrorAction SilentlyContinue | Out-Null
+                    Export-VM -Name $CurrentVmName -Path $CurrentVmTemp -ErrorAction Stop
                 }
 
                 $exportAttempt = 1
