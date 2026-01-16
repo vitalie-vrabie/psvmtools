@@ -362,9 +362,6 @@ end;
 procedure InitializeWizard();
 begin
   RequirementsOK := True;
-
-  // Best-effort online check; do not block installation.
-  WarnIfOutdatedInstaller();
   
   // Create a custom page to show requirements check
   PowerShellVersionPage := CreateOutputMsgMemoPage(wpWelcome,
@@ -372,6 +369,13 @@ begin
     'Please wait while Setup checks if your system meets the requirements.',
     'Setup is checking for PowerShell 5.1+ and Hyper-V...',
     '');
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  // Must run before wizard is shown, otherwise dialogs may be missed/blocked.
+  WarnIfOutdatedInstaller();
+  Result := True;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
