@@ -206,6 +206,7 @@ var
   LatestVersion: String;
   CurrentVersion: String;
   Cmp: Integer;
+  Resp: Integer;
 begin
   CurrentVersion := NormalizeVersionForCompare('{#MyAppVersion}');
   if TryGetLatestReleaseTag(LatestTag) then
@@ -227,13 +228,20 @@ begin
       end;
       if Cmp > 0 then
       begin
-        MsgBox(
+        Resp := MsgBox(
           'This installer appears to be a development build.' + #13#10 + #13#10 +
           'Installed version: ' + CurrentVersion + #13#10 +
           'Latest GitHub release: ' + LatestVersion + #13#10 + #13#10 +
-          'This version is newer than the latest published GitHub release and may be unstable.' + #13#10 +
-          'Setup will continue.',
-          mbInformation, MB_OK);
+          'This version is newer than the latest published GitHub release and may be unstable.' + #13#10 + #13#10 +
+          '[ ] I understand and want to continue.' + #13#10 + #13#10 +
+          'Click Yes to agree and continue, or No to exit Setup.',
+          mbConfirmation, MB_YESNO);
+
+        if Resp <> IDYES then
+        begin
+          MsgBox('Setup was cancelled because the development build warning was not accepted.', mbInformation, MB_OK);
+          WizardForm.Close;
+        end;
       end;
     end;
   end;
