@@ -410,7 +410,7 @@ begin
   DevBuildConsentCheck.Caption := 'I understand and want to continue.';
   
   // Create a custom page to show requirements check
-  PowerShellVersionPage := CreateOutputMsgMemoPage(wpWelcome,
+  PowerShellVersionPage := CreateOutputMsgMemoPage(DevBuildConsentPage.ID,
     'Checking System Requirements',
     'Please wait while Setup checks if your system meets the requirements.',
     'Setup is checking for PowerShell 5.1+ and Hyper-V...',
