@@ -29,6 +29,11 @@ After installation, the **pshvtools** module provides:
 - `Restore-OrphanedVMs` - Full cmdlet name
 - `hvrecover` - Short alias
 
+### Clone Commands
+- `Clone-VM` - Full cmdlet name
+- `hvclone` - Short alias
+- `hv-clone` - Hyphenated alias
+
 All commands work identically!
 
 ## Quick Start
@@ -68,6 +73,11 @@ Get-Help hvrestore -Examples
 hvrecover
 Get-Help Restore-OrphanedVMs -Full
 Get-Help hvrecover -Examples
+
+# Display help for cloning a VM
+hvclone
+Get-Help Clone-VM -Full
+Get-Help hvclone -Examples
 ```
 
 ## Backing Up VMs
@@ -118,6 +128,23 @@ hvbak -NamePattern "prod-*" `
 1. Creates checkpoint (Production or Standard)
 2. Exports VM (configuration + checkpoints + VHDs)
 3. Compresses to 7z archive
+
+---
+
+## Cloning VMs
+
+Clone a VM by exporting it and importing it as a copy (new VM ID) under a new name.
+
+```powershell
+# Clone a VM into D:\Hyper-V\Win11-Dev01
+hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
+
+# Same, using hyphenated alias
+hv-clone -SourceVmName "BaseWin11" -NewName "Win11-Dev02" -DestinationRoot "D:\Hyper-V"
+
+# Preview actions
+hvclone -SourceVmName "BaseWin11" -NewName "Win11-WhatIf" -DestinationRoot "D:\Hyper-V" -WhatIf
+```
 4. Removes checkpoint
 5. Restarts VM if it was running
 6. Cleans up old backups based on KeepCount

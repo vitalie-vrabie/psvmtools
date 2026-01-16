@@ -3,7 +3,7 @@
 **Version:** 1.0.7  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** pshvtools  
-**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, `Restore-VMBackup`, `Restore-OrphanedVMs` and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`, `hvrestore`, `hvrecover`  
+**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, `Restore-VMBackup`, `Restore-OrphanedVMs`, `Clone-VM` and aliases: `hvbak`, `hv-bak`, `fix-vhd-acl`, `hvrestore`, `hvrecover`, `hvclone`, `hv-clone`  
 **License:** MIT
 
 ---
@@ -24,6 +24,7 @@ PSHVTools is a PowerShell module for backing up and managing Hyper-V virtual mac
 - Restore/import from `hvbak` `.7z` backups (with optional network switch mapping)
 - Recover orphaned VMs by re-registering configs found on disk (scan `Virtual Machines` folder)
 - Utility script to remove GPU partition adapters from VMs (see `scripts/remove-gpu-partitions.ps1`)
+- Clone an existing VM (export + import copy with a new ID) into a new VM name
 
 ---
 
@@ -71,6 +72,9 @@ fix-vhd-acl -WhatIf
 
 # Recover orphaned VMs
 hvrecover -WhatIf
+
+# Clone a VM
+hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
 ```
 
 **Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)
@@ -200,6 +204,21 @@ fix-vhd-acl
 Repair-VhdAcl -VhdFolder "D:\Restores"
 ```
 
+### Clone-VM (aliases: hvclone, hv-clone)
+Clones a VM by exporting it to a temp folder, then importing it as a copy with a new ID.
+
+**Examples:**
+```powershell
+# Clone a VM
+hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
+
+# Same, using dashed alias
+hv-clone -SourceVmName "BaseWin11" -NewName "Win11-Dev02" -DestinationRoot "D:\Hyper-V"
+
+# Preview actions
+hvclone -SourceVmName "BaseWin11" -NewName "Win11-WhatIf" -DestinationRoot "D:\Hyper-V" -WhatIf
+```
+
 ---
 
 ## ?? Quick Reference
@@ -248,11 +267,15 @@ hvrecover -WhatIf
 # Fix VHD permissions
 fix-vhd-acl -WhatIf
 
+# Clone a VM
+hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
+
 # Get detailed help
 Get-Help Invoke-VMBackup -Full
 Get-Help Repair-VhdAcl -Full
 Get-Help Restore-VMBackup -Full
 Get-Help Restore-OrphanedVMs -Full
+Get-Help Clone-VM -Full
 ```
 
 ---
