@@ -4,6 +4,7 @@
 
 #define MyAppName "PSHVTools"
 #define MyAppVersion "1.0.8"
+#define MyAppLatestStableVersion "1.0.7"
 #define MyAppPublisher "Vitalie Vrabie"
 #define MyAppURL "https://github.com/vitalie-vrabie/pshvtools"
 #define MyAppDescription "PowerShell Hyper-V Tools - VM Backup Utilities"
@@ -408,16 +409,11 @@ begin
 end;
 
 function InitializeSetup(): Boolean;
-var
-  R: Integer;
 begin
-  // Must run before wizard is shown, otherwise dialogs may be missed/blocked.
-  R := MsgBox('PSHVTools Setup starting (debug): installer pre-checks are running now.', mbInformation, MB_OKCANCEL);
-  if R <> IDOK then
-  begin
-    Result := False;
-    exit;
-  end;
+  // Deterministic dev-build guard (no network dependency).
+  // If this installer version is higher than the last stable release, require explicit consent.
+  if CompareSemVer('{#MyAppVersion}', '{#MyAppLatestStableVersion}') > 0 then
+    RequireDevBuildConsent(NormalizeVersionForCompare('{#MyAppVersion}'), NormalizeVersionForCompare('{#MyAppLatestStableVersion}'), 'Latest stable release');
 
   WarnIfOutdatedInstaller();
   Result := True;
