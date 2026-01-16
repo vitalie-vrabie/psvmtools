@@ -17,6 +17,7 @@ Import-Module pshvtools
 ## Contents
 
 - `samples/hvbak.samples.ps1` — backup examples (`Invoke-VMBackup` / `hvbak`)
+- `samples/hvclone.samples.ps1` — clone examples (`Clone-VM` / `hvclone` / `hv-clone`)
 - `samples/hvrestore.samples.ps1` — restore/import examples (`Restore-VMBackup` / `hvrestore`)
 - `samples/fix-vhd-acl.samples.ps1` — VHD ACL repair examples (`Repair-VhdAcl` / `fix-vhd-acl`)
 - `samples/hvrecover.samples.ps1` — orphaned VM recovery examples (`Restore-OrphanedVMs` / `hvrecover`)
