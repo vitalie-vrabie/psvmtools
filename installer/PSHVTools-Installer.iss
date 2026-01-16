@@ -411,8 +411,17 @@ begin
 end;
 
 function InitializeSetup(): Boolean;
+var
+  R: Integer;
 begin
   // Must run before wizard is shown, otherwise dialogs may be missed/blocked.
+  R := MsgBox('PSHVTools Setup starting (debug): installer pre-checks are running now.', mbInformation, MB_OKCANCEL);
+  if R <> IDOK then
+  begin
+    Result := False;
+    exit;
+  end;
+
   WarnIfOutdatedInstaller();
   Result := True;
 end;
