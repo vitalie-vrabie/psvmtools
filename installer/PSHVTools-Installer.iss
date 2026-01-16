@@ -172,7 +172,7 @@ begin
     'Installer version: ' + CurrentVersion + #13#10 +
     ReferenceLabel + ': ' + ReferenceVersion + #13#10 + #13#10 +
     'This build may be unstable.' + #13#10 + #13#10 +
-    'Agreement required: [ ] I understand and want to continue.' + #13#10 + #13#10 +
+    'Agreement required: I understand and want to continue.' + #13#10 + #13#10 +
     'Click Yes to agree and continue, or No to exit Setup.',
     mbConfirmation, MB_YESNO);
 
