@@ -12,6 +12,41 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### Fixed
 
+## [1.0.9] - 2026-01-17
+
+### Added
+- CI/CD: GitHub Actions workflows for automated build, test, and release
+- CI/CD: Automated test result publishing
+- Testing: Pester test framework with module validation tests
+- Testing: Version consistency validation across all files
+- Configuration: Configuration management module (PSHVTools.Config)
+  - `Get-PSHVToolsConfig` - Read current configuration
+  - `Set-PSHVToolsConfig` - Update settings
+  - `Reset-PSHVToolsConfig` - Reset to defaults
+  - `Show-PSHVToolsConfig` - Display current configuration
+- Diagnostics: Health check command (`hvhealth`, `hv-health`)
+  - `Test-PSHVToolsEnvironment` - System diagnostics and environment validation
+- Build: Enhanced build script with version validation and checksums
+- Build: SHA256 checksum generation for installers
+- Documentation: CONTRIBUTING.md - Developer guidelines
+- Documentation: TROUBLESHOOTING.md - Common issues and solutions
+- Documentation: IMPROVEMENTS_SUMMARY.md - Project improvements summary
+- Publishing: PowerShell Gallery publish script
+
+### Changed
+- Build: Improved error messages with actionable tips
+- Build: Added `-WhatIf` support for dry runs
+- Build: Added `-Clean` flag for clean builds
+- Build: Added `-SkipVersionCheck` for quick rebuilds
+- Module: Reorganized for better maintainability with separate modules
+- Documentation: Updated README with new features and commands
+
+### Fixed
+- Build: Fixed default ISS file path resolution
+- Build: Fixed param block placement for proper PowerShell execution
+- CI/CD: Fixed Pester test execution in GitHub Actions
+- CI/CD: Added proper permissions for test result publishing
+
 ## [1.0.8] - 2026-01-17
 
 ### Added
@@ -19,10 +54,6 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### Fixed
 - Installer: fixed semantic version comparisons and startup checks so dev/stable detection behaves reliably.
-
-### Changed
-
-### Fixed
 
 ## [1.0.7] - 2026-01-16
 

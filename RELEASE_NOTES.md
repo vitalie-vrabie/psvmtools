@@ -1,23 +1,80 @@
-# PSHVTools v1.0.8
+# PSHVTools v1.0.9
 
 Release date: 2026-01-17
 
-> This is the release notes for the tagged release `v1.0.8`.
-> For ongoing development toward the next release (e.g. v1.0.9), see `CHANGELOG.md` under **[Unreleased]**.
+> This is the release notes for the tagged release `v1.0.9`.
+> For ongoing development toward the next release (e.g. v1.1.0), see `CHANGELOG.md` under **[Unreleased]**.
 
 ## Highlights
 
-- Installer: dev-build installs now require explicit acknowledgement via a wizard checkbox page.
-- Installer: fixed semantic version comparisons and startup checks so dev/stable detection behaves reliably.
+### ?? **CI/CD & DevOps**
+- Automated GitHub Actions workflow for build, test, and release
+- Version consistency validation across all project files
+- Automated test result publishing
+- Build artifacts automatically uploaded to releases
 
-## Changes
+### ?? **Testing & Quality**
+- Comprehensive Pester test framework
+- Module manifest validation
+- Version consistency checks
+- Ready for PowerShell Gallery publishing
 
-### Added
-- Installer: dev-build installs now require explicit acknowledgement via a wizard checkbox page.
+### ??? **New Tools & Features**
+- **Configuration Management**: `Set-PSHVToolsConfig`, `Get-PSHVToolsConfig`, `Reset-PSHVToolsConfig`
+- **Health Check**: `hvhealth` command to diagnose environment issues
+- **Enhanced Build Script**: Version validation, checksums, `-WhatIf` support, `-Clean` flag
 
-### Fixed
-- Installer: fixed semantic version comparisons and startup checks so dev/stable detection behaves reliably.
+### ?? **Documentation**
+- CONTRIBUTING.md - Complete development guidelines
+- TROUBLESHOOTING.md - Solutions for common issues
+- Updated README with new commands and features
+- IMPROVEMENTS_SUMMARY.md - Detailed changelog of improvements
 
-## Installer / packaging
+### ?? **Improvements**
+- Better error messages with actionable tips and documentation links
+- SHA256 checksum generation for build artifacts
+- Improved module organization with separate config and health check modules
+- PowerShell Gallery publish script for automated distribution
 
-- GUI installer (Inno Setup): `dist\PSHVTools-Setup.exe`
+## Installation
+
+### GUI Installer
+```cmd
+PSHVTools-Setup.exe
+```
+
+### Silent Install
+```cmd
+PSHVTools-Setup.exe /VERYSILENT /NORESTART
+```
+
+### PowerShell
+```powershell
+powershell -ExecutionPolicy Bypass -File Install.ps1
+```
+
+## Quick Start
+
+```powershell
+Import-Module pshvtools
+
+# Check environment
+hvhealth
+
+# Configure defaults
+Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
+
+# Backup VMs
+hvbak -NamePattern "*"
+
+# View configuration
+Show-PSHVToolsConfig
+```
+
+## Key Links
+
+- **GitHub**: https://github.com/vitalie-vrabie/pshvtools
+- **Documentation**: https://github.com/vitalie-vrabie/pshvtools#readme
+- **Issues**: https://github.com/vitalie-vrabie/pshvtools/issues
+- **Contributing**: See CONTRIBUTING.md
+- **Troubleshooting**: See TROUBLESHOOTING.md
