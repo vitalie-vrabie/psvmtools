@@ -1,6 +1,6 @@
 {
-  "version": "1.0.9",
-  "stableVersion": "1.0.8",
+  "version": "1.0.10-dev",
+  "stableVersion": "1.0.9",
   "releaseDate": "2026-01-17",
   "changelog": "See CHANGELOG.md for details"
 }
