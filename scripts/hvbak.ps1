@@ -1040,6 +1040,20 @@ foreach ($vm in $vms) {
                     LocalLog ("Cleanup: Failed to check/delete temp directory {0}: {1}" -f $vmTemp, $_)
                 }
             }
+
+            # 5. If the global temp root is now empty, delete it as well
+            if ($TempRoot -and (Test-Path $TempRoot)) {
+                try {
+                    $rootContents = Get-ChildItem -Path $TempRoot -Force -ErrorAction SilentlyContinue
+                    if (-not $rootContents -or $rootContents.Count -eq 0) {
+                        LocalLog ("Cleanup: Temp root {0} is empty, deleting..." -f $TempRoot)
+                        Remove-Item -LiteralPath $TempRoot -Force -ErrorAction Stop
+                        LocalLog ("Cleanup: Successfully deleted empty temp root: {0}" -f $TempRoot)
+                    }
+                } catch {
+                    LocalLog ("Cleanup: Failed to check/delete temp root {0}: {1}" -f $TempRoot, $_)
+                }
+            }
         }
 
         # Ensure result object only contains safe, serializable types before returning
