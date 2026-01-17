@@ -628,6 +628,17 @@ function Remove-GpuPartitions {
     & $scriptPath @params
 }
 
+# Import additional module components
+$configModule = Join-Path -Path $PSScriptRoot -ChildPath 'PSHVTools.Config.psm1'
+if (Test-Path -LiteralPath $configModule) {
+    Import-Module $configModule -Force
+}
+
+$healthCheckScript = Join-Path -Path $PSScriptRoot -ChildPath 'Test-PSHVToolsEnvironment.ps1'
+if (Test-Path -LiteralPath $healthCheckScript) {
+    . $healthCheckScript
+}
+
 # Create aliases for shorter commands
 New-Alias -Name hvbak -Value Invoke-VMBackup -Force
 New-Alias -Name hv-bak -Value Invoke-VMBackup -Force
@@ -637,6 +648,31 @@ New-Alias -Name hvrecover -Value Restore-OrphanedVMs -Force
 New-Alias -Name nogpup -Value Remove-GpuPartitions -Force
 New-Alias -Name hvclone -Value Clone-VM -Force
 New-Alias -Name hv-clone -Value Clone-VM -Force
+New-Alias -Name hvhealth -Value Test-PSHVToolsEnvironment -Force
+New-Alias -Name hv-health -Value Test-PSHVToolsEnvironment -Force
 
 # Export the functions and aliases
-Export-ModuleMember -Function Invoke-VMBackup, Repair-VhdAcl, Restore-VMBackup, Restore-OrphanedVMs, Remove-GpuPartitions, Clone-VM -Alias hvbak, hv-bak, fix-vhd-acl, hvrestore, hvrecover, nogpup, hvclone, hv-clone
+Export-ModuleMember -Function @(
+    'Invoke-VMBackup',
+    'Repair-VhdAcl',
+    'Restore-VMBackup',
+    'Restore-OrphanedVMs',
+    'Remove-GpuPartitions',
+    'Clone-VM',
+    'Test-PSHVToolsEnvironment',
+    'Get-PSHVToolsConfig',
+    'Set-PSHVToolsConfig',
+    'Reset-PSHVToolsConfig',
+    'Show-PSHVToolsConfig'
+) -Alias @(
+    'hvbak',
+    'hv-bak',
+    'fix-vhd-acl',
+    'hvrestore',
+    'hvrecover',
+    'nogpup',
+    'hvclone',
+    'hv-clone',
+    'hvhealth',
+    'hv-health'
+)

@@ -1,0 +1,81 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      shell: pwsh
+      run: |
+        $PSVersionTable
+        
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Install-Module -Name Pester -Force -SkipPublisherCheck -MinimumVersion 5.0.0
+        
+    - name: Run Pester Tests
+      shell: pwsh
+      run: |
+        Invoke-Pester -Path ./tests -OutputFormat NUnitXml -OutputFile TestResults.xml -PassThru
+        
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      if: always()
+      with:
+        files: TestResults.xml
+        
+    - name: Validate Module Manifest
+      shell: pwsh
+      run: |
+        Test-ModuleManifest -Path ./scripts/pshvtools.psd1
+        
+    - name: Check Version Consistency
+      shell: pwsh
+      run: |
+        ./tests/Test-VersionConsistency.ps1
+        
+    - name: Install Inno Setup
+      shell: pwsh
+      run: |
+        choco install innosetup -y
+        
+    - name: Build Installer
+      shell: pwsh
+      run: |
+        ./build.ps1
+        
+    - name: Verify Build Output
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "dist/PSHVTools-Setup.exe")) {
+          throw "Build failed: PSHVTools-Setup.exe not found"
+        }
+        Write-Host "? Build succeeded: dist/PSHVTools-Setup.exe"
+        
+    - name: Generate Checksums
+      shell: pwsh
+      run: |
+        $hash = Get-FileHash "dist/PSHVTools-Setup.exe" -Algorithm SHA256
+        "$($hash.Hash)  PSHVTools-Setup.exe" | Out-File "dist/PSHVTools-Setup.exe.sha256"
+        Get-Content "dist/PSHVTools-Setup.exe.sha256"
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: PSHVTools-Installer
+        path: |
+          dist/PSHVTools-Setup.exe
+          dist/PSHVTools-Setup.exe.sha256
+        retention-days: 30

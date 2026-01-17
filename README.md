@@ -75,9 +75,57 @@ hvrecover
 
 # Clone a VM
 hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
+
+# Check environment health
+hvhealth
+
+# Configure defaults
+Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
 ```
 
-**Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)
+**Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)  
+**Troubleshooting:** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+---
+
+## ?? Configuration Management
+
+PSHVTools now supports user configuration for default settings:
+
+```powershell
+# View current configuration
+Show-PSHVToolsConfig
+
+# Set defaults
+Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
+
+# Reset to defaults
+Reset-PSHVToolsConfig
+```
+
+Configuration is stored in `$HOME\.pshvtools\config.json`
+
+---
+
+## ?? Health Check
+
+Validate your PSHVTools environment:
+
+```powershell
+# Quick health check
+hvhealth
+
+# Detailed diagnostics
+Test-PSHVToolsEnvironment -Detailed
+```
+
+Checks:
+- PowerShell version
+- Hyper-V module availability
+- Administrative privileges
+- 7-Zip installation
+- Hyper-V service status
+- VM connectivity
 
 ---
 
