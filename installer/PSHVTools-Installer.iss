@@ -9,6 +9,7 @@
 #ifndef MyAppLatestStableVersion
 #define MyAppLatestStableVersion "1.0.9"
 #endif
+
 #define MyAppPublisher "Vitalie Vrabie"
 #define MyAppURL "https://github.com/vitalie-vrabie/pshvtools"
 #define MyAppDescription "PowerShell Hyper-V Tools - VM Backup Utilities"
