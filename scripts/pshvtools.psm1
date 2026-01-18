@@ -636,140 +636,54 @@ function Invoke-VHDCompact {
 
     .DESCRIPTION
       For each VM matching the provided NamePattern this function:
+        - Automatically shuts down the VM (unless -NoAutoShutdown is specified).
         - Retrieves all VHD/VHDX disks attached to the VM.
         - Compacts each disk using Optimize-VHD with full reclamation mode.
+        - Automatically starts the VM back up after compaction.
         - Reports progress and status for each compaction operation.
-        - Requires the VM to be stopped before compacting.
 
     .PARAMETER NamePattern
       Wildcard pattern to match VM names (e.g., "*" for all VMs, "web-*" for VMs starting with "web-").
 
-    .EXAMPLE
-      hvcompact -NamePattern "*"
-      Compacts all VHDs of all VMs.
+    .PARAMETER NoAutoShutdown
+      If specified, do not automatically shut down running VMs. VMs must be stopped manually.
+      Default is to automatically shut down any running VMs before compaction.
 
     .EXAMPLE
-      hvcompact -NamePattern "srv-*"
-      Compacts all VHDs of VMs matching "srv-*".
+      hvcompact "*"
+      Compacts all VHDs of all VMs (shuts down and restarts them automatically).
 
     .EXAMPLE
-      hvcompact "web-*"
-      Positional parameter - compacts all VHDs of VMs matching "web-*".
+      hvcompact "srv-*"
+      Compacts all VHDs of VMs matching "srv-*" (auto shutdown/startup).
+
+    .EXAMPLE
+      hvcompact "web-*" -NoAutoShutdown
+      Compacts VHDs of VMs matching "web-*" (requires VMs to be already stopped).
 
     .NOTES
       - Run elevated (Administrator) on the Hyper-V host.
-      - VMs must be stopped before VHD compaction can proceed.
+      - By default, running VMs are automatically stopped before compaction and restarted after.
+      - Use -NoAutoShutdown to manage VM state manually.
       - Compaction can be time-consuming depending on VHD size.
       - Compaction releases unused space from the VHD to the host storage.
       - Available as 'hvcompact' command.
     #>
 
-    [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false, Position = 0)]
-        [string]$NamePattern
+        [string]$NamePattern,
+        
+        [Parameter(Mandatory = $false)]
+        [switch]$NoAutoShutdown = $false
     )
 
-    if ([string]::IsNullOrWhiteSpace($NamePattern)) {
-        Get-Help Invoke-VHDCompact -Full
-        return
-    }
-
-    # Verify admin privileges
-    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-        Write-Error "This function must be run as Administrator."
-        return
-    }
-
-    try {
-        # Get VMs matching the pattern
-        Write-Host "Searching for VMs matching pattern: $NamePattern" -ForegroundColor Cyan
-        $vms = @(Get-VM -Name $NamePattern -ErrorAction Stop)
-
-        if ($vms.Count -eq 0) {
-            Write-Host "No VMs found matching pattern: $NamePattern" -ForegroundColor Yellow
-            return
-        }
-
-        Write-Host "Found $($vms.Count) VM(s) to process" -ForegroundColor Green
-        Write-Host ""
-
-        $totalDisksCompacted = 0
-        $totalErrors = 0
-
-        foreach ($vm in $vms) {
-            $vmName = $vm.Name
-            $vmState = $vm.State
-
-            Write-Host "Processing VM: $vmName (State: $vmState)" -ForegroundColor Cyan
-
-            # Check if VM is stopped
-            if ($vmState -ne "Off") {
-                Write-Host "  WARNING: VM is not in stopped state. Skipping compaction." -ForegroundColor Yellow
-                continue
-            }
-
-            try {
-                # Get all hard disk drives for this VM
-                $disks = @(Get-VMHardDiskDrive -VMName $vmName -ErrorAction Stop)
-
-                if ($disks.Count -eq 0) {
-                    Write-Host "  No VHDs attached to this VM" -ForegroundColor Gray
-                    continue
-                }
-
-                Write-Host "  Found $($disks.Count) disk(s) attached" -ForegroundColor Gray
-
-                foreach ($disk in $disks) {
-                    $diskPath = $disk.Path
-                    $diskController = $disk.ControllerNumber
-                    $diskLocation = $disk.ControllerLocation
-
-                    if (-not $diskPath) {
-                        Write-Host "    WARNING: Disk controller $diskController, location $diskLocation has no path. Skipping." -ForegroundColor Yellow
-                        continue
-                    }
-
-                    if (-not (Test-Path $diskPath)) {
-                        Write-Host "    WARNING: Disk path not found: $diskPath" -ForegroundColor Yellow
-                        continue
-                    }
-
-                    Write-Host "    Compacting: $diskPath" -ForegroundColor Gray
-
-                    try {
-                        # Compact the VHD using full reclamation
-                        Optimize-VHD -Path $diskPath -Mode Full -ErrorAction Stop
-                        Write-Host "      SUCCESS: Compaction completed" -ForegroundColor Green
-                        $totalDisksCompacted++
-                    } catch {
-                        Write-Host "      ERROR: Compaction failed - $_" -ForegroundColor Red
-                        $totalErrors++
-                    }
-                }
-            } catch {
-                Write-Host "  ERROR: Failed to process VM - $_" -ForegroundColor Red
-                $totalErrors++
-            }
-
-            Write-Host ""
-        }
-
-        # Summary
-        Write-Host "========================================" -ForegroundColor Cyan
-        Write-Host "Compaction Summary:" -ForegroundColor Cyan
-        Write-Host "  VMs processed: $($vms.Count)" -ForegroundColor Green
-        Write-Host "  Disks compacted: $totalDisksCompacted" -ForegroundColor Green
-        Write-Host "  Errors: $totalErrors" -ForegroundColor $(if ($totalErrors -gt 0) { "Red" } else { "Green" })
-        Write-Host "========================================" -ForegroundColor Cyan
-
-        if ($totalErrors -gt 0) {
-            return
-        }
-
-    } catch {
-        Write-Error "Fatal error: $_"
-        return
+    # Dot-source the hvcompact.ps1 script with parameters
+    $hvcompactScript = Join-Path -Path $PSScriptRoot -ChildPath 'hvcompact.ps1'
+    if (Test-Path -LiteralPath $hvcompactScript) {
+        & $hvcompactScript -NamePattern $NamePattern -NoAutoShutdown:$NoAutoShutdown
+    } else {
+        Write-Error "hvcompact.ps1 not found at $hvcompactScript"
     }
 }
 
