@@ -257,26 +257,12 @@ begin
     Result := not NeedsDevBuildConsent;
 end;
 
-function NextButtonClick(CurPageID: Integer): Boolean;
+procedure CurPageChanged(CurPageID: Integer);
 var
   HasHyperV: Boolean;
   Has7Zip: Boolean;
-  Message: String;
 begin
-  Result := True;
-
-  // Handle dev build consent page
-  if (DevBuildConsentPage <> nil) and (CurPageID = DevBuildConsentPage.ID) then
-  begin
-    if not DevBuildConsentCheck.Checked then
-    begin
-      MsgBox('You must check "I understand and want to continue." to proceed.', mbError, MB_OK);
-      Result := False;
-      exit;
-    end;
-  end;
-
-  // Handle requirements check page - populate it and run checks
+  // Run requirement checks when page is displayed (not when user clicks Next)
   if (PowerShellVersionPage <> nil) and (CurPageID = PowerShellVersionPage.ID) then
   begin
     PowerShellVersionPage.RichEditViewer.Clear;
@@ -326,6 +312,32 @@ begin
     begin
       PowerShellVersionPage.RichEditViewer.Lines.Add('System requirements check failed!');
       PowerShellVersionPage.RichEditViewer.Lines.Add('Please install the required components and try again.');
+    end;
+  end;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Message: String;
+begin
+  Result := True;
+
+  // Handle dev build consent page
+  if (DevBuildConsentPage <> nil) and (CurPageID = DevBuildConsentPage.ID) then
+  begin
+    if not DevBuildConsentCheck.Checked then
+    begin
+      MsgBox('You must check "I understand and want to continue." to proceed.', mbError, MB_OK);
+      Result := False;
+      exit;
+    end;
+  end;
+
+  // Handle requirements check page - just validate, checks already ran in CurPageChanged
+  if (PowerShellVersionPage <> nil) and (CurPageID = PowerShellVersionPage.ID) then
+  begin
+    if not RequirementsOK then
+    begin
       Message := 'Your system does not meet the minimum requirements for PSHVTools.' + #13#10 + #13#10;
       Message := Message + 'Required:' + #13#10;
       Message := Message + '  - PowerShell 5.1 or later' + #13#10;
