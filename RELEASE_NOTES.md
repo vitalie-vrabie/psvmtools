@@ -1,11 +1,18 @@
-# PSHVTools v1.0.9
+# PSHVTools v1.0.12
 
-Release date: 2026-01-17
+Release date: 2026-01-18
 
-> This is the release notes for the tagged release `v1.0.9`.
+> This is the release notes for the tagged release `v1.0.12`.
 > For ongoing development toward the next release (e.g. v1.1.0), see `CHANGELOG.md` under **[Unreleased]**.
 
 ## Highlights
+
+### ?? **Installer Improvements**
+- Fixed critical bugs in the installer script
+- Added development build detection and consent page for pre-release versions
+- Enforced mandatory system requirements (PowerShell 5.1+ and 7-Zip)
+- Improved user experience with better error messages and requirement checks
+- Added option to download latest stable release directly from dev builds
 
 ### ?? **CI/CD & DevOps**
 - Automated GitHub Actions workflow for build, test, and release
@@ -48,33 +55,26 @@ PSHVTools-Setup.exe
 PSHVTools-Setup.exe /VERYSILENT /NORESTART
 ```
 
-### PowerShell
-```powershell
-powershell -ExecutionPolicy Bypass -File Install.ps1
-```
-
 ## Quick Start
 
-```powershell
-Import-Module pshvtools
+    Import-Module pshvtools
 
-# Check environment
-hvhealth
+    # Check environment
+    hvhealth
 
-# Configure defaults
-Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
+    # Configure defaults
+    Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
 
-# Backup VMs
-hvbak -NamePattern "*"
+    # Backup VMs
+    hvbak -NamePattern "*"
 
-# View configuration
-Show-PSHVToolsConfig
-```
+    # View configuration
+    Show-PSHVToolsConfig
 
 ## Key Links
 
-- **GitHub**: https://github.com/vitalie-vrabie/pshvtools
-- **Documentation**: https://github.com/vitalie-vrabie/pshvtools#readme
-- **Issues**: https://github.com/vitalie-vrabie/pshvtools/issues
-- **Contributing**: See CONTRIBUTING.md
-- **Troubleshooting**: See TROUBLESHOOTING.md
+• GitHub: https://github.com/vitalie-vrabie/pshvtools
+• Documentation: https://github.com/vitalie-vrabie/pshvtools#readme
+• Issues: https://github.com/vitalie-vrabie/pshvtools/issues
+• Contributing: See CONTRIBUTING.md
+• Troubleshooting: See TROUBLESHOOTING.md
