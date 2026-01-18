@@ -144,11 +144,78 @@ begin
 end;
 
 function CompareSemVer(const A, B: String): Integer;
+var
+  aParts: array[0..3] of Integer;
+  bParts: array[0..3] of Integer;
+  aStr, bStr: String;
+  i, idx, val: Integer;
+  ch: Char;
 begin
-  // Simple comparison - just handle the major version numbers
-  if A = B then Result := 0
-  else if A > B then Result := 1
-  else Result := -1;
+  // Parse version string into parts (major.minor.patch.build)
+  aStr := NormalizeVersionForCompare(A);
+  bStr := NormalizeVersionForCompare(B);
+  
+  // Initialize parts to 0
+  for i := 0 to 3 do
+  begin
+    aParts[i] := 0;
+    bParts[i] := 0;
+  end;
+  
+  // Parse A version
+  idx := 0;
+  i := 0;
+  while (i < Length(aStr)) and (idx < 4) do
+  begin
+    if (aStr[i+1] >= '0') and (aStr[i+1] <= '9') then
+    begin
+      val := 0;
+      while (i < Length(aStr)) and (aStr[i+1] >= '0') and (aStr[i+1] <= '9') do
+      begin
+        val := val * 10 + (Ord(aStr[i+1]) - Ord('0'));
+        i := i + 1;
+      end;
+      aParts[idx] := val;
+      idx := idx + 1;
+    end;
+    i := i + 1;
+  end;
+  
+  // Parse B version
+  idx := 0;
+  i := 0;
+  while (i < Length(bStr)) and (idx < 4) do
+  begin
+    if (bStr[i+1] >= '0') and (bStr[i+1] <= '9') then
+    begin
+      val := 0;
+      while (i < Length(bStr)) and (bStr[i+1] >= '0') and (bStr[i+1] <= '9') do
+      begin
+        val := val * 10 + (Ord(bStr[i+1]) - Ord('0'));
+        i := i + 1;
+      end;
+      bParts[idx] := val;
+      idx := idx + 1;
+    end;
+    i := i + 1;
+  end;
+  
+  // Compare each part numerically
+  for i := 0 to 3 do
+  begin
+    if aParts[i] < bParts[i] then
+    begin
+      Result := -1;
+      exit;
+    end;
+    if aParts[i] > bParts[i] then
+    begin
+      Result := 1;
+      exit;
+    end;
+  end;
+  
+  Result := 0;
 end;
 
 procedure WarnIfOutdatedInstaller();
