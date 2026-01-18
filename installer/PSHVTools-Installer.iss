@@ -90,8 +90,9 @@ Source: "..\scripts\restore-orphaned-vms.ps1"; DestDir: "{commonpf64}\WindowsPow
 
 ; GUI Application
 ; NOTE: The GUI publish artifact may not be present in CI/build environments.
-; Uncomment the following Source line when the GUI executable is available at the expected path.
-; Source: "..\PSHVTools.GUI\PSHVToolsShell\bin\Release\net10.0-windows\win-x64\publish\PSHVToolsShell.exe"; DestDir: "{app}"; Flags: ignoreversion
+; The CI workflows publish the GUI before building the installer so the executable
+; should be available at the path below during the installer build.
+Source: "..\PSHVTools.GUI\PSHVToolsShell\bin\Release\net10.0-windows\win-x64\publish\PSHVToolsShell.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
 Source: "..\docs\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
