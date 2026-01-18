@@ -277,18 +277,23 @@ var
 begin
   Exec('taskkill.exe', '/F /IM powershell.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Sleep(1000);
+
+  // Remove app directory recursively (including all files)
   AppPath := ExpandConstant('{autopf}\PSHVTools');
   if DirExists(AppPath) then
   begin
-    RemoveDir(AppPath);
+    Exec('cmd.exe', '/c rmdir /s /q "' + AppPath + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Sleep(500);
   end;
+
+  // Remove module directory recursively (including all files)
   ModulePath := ExpandConstant('{commonpf64}\WindowsPowerShell\Modules\pshvtools');
   if DirExists(ModulePath) then
   begin
-    RemoveDir(ModulePath);
+    Exec('cmd.exe', '/c rmdir /s /q "' + ModulePath + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Sleep(500);
   end;
+
   Result := True;
 end;
 
