@@ -442,43 +442,48 @@ end;
 
 function InitializeSetup(): Boolean;
 var
-  UninstallString: String;
-  ResultCode: Integer;
   ModulePath: String;
+  AppPath: String;
+  ResultCode: Integer;
+  i: Integer;
 begin
-  // **CRITICAL:** Uninstall old version BEFORE wizard starts
+  // **CRITICAL:** Force-clean old PSHVTools installation BEFORE wizard starts
   
-  // Check if PSHVTools is already installed and uninstall old version
-  if RegQueryStringValue(HKLM, 'Software\{#MyAppPublisher}\{#MyAppName}', 'UninstallString', UninstallString) then
-  begin
-    // Uninstall the old version first
-    if FileExists(UninstallString) then
-    begin
-      // Run the uninstaller silently with NORESTART
-      Exec(UninstallString, '/SILENT /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-      
-      // Wait longer for uninstaller to complete
-      Sleep(3000);
-    end;
-  end;
-
-  // Always try to clean up the module directory to ensure fresh install
+  // Kill any PowerShell processes that might have the module loaded
+  Exec('taskkill.exe', '/F /IM powershell.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(1000);
+  
+  // Force-clean the module directory
   ModulePath := ExpandConstant('{commonpf64}\WindowsPowerShell\Modules\pshvtools');
   if DirExists(ModulePath) then
   begin
-    // Remove module from memory first
-    Exec('powershell.exe',
-      '-NoProfile -NonInteractive -Command "Remove-Module pshvtools -ErrorAction SilentlyContinue"',
-      '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Sleep(1000);
-    
-    // Try to delete the directory multiple times
-    if not RemoveDir(ModulePath) then
+    // Try multiple times to delete
+    for i := 1 to 3 do
     begin
-      // If it still exists, wait and try again
-      Sleep(1000);
-      RemoveDir(ModulePath);
+      if RemoveDir(ModulePath) then
+        break;
+      Sleep(500);
     end;
+  end;
+
+  // Force-clean the app installation directory  
+  AppPath := ExpandConstant('{autopf}\PSHVTools');
+  if DirExists(AppPath) then
+  begin
+    // Try multiple times to delete
+    for i := 1 to 3 do
+    begin
+      if RemoveDir(AppPath) then
+        break;
+      Sleep(500);
+    end;
+  end;
+  
+  // Clean up Start Menu shortcuts
+  try
+    RemoveDir(ExpandConstant('{commonprograms}\PSHVTools'));
+  except
+    // Ignore errors
   end;
 
   Result := True;
