@@ -110,6 +110,26 @@ Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string
 Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "Version"; ValueData: "{#MyAppVersion}"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "ModulePath"; ValueData: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: uninsdeletekey
 
-[Run]
-; Clean up old app directory to ensure fresh install
-Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Remove-Item -Path '{autopf}\PSHVTools' -Recurse -Force -ErrorAction SilentlyContinue; exit 0"""; Flags: RunHidden; StatusMsg: "Cleaning up old installation..."
+[Code]
+function InitializeSetup(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // Kill PowerShell processes to release any module locks
+  Exec('taskkill.exe', '/F /IM powershell.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(500);
+
+  // Clean up old app directory BEFORE installation
+  Exec('powershell.exe',
+    '-NoProfile -Command "Remove-Item -Path ''' + ExpandConstant('{autopf}\PSHVTools') + ''' -Recurse -Force -ErrorAction SilentlyContinue; exit 0"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(500);
+
+  // Clean up old module directory BEFORE installation
+  Exec('powershell.exe',
+    '-NoProfile -Command "Remove-Item -Path ''' + ExpandConstant('{commonpf64}\WindowsPowerShell\Modules\pshvtools') + ''' -Recurse -Force -ErrorAction SilentlyContinue; exit 0"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(500);
+
+  Result := True;
+end;
