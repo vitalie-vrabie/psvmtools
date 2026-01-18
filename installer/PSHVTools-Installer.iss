@@ -91,7 +91,7 @@ Source: "..\scripts\remove-gpu-partitions.ps1"; DestDir: "{commonpf64}\WindowsPo
 Source: "..\scripts\PSHVTools-GUI.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"
 
 ; GUI Application
-Source: "..\PSHVTools.GUI\PSHVToolsShell\bin\Release\net10.0-windows\PSHVToolsShell.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\PSHVTools.GUI\PSHVToolsShell\bin\Release\net10.0-windows\win-x64\publish\PSHVToolsShell.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Documentation files - install to application directory
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
