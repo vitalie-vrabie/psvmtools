@@ -205,7 +205,7 @@ begin
       val := 0;
       while (i < Length(aStr)) and (aStr[i+1] >= '0') and (aStr[i+1] <= '9') do
       begin
-        val := val * 10 + (Ord(aStr[i+1]) - Ord('0'));
+        val := val * 10 + (Ord(aStr[i+1]) - Ord('0'))
         i := i + 1;
       end;
       aParts[idx] := val;
@@ -349,28 +349,29 @@ end;
 
 function CheckDotNetVersion(): Boolean;
 var
-  ResultCode: Integer;
-  Output: String;
   Version: String;
-  MajorVersion: Integer;
+  ResultCode: Integer;
 begin
-  Result := Exec('cmd.exe',
-    '/c dotnet --version 2>nul',
-    Output, SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  if Result and (ResultCode = 0) then
+  // Check for .NET 10 runtime in registry
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.0', 'Version', Version) then
   begin
-    Version := Trim(Output);
-    // Extract major version (first part before dot)
-    if Pos('.', Version) > 0 then
-    begin
-      Version := Copy(Version, 1, Pos('.', Version) - 1);
-    end;
-    MajorVersion := StrToIntDef(Version, 0);
-    Result := (MajorVersion >= 10);
+    Result := True;
+  end
+  else if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.1', 'Version', Version) then
+  begin
+    Result := True;
+  end
+  else if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.2', 'Version', Version) then
+  begin
+    Result := True;
   end
   else
   begin
-    Result := False;
+    // Fallback to dotnet command
+    if Exec('cmd.exe', '/c dotnet --version 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      Result := (ResultCode = 0)
+    else
+      Result := False;
   end;
 end;
 
