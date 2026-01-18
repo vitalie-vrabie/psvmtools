@@ -91,9 +91,9 @@ try {
             if ($vm.State -eq "Running") {
                 Write-Host "Stopping: $($vm.Name)" -ForegroundColor Yellow
                 try {
-                    Stop-VM -VM $vm -Force -ErrorAction Stop
-                    $runningVms += $vm
-                    Write-Host "  Stopped successfully" -ForegroundColor Green
+                    Stop-VM -Name $vm.Name -Force -ErrorAction Stop
+                    $runningVms += $vm.Name
+                    Write-Host "  Stop command sent" -ForegroundColor Green
                 } catch {
                     Write-Host "  ERROR: Failed to stop VM - $_" -ForegroundColor Red
                     $totalErrors++
@@ -105,7 +105,32 @@ try {
         if ($runningVms.Count -gt 0) {
             Write-Host ""
             Write-Host "Waiting for VMs to stop..." -ForegroundColor Yellow
-            Start-Sleep -Seconds 3
+            $maxRetries = 30
+            $retries = 0
+            
+            while ($retries -lt $maxRetries) {
+                $allStopped = $true
+                foreach ($vmName in $runningVms) {
+                    $vmState = (Get-VM -Name $vmName).State
+                    if ($vmState -ne "Off") {
+                        $allStopped = $false
+                        break
+                    }
+                }
+                
+                if ($allStopped) {
+                    Write-Host "All VMs stopped successfully" -ForegroundColor Green
+                    break
+                }
+                
+                Write-Host "  Waiting... ($retries/$maxRetries)" -ForegroundColor Gray
+                Start-Sleep -Seconds 1
+                $retries++
+            }
+            
+            if ($retries -ge $maxRetries) {
+                Write-Host "WARNING: Some VMs did not stop within timeout" -ForegroundColor Yellow
+            }
         }
         Write-Host ""
     }
@@ -119,13 +144,13 @@ try {
     foreach ($vm in $vms) {
         $vmName = $vm.Name
         
-        # Refresh VM state
-        $vm = Get-VM -Name $vmName
-        $vmState = $vm.State
+        # Refresh VM state from latest snapshot
+        $currentVm = Get-VM -Name $vmName -ErrorAction Stop
+        $vmState = $currentVm.State
 
         Write-Host "Processing VM: $vmName (State: $vmState)" -ForegroundColor Cyan
 
-        # Check if VM is stopped
+        # Check if VM is stopped (should be after Phase 1, or user passed -NoAutoShutdown with stopped VMs)
         if ($vmState -ne "Off") {
             Write-Host "  WARNING: VM is not in stopped state. Skipping compaction." -ForegroundColor Yellow
             continue
@@ -183,10 +208,10 @@ try {
         Write-Host "Phase 3: Starting VMs..." -ForegroundColor Cyan
         Write-Host "========================================" -ForegroundColor Cyan
         
-        foreach ($vm in $runningVms) {
-            Write-Host "Starting: $($vm.Name)" -ForegroundColor Yellow
+        foreach ($vmName in $runningVms) {
+            Write-Host "Starting: $vmName" -ForegroundColor Yellow
             try {
-                Start-VM -VM $vm -ErrorAction Stop
+                Start-VM -Name $vmName -ErrorAction Stop
                 Write-Host "  Started successfully" -ForegroundColor Green
             } catch {
                 Write-Host "  ERROR: Failed to start VM - $_" -ForegroundColor Red
