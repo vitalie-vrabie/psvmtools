@@ -94,14 +94,16 @@ Source: "..\RELEASE_NOTES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\QUICKSTART.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\BUILD_GUIDE.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\PROJECT_SUMMARY.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\CONTRIBUTING.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\TROUBLESHOOTING.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Start Menu shortcuts
 Name: "{group}\{#MyAppName} Documentation"; Filename: "{app}\README.md"
 Name: "{group}\Changelog"; Filename: "{app}\CHANGELOG.md"
 Name: "{group}\Quick Start Guide"; Filename: "{app}\QUICKSTART.md"
+Name: "{group}\Contributing Guide"; Filename: "{app}\CONTRIBUTING.md"
+Name: "{group}\Troubleshooting"; Filename: "{app}\TROUBLESHOOTING.md"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
 [Registry]

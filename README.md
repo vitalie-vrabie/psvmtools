@@ -1,394 +1,117 @@
 # PSHVTools - PowerShell Hyper-V Tools
 
-**Version:** 1.0.11  
+**Version:** 1.1.0  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** pshvtools  
-**Commands:** `Invoke-VMBackup`, `Repair-VhdAcl`, `Restore-VMBackup`, `Restore-OrphanedVMs`, `Clone-VM`, `Invoke-VHDCompact` and aliases: `hvbak`, `hv-bak`, `hvfixacl`, `hv-fixacl`, `hvrestore`, `hv-restore`, `hvrecover`, `hv-recover`, `hvnogpup`, `hv-nogpup`, `hvclone`, `hv-clone`, `hvcompact`, `hv-compact`  
 **License:** MIT
 
 ---
 
 ## What is PSHVTools?
 
-PSHVTools is a PowerShell module for backing up and managing Hyper-V virtual machines. It provides cmdlets for automated, parallel VM backups with checkpoint support, 7-Zip compression, VHD permission repair utilities, VHD compaction, and VM recovery tools.
+PSHVTools is a comprehensive PowerShell module for backing up and managing Hyper-V virtual machines. It provides professional-grade cmdlets for automated VM operations with enterprise features like parallel processing, checkpoint support, compression, and recovery tools.
 
 ### Key Features
-- Live VM backups using Production checkpoints
-- Parallel processing of multiple VMs
-- 7-Zip compression with multithreading
-- Configurable backup retention (keep 1-100 copies per VM)
-- Progress tracking with real-time status
-- Graceful cancellation (Ctrl+C support)
-- Low-priority compression (Idle CPU class)
-- VHD/VHDX permission repair utility
-- **VHD/VHDX compaction utility** (reclaim unused space)
-- Restore/import from `hvbak` `.7z` backups (with optional network switch mapping)
-- Recover orphaned VMs by re-registering configs found on disk (scan `Virtual Machines` folder)
-- Utility script to remove GPU partition adapters from VMs (see `scripts/remove-gpu-partitions.ps1`)
-- Clone an existing VM (export + import copy with a new ID) into a new VM name
+- **Live VM Backups**: Production checkpoint-based backups with zero downtime
+- **Parallel Processing**: Concurrent backup of multiple VMs for efficiency
+- **Advanced Compression**: 7-Zip integration with multithreading and low-priority processing
+- **Flexible Retention**: Configurable backup policies (1-100 copies per VM)
+- **Progress Tracking**: Real-time status with graceful cancellation support
+- **VHD Management**: Permission repair, compaction, and optimization utilities
+- **Recovery Tools**: Restore from backups and recover orphaned VMs
+- **Configuration Management**: Persistent settings and environment health checks
+- **Professional Installer**: GUI setup with system requirements validation
+
+### Commands Available
+- `Invoke-VMBackup` / `hvbak` - Backup VMs with checkpoints and compression
+- `Invoke-VHDCompact` / `hvcompact` - Compact VHD/VHDX files
+- `Repair-VhdAcl` / `hvfixacl` - Fix VHD permissions
+- `Restore-VMBackup` / `hvrestore` - Restore from backup archives
+- `Restore-OrphanedVMs` / `hvrecover` - Recover unregistered VMs
+- `Clone-VM` / `hvclone` - Clone existing VMs
+- `Set-PSHVToolsConfig` - Configure default settings
+- `Get-PSHVToolsConfig` - View current configuration
+- `hvhealth` - Check environment health
 
 ---
 
 ## Installation
 
-### GUI Installer (Recommended for End Users)
+### GUI Installer (Recommended)
 
-1. Download `PSHVTools-Setup.exe`
-2. Double-click to run the installer
-3. Follow the wizard
-4. Done
+1. Download `PSHVTools-Setup.exe` from [GitHub Releases](https://github.com/vitalie-vrabie/pshvtools/releases)
+2. Run as Administrator
+3. Follow the installation wizard
+4. The module will be available system-wide
 
-**Silent install:**
+**Silent Installation:**
 ```cmd
 PSHVTools-Setup.exe /VERYSILENT /NORESTART
 ```
 
-### PowerShell Installer (Alternative)
+### System Requirements
 
-1. Download and extract `PSHVTools-Setup.zip`
-2. Right-click `Install.ps1` -> "Run with PowerShell" (as Administrator)
-
-**Command line install:**
-```powershell
-powershell -ExecutionPolicy Bypass -File Install.ps1
-```
-
-**Silent install:**
-```powershell
-powershell -ExecutionPolicy Bypass -File Install.ps1 -Silent
-```
-
-After installation:
-```powershell
-Import-Module pshvtools
-
-# Backup VMs
-hvbak -NamePattern "*"
-
-# Restore VMs
-hvrestore -VmName "MyVM" -Latest
-
-# Fix VHD permissions
-hvfixacl
-
-# Compact VHDs (reclaim unused space)
-hvcompact -NamePattern "*"
-
-# Recover orphaned VMs
-hvrecover
-
-# Clone a VM
-hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
-
-# Check environment health
-hvhealth
-
-# Configure defaults
-Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
-```
-
-**Full user documentation:** See [QUICKSTART.md](QUICKSTART.md)  
-**Troubleshooting:** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
----
-
-## ?? Configuration Management
-
-PSHVTools now supports user configuration for default settings:
-
-```powershell
-# View current configuration
-Show-PSHVToolsConfig
-
-# Set defaults
-Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
-
-# Reset to defaults
-Reset-PSHVToolsConfig
-```
-
-Configuration is stored in `$HOME\.pshvtools\config.json`
-
----
-
-## ?? Health Check
-
-Validate your PSHVTools environment:
-
-```powershell
-# Quick health check
-hvhealth
-
-# Detailed diagnostics
-Test-PSHVToolsEnvironment -Detailed
-```
-
-Checks:
-- PowerShell version
-- Hyper-V module availability
-- Administrative privileges
-- 7-Zip installation
-- Hyper-V service status
-- VM connectivity
-
----
-
-## Utility Scripts
-
-### Remove GPU partition adapters
-
-File: `scripts/remove-gpu-partitions.ps1`
-
-Removes all GPU partition adapters from Hyper-V VMs matching a wildcard pattern. This is intended to work even if the host has no compatible GPU currently present.
-
-```powershell
-# Script
-.\scripts\remove-gpu-partitions.ps1 -NamePattern "lab-*"
-.\scripts\remove-gpu-partitions.ps1 -NamePattern "*"
-
-# Module alias (after: Import-Module pshvtools)
-nogpup -NamePattern "lab-*"
-```
-
----
-
-## Building from Source
-
-### Prerequisites
-
-**For GUI EXE Installer:**
-- Inno Setup 6 (https://jrsoftware.org/isdl.php)
-- Or install via WinGet: `winget install JRSoftware.InnoSetup`
-
-**For PowerShell Installer:**
-- PowerShell 5.1+
-
-### Build Commands
-
-```cmd
-# Build GUI EXE installer (recommended)
-installer\Build-InnoSetupInstaller.bat
-```
-
-**Full build documentation:** See [BUILD_GUIDE.md](BUILD_GUIDE.md)
-
----
-
-## ?? Available Commands
-
-### Invoke-VMBackup (aliases: hvbak, hv-bak)
-Backs up Hyper-V VMs using checkpoints and 7-Zip compression.
-
-**Parameters:**
-- `NamePattern` - VM name wildcard pattern (required)
-- `Destination` - Backup destination folder (default: `$env:USERPROFILE\hvbak-archives`)
-- `TempFolder` - Temporary export folder (default: `$env:TEMP\hvbak`)
-- `ForceTurnOff` - Force VM power off if checkpoint fails (default: $true)
-- `KeepCount` - Number of backups to keep per VM (default: 2, range: 1-100)
-
-**Examples:**
-```powershell
-hvbak -NamePattern "*"
-hv-bak -NamePattern "srv-*" -Destination "D:\Backups"
-hvbak -NamePattern "web-*" -KeepCount 5
-```
-
-### Restore-VMBackup (alias: hvrestore)
-Restores a VM from an `hvbak` `.7z` archive by extracting to a staging folder and importing into Hyper-V.
-
-**Parameters (common):**
-- `BackupPath` - Path to a `.7z` archive
-- `VmName`, `BackupRoot`, `Latest` - Restore most recent archive for a VM
-- `ImportMode` - `Copy` (default), `Register`, or `Restore`
-- `DestinationRoot` - Single "where should it go" root:
-  - with `ImportMode=Register` (or if `ImportMode` omitted): extract under `DestinationRoot` and register **in-place**
-  - with `ImportMode=Copy`/`Restore`: treated as `VmStorageRoot` (final Hyper-V storage root)
-- `StagingRoot` - Extraction root used when staging is needed (e.g., Copy/Restore)
-- `VmStorageRoot` - Destination root for VM files in `Copy`/`Restore` mode
-- `VSwitchName` - Connect adapters to a switch after import
-- `NoNetwork` - Disconnect adapters after import
-- `Force` - Remove existing VM with the same name before import
-- `StartAfterRestore` - Start the VM after restore
-
-**Examples:**
-```powershell
-# In-place restore into a specific folder (extract + register from DestinationRoot)
-hvrestore -VmName "MyVM" -BackupRoot "D:\hvbak-archives" -Latest -DestinationRoot "D:\RestoredVMs" -NoNetwork
-
-# Restore a specific archive (recommended: Copy + GenerateNewId) to a specific Hyper-V storage root
-hvrestore -BackupPath "D:\hvbak-archives\20260101\MyVM_20260101123456.7z" `
-  -ImportMode Copy -DestinationRoot "D:\Hyper-V" -VSwitchName "vSwitch" -StartAfterRestore
-```
-
-### Restore-OrphanedVMs (alias: hvrecover)
-Scans Hyper-V VM configuration folders (`Virtual Machines`) for VM configs present on disk but not registered, and re-registers them in-place.
-
-**Parameters:**
-- `VmConfigRoot` - Path to root folder for VM configs (default: `C:\ProgramData\Microsoft\Windows\Hyper-V\Virtual Machines`)
-- `LogFile` - Log file path (default: `$env:TEMP\RecoverOrphanedVMs.log`)
-
-**Examples:**
-```powershell
-# Recover orphaned VMs found in default location
-hvrecover
-
-# Recover orphaned VMs from a custom folder
-hvrecover -VmConfigRoot "D:\Hyper-V\Custom VMs"
-```
-
-### Repair-VhdAcl (alias: fix-vhd-acl)
-Repairs file permissions on VHD/VHDX files for Hyper-V access.
-
-**Parameters:**
-- `VhdFolder` - Path to folder with VHD/VHDX files
-- `VhdListCsv` - CSV file with VHD paths
-- `LogFile` - Log file path (default: `$env:TEMP\FixVhdAcl.log`)
-
-**Examples:**
-```powershell
-fix-vhd-acl
-Repair-VhdAcl -VhdFolder "D:\Restores"
-```
-
-### Clone-VM (aliases: hvclone, hv-clone)
-Clones a VM by exporting it to a temp folder, then importing it as a copy with a new ID.
-
-**Examples:**
-```powershell
-# Clone a VM
-hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
-
-# Same, using dashed alias
-hv-clone -SourceVmName "BaseWin11" -NewName "Win11-Dev02" -DestinationRoot "D:\Hyper-V"
-
-```
-
----
-
-## ?? Quick Reference
-
-### Build Commands
-```cmd
-# Build GUI installer
-Build-InnoSetupInstaller.bat
-
-# Build PowerShell installer
-Build-Release.bat package
-
-# Clean outputs
-Build-Release.bat clean
-```
-
-### Installation Commands
-```powershell
-# GUI installer (silent)
-PSHVTools-Setup.exe /VERYSILENT /NORESTART
-
-# PowerShell installer (silent)
-.\Install.ps1 -Silent
-
-# Uninstall
-.\Install.ps1 -Uninstall
-```
-
-### Usage Commands
-```powershell
-# Import module
-Import-Module pshvtools
-
-# List available commands
-Get-Command -Module pshvtools
-
-# Backup VMs
-hvbak -NamePattern "*"
-
-# Restore from backup
-hvrestore -VmName "MyVM" -Latest
-
-# Recover orphaned VMs
-hvrecover
-
-# Fix VHD permissions
-hvfixacl
-
-# Clone a VM
-hvclone -SourceVmName "BaseWin11" -NewName "Win11-Dev01" -DestinationRoot "D:\Hyper-V"
-
-# Get detailed help
-Get-Help Invoke-VMBackup -Full
-Get-Help Repair-VhdAcl -Full
-Get-Help Restore-VMBackup -Full
-Get-Help Restore-OrphanedVMs -Full
-Get-Help Clone-VM -Full
-```
-
----
-
-## ?? Documentation Index
-
-| Document | Description | Target Audience |
-|----------|-------------|-----------------|
-| [QUICKSTART.md](QUICKSTART.md) | Quick start guide | End Users |
-| [BUILD_GUIDE.md](BUILD_GUIDE.md) | Building packages | Developers |
-| [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) | Project overview | Everyone |
-| [LICENSE.txt](LICENSE.txt) | MIT license | Everyone |
-
----
-
-## ?? System Requirements
-
-### Minimum Requirements
-- Windows Server 2016 or Windows 10 (with Hyper-V)
+- Windows 10/11 or Windows Server 2016+
 - PowerShell 5.1 or later
-- Hyper-V PowerShell module
-- 7-Zip installed (7z.exe in PATH)
-- Administrator privileges for installation
+- Hyper-V role enabled (recommended)
+- 7-Zip installed (will be detected automatically)
 
-### Recommended
-- Windows Server 2019 or later
-- PowerShell 7+
-- Fast storage for temp folder
-- Sufficient disk space for backups
+### Post-Installation
 
----
+After installation, the module is automatically imported. You can verify with:
 
-## ?? Support
-
-- **GitHub Issues:** https://github.com/vitalie-vrabie/pshvtools/issues
-- **GitHub Repository:** https://github.com/vitalie-vrabie/pshvtools
-- **Discussions:** https://github.com/vitalie-vrabie/pshvtools/discussions
+```powershell
+Get-Module pshvtools
+Get-Command -Module pshvtools
+```
 
 ---
 
-## ?? License
+## Quick Start
 
-MIT License - See [LICENSE.txt](LICENSE.txt) for full details
+### 1. Check Environment
+```powershell
+hvhealth
+```
 
-Copyright (c) 2026 Vitalie Vrabie
+### 2. Configure Defaults (Optional)
+```powershell
+Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
+```
+
+### 3. Backup All VMs
+```powershell
+hvbak -NamePattern "*"
+```
+
+### 4. Compact VHD Files
+```powershell
+hvcompact -NamePattern "*" -WhatIf  # Preview first
+hvcompact -NamePattern "*"          # Execute
+```
+
+### 5. View Configuration
+```powershell
+Show-PSHVToolsConfig
+```
 
 ---
 
-## ?? Getting Started
+## Documentation
 
-### For End Users
-1. Download `PSHVTools-Setup.exe`
-2. Run the installer
-3. Import the module: `Import-Module pshvtools`
-4. Start backing up VMs: `hvbak -NamePattern "*"`
-
-### For Developers
-1. Clone the repository
-2. Run `Build-InnoSetupInstaller.bat`
-3. Find installer in `dist\` folder
-4. Test and distribute!
+- **[Quick Start Guide](QUICKSTART.md)** - Step-by-step usage examples
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Contributing](CONTRIBUTING.md)** - Development guidelines
+- **[Changelog](CHANGELOG.md)** - Version history and changes
 
 ---
 
-## ?? Version History
+## Support
 
-### Version 1.0.11 (Current)
-- Added `hvcompact` command for VHD compaction
-- Added `hvfixacl` command for VHD ACL repair
-- Added standardized hyphenated aliases (`hv-*`) for all commands
-- Removed legacy aliases (`fix-vhd-acl`, `nogpup`)
-- See `CHANGELOG.md` for complete details
+- **GitHub Issues**: [Report bugs or request features](https://github.com/vitalie-vrabie/pshvtools/issues)
+- **Documentation**: Comprehensive guides included with installation
+- **Community**: Open source project - contributions welcome!
+
+---
+
+*PSHVTools is developed and maintained by Vitalie Vrabie. Licensed under MIT License.*
