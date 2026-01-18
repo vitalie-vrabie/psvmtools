@@ -6,7 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{B2D7987F-4C7C-4F10-9C1A-A0F9F5CDE3C7}"
 	ProjectSection(SolutionItems) = preProject
 		fix-vhd-acl.ps1 = fix-vhd-acl.ps1
-		hvbak.ps1 = hvbak.ps1
 		Install-PSHVTools.ps1 = Install-PSHVTools.ps1
 		Uninstall-PSHVTools.ps1 = Uninstall-PSHVTools.ps1
 		pshvtools.psd1 = pshvtools.psd1
@@ -17,18 +16,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{
 	ProjectSection(SolutionItems) = preProject
 		PSHVTools-Installer.iss = PSHVTools-Installer.iss
 		Build-InnoSetupInstaller.bat = Build-InnoSetupInstaller.bat
-		INNO_SETUP_INSTALLER.md = INNO_SETUP_INSTALLER.md
+		INNO_SETUP_INSTALLER.md = docs\installer\INNO_SETUP_INSTALLER.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{EA75FA0B-BB91-4E78-AD74-9FFB4E56B50F}"
 	ProjectSection(SolutionItems) = preProject
-		README.md = README.md
-		QUICKSTART.md = QUICKSTART.md
+		docs\README.md = docs\README.md
+		docs\QUICKSTART.md = docs\QUICKSTART.md
 		BUILD_GUIDE.md = BUILD_GUIDE.md
-		CHANGELOG.md = CHANGELOG.md
+		docs\CHANGELOG.md = docs\CHANGELOG.md
 		LICENSE.txt = LICENSE.txt
 		PROJECT_SUMMARY.md = PROJECT_SUMMARY.md
-		INNO_SETUP_INSTALLER.md = INNO_SETUP_INSTALLER.md
+		docs\installer\INNO_SETUP_INSTALLER.md = docs\installer\INNO_SETUP_INSTALLER.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PSHVTools.GUI", "PSHVTools.GUI", "{6BBACC6E-250B-AFA2-A372-09A6C88821EE}"
