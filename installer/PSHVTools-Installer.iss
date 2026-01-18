@@ -379,7 +379,7 @@ var
 begin
   // Reload the module after installation completes (if not cancelled)
   Exec('powershell.exe',
-    '-NoProfile -NonInteractive -Command "Import-Module pshvtools -Force -ErrorAction SilentlyContinue; exit 0"',
+    '-NoProfile -NonInteractive -Command "Import-Module pshvtools -Verbose -ErrorAction SilentlyContinue; exit 0"',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
