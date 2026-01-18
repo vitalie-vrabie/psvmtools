@@ -12,8 +12,16 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        var window = new MainWindow();
-        window.Show();
+        try
+        {
+            var window = new MainWindow();
+            window.Show();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error starting application: {ex.Message}", "Error");
+            throw;
+        }
     }
 }
 
