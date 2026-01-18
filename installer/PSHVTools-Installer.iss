@@ -74,6 +74,7 @@ FinishedLabel=[name] has been successfully installed.%n%nThe pshvtools PowerShel
 [CustomMessages]
 english.PowerShellCheck=Checking PowerShell version...
 english.HyperVCheck=Checking Hyper-V availability...
+english.DotNetCheck=Checking .NET runtime...
 english.ModuleInstall=Installing PowerShell module...
 
 [Files]
@@ -281,6 +282,7 @@ begin
       Message := 'Your system does not meet the minimum requirements for PSHVTools.' + #13#10 + #13#10;
       Message := Message + 'Required:' + #13#10;
       Message := Message + '  - PowerShell 5.1 or later' + #13#10;
+      Message := Message + '  - .NET 10 or later runtime' + #13#10;
       Message := Message + '  - 7-Zip (7z.exe in PATH or standard install location)' + #13#10;
       Message := Message + '  - Hyper-V (recommended)' + #13#10 + #13#10;
       Message := Message + 'Installation cannot continue.';
@@ -343,6 +345,33 @@ begin
     exit;
   end;
   Result := False;
+end;
+
+function CheckDotNetVersion(): Boolean;
+var
+  ResultCode: Integer;
+  Output: String;
+  Version: String;
+  MajorVersion: Integer;
+begin
+  Result := Exec('cmd.exe',
+    '/c dotnet --version 2>nul',
+    Output, SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if Result and (ResultCode = 0) then
+  begin
+    Version := Trim(Output);
+    // Extract major version (first part before dot)
+    if Pos('.', Version) > 0 then
+    begin
+      Version := Copy(Version, 1, Pos('.', Version) - 1);
+    end;
+    MajorVersion := StrToIntDef(Version, 0);
+    Result := (MajorVersion >= 10);
+  end
+  else
+  begin
+    Result := False;
+  end;
 end;
 
 function InitializeSetup(): Boolean;
@@ -432,6 +461,7 @@ procedure CurPageChanged(CurPageID: Integer);
 var
   HasHyperV: Boolean;
   Has7Zip: Boolean;
+  HasDotNet: Boolean;
 begin
   // Run requirement checks when page is displayed (not when user clicks Next)
   if (PowerShellVersionPage <> nil) and (CurPageID = PowerShellVersionPage.ID) then
@@ -470,6 +500,19 @@ begin
       PowerShellVersionPage.RichEditViewer.Lines.Add('  [ERROR] 7-Zip not detected (7z.exe)');
       PowerShellVersionPage.RichEditViewer.Lines.Add('  Please install 7-Zip and ensure 7z.exe is in PATH,');
       PowerShellVersionPage.RichEditViewer.Lines.Add('  or installed in "C:\Program Files\7-Zip\7z.exe".');
+      RequirementsOK := False;
+    end;
+
+    PowerShellVersionPage.RichEditViewer.Lines.Add('');
+    PowerShellVersionPage.RichEditViewer.Lines.Add('Checking .NET runtime...');
+    HasDotNet := CheckDotNetVersion();
+    
+    if HasDotNet then
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [OK] .NET 10+ runtime detected')
+    else
+    begin
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [ERROR] .NET 10 or later runtime is required!');
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  Please install .NET 10 runtime from https://dotnet.microsoft.com/download');
       RequirementsOK := False;
     end;
 
