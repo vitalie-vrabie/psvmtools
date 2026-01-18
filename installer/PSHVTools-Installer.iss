@@ -229,18 +229,25 @@ procedure InitializeWizard();
 begin
   RequirementsOK := True;
   NeedsDevBuildConsent := False;
+
+  // Create consent page FIRST, before calling WarnIfOutdatedInstaller
+  DevBuildConsentPage := CreateCustomPage(wpWelcome, 'Development build warning', '');
+  DevBuildConsentCheck := TNewCheckBox.Create(DevBuildConsentPage);
+  DevBuildConsentCheck.Parent := DevBuildConsentPage.Surface;
+  DevBuildConsentCheck.Left := ScaleX(0);
+  DevBuildConsentCheck.Top := ScaleY(8);
+  DevBuildConsentCheck.Width := DevBuildConsentPage.SurfaceWidth;
+  DevBuildConsentCheck.Caption := 'I understand and want to continue.';
+
+  // NOW check for dev build warning (page exists)
   WarnIfOutdatedInstaller();
-  if NeedsDevBuildConsent then
-  begin
-    DevBuildConsentPage := CreateCustomPage(wpWelcome, 'Development build warning', '');
-    DevBuildConsentCheck := TNewCheckBox.Create(DevBuildConsentPage);
-    DevBuildConsentCheck.Parent := DevBuildConsentPage.Surface;
-    DevBuildConsentCheck.Left := ScaleX(0);
-    DevBuildConsentCheck.Top := ScaleY(8);
-    DevBuildConsentCheck.Width := DevBuildConsentPage.SurfaceWidth;
-    DevBuildConsentCheck.Caption := 'I understand and want to continue.';
-  end;
-  PowerShellVersionPage := CreateOutputMsgMemoPage(wpWelcome, 'Checking System Requirements', 'Please wait while Setup checks if your system meets the requirements.', 'Setup is checking for PowerShell 5.1+ and Hyper-V...', '');
+  
+  // Create requirements check page
+  PowerShellVersionPage := CreateOutputMsgMemoPage(DevBuildConsentPage.ID,
+    'Checking System Requirements',
+    'Please wait while Setup checks if your system meets the requirements.',
+    'Setup is checking for PowerShell 5.1+ and Hyper-V...',
+    '');
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
@@ -251,14 +258,83 @@ begin
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  HasHyperV: Boolean;
+  Has7Zip: Boolean;
+  Message: String;
 begin
   Result := True;
+
+  // Handle dev build consent page
   if (DevBuildConsentPage <> nil) and (CurPageID = DevBuildConsentPage.ID) then
   begin
     if not DevBuildConsentCheck.Checked then
     begin
       MsgBox('You must check "I understand and want to continue." to proceed.', mbError, MB_OK);
       Result := False;
+      exit;
+    end;
+  end;
+
+  // Handle requirements check page - populate it and run checks
+  if (PowerShellVersionPage <> nil) and (CurPageID = PowerShellVersionPage.ID) then
+  begin
+    PowerShellVersionPage.RichEditViewer.Clear;
+    PowerShellVersionPage.RichEditViewer.Lines.Add('Checking PowerShell version...');
+    
+    if CheckPowerShellVersion() then
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [OK] PowerShell 5.1+ detected')
+    else
+    begin
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [ERROR] PowerShell 5.1 or later is required!');
+      RequirementsOK := False;
+    end;
+
+    PowerShellVersionPage.RichEditViewer.Lines.Add('');
+    PowerShellVersionPage.RichEditViewer.Lines.Add('Checking Hyper-V...');
+    HasHyperV := CheckHyperV();
+    
+    if HasHyperV then
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [OK] Hyper-V PowerShell module is available')
+    else
+    begin
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [WARNING] Hyper-V PowerShell module not detected');
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  The module will install, but requires Hyper-V to function.');
+    end;
+
+    PowerShellVersionPage.RichEditViewer.Lines.Add('');
+    PowerShellVersionPage.RichEditViewer.Lines.Add('Checking 7-Zip (7z.exe)...');
+    Has7Zip := Check7Zip();
+    
+    if Has7Zip then
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [OK] 7-Zip detected (7z.exe)')
+    else
+    begin
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  [ERROR] 7-Zip not detected (7z.exe)');
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  Please install 7-Zip and ensure 7z.exe is in PATH,');
+      PowerShellVersionPage.RichEditViewer.Lines.Add('  or installed in "C:\Program Files\7-Zip\7z.exe".');
+      RequirementsOK := False;
+    end;
+
+    PowerShellVersionPage.RichEditViewer.Lines.Add('');
+    if RequirementsOK then
+    begin
+      PowerShellVersionPage.RichEditViewer.Lines.Add('System requirements check completed successfully!');
+      PowerShellVersionPage.RichEditViewer.Lines.Add('Click Next to continue with installation.');
+    end
+    else
+    begin
+      PowerShellVersionPage.RichEditViewer.Lines.Add('System requirements check failed!');
+      PowerShellVersionPage.RichEditViewer.Lines.Add('Please install the required components and try again.');
+      Message := 'Your system does not meet the minimum requirements for PSHVTools.' + #13#10 + #13#10;
+      Message := Message + 'Required:' + #13#10;
+      Message := Message + '  - PowerShell 5.1 or later' + #13#10;
+      Message := Message + '  - 7-Zip (7z.exe in PATH or standard install location)' + #13#10;
+      Message := Message + '  - Hyper-V (recommended)' + #13#10 + #13#10;
+      Message := Message + 'Do you want to abort the installation?';
+      
+      if MsgBox(Message, mbError, MB_YESNO) = IDYES then
+        Result := False;
     end;
   end;
 end;
