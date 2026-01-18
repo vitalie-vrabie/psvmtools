@@ -5,8 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PSHVToolsShell"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="PSHVTools - Hyper-V VM Backup GUI" Height="500" Width="600" WindowStartupLocation="CenterScreen">
     <Grid>
-
+        <Label Content="PSHVTools - Professional Hyper-V VM Backup Tools" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+        <Button x:Name="BackupButton" Content="Backup All VMs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="150" Height="40" Margin="10,50,0,0" Click="BackupButton_Click"/>
+        <Button x:Name="CompactButton" Content="Compact VHDs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="150" Height="40" Margin="170,50,0,0" Click="CompactButton_Click"/>
+        <Button x:Name="HealthButton" Content="Health Check" HorizontalAlignment="Left" VerticalAlignment="Top" Width="150" Height="40" Margin="330,50,0,0" Click="HealthButton_Click"/>
+        <Button x:Name="ConfigButton" Content="Show Config" HorizontalAlignment="Left" VerticalAlignment="Top" Width="150" Height="40" Margin="10,110,0,0" Click="ConfigButton_Click"/>
+        <Button x:Name="RestoreButton" Content="Restore VMs" HorizontalAlignment="Left" VerticalAlignment="Top" Width="150" Height="40" Margin="170,110,0,0" Click="RestoreButton_Click"/>
+        <Button x:Name="ExitButton" Content="Exit" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="40" Margin="10,400,0,0" Click="ExitButton_Click"/>
     </Grid>
 </Window>
