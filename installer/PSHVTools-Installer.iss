@@ -1,6 +1,6 @@
 ; PSHVTools Inno Setup Script
 ; Creates a professional Windows installer with GUI wizard
-; Version 1.0.11
+; Version 1.0.12
 
 #define MyAppName "PSHVTools"
 #ifndef MyAppVersion
@@ -69,7 +69,7 @@ WelcomeLabel1=Welcome to [name] Setup
 WelcomeLabel2=This will install [name/ver] on your computer.%n%nPSHVTools provides PowerShell cmdlets for backing up Hyper-V virtual machines with checkpoint support and 7-Zip compression.%n%nIt is recommended that you close all other applications before continuing.
 FinishedHeadingLabel=Completing [name] Setup
 FinishedLabelNoIcons=[name] has been successfully installed.%n%nThe pshvtools PowerShell module is now available system-wide.
-FinishedLabel=[name] has been successfully installed.%n%nThe pshvtools PowerShell module is now available system-wide.%n%nYou can now use the following commands:%n  Import-Module hvbak%n  Get-Help Invoke-VMBackup -Full
+FinishedLabel=[name] has been successfully installed.%n%nThe pshvtools PowerShell module is now available system-wide.%n%nYou can now use the following commands:%n  Import-Module pshvtools%n  Get-Help Invoke-VMBackup -Full
 
 [CustomMessages]
 english.PowerShellCheck=Checking PowerShell version...
@@ -111,6 +111,12 @@ Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string
 Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "ModulePath"; ValueData: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: uninsdeletekey
 
 [Code]
+const
+  EXIT_PROCESS = 0;
+
+procedure ExitProcess(uExitCode: UINT);
+external 'ExitProcess@kernel32.dll stdcall';
+
 var
   PowerShellVersionPage: TOutputMsgMemoWizardPage;
   DevBuildConsentPage: TWizardPage;
@@ -150,7 +156,6 @@ var
   bParts: array[0..3] of Integer;
   aStr, bStr: String;
   i, idx, val: Integer;
-  ch: Char;
 begin
   // Parse version string into parts (major.minor.patch.build)
   aStr := NormalizeVersionForCompare(A);
@@ -225,13 +230,48 @@ begin
     RequireDevBuildConsent(NormalizeVersionForCompare('{#MyAppVersion}'), NormalizeVersionForCompare('{#MyAppLatestStableVersion}'), 'Latest stable release');
 end;
 
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Message: String;
+begin
+  Result := True;
+
+  // Handle dev build consent page
+  if (DevBuildConsentPage <> nil) and (CurPageID = DevBuildConsentPage.ID) then
+  begin
+    if not DevBuildConsentCheck.Checked then
+    begin
+      MsgBox('You must check "I understand and want to continue." to proceed.', mbError, MB_OK);
+      Result := False;
+      exit;
+    end;
+  end;
+
+  // Handle requirements check page - prevent install if requirements not met
+  if (PowerShellVersionPage <> nil) and (CurPageID = PowerShellVersionPage.ID) then
+  begin
+    if not RequirementsOK then
+    begin
+      Message := 'Your system does not meet the minimum requirements for PSHVTools.' + #13#10 + #13#10;
+      Message := Message + 'Required:' + #13#10;
+      Message := Message + '  - PowerShell 5.1 or later' + #13#10;
+      Message := Message + '  - 7-Zip (7z.exe in PATH or standard install location)' + #13#10;
+      Message := Message + '  - Hyper-V (recommended)' + #13#10 + #13#10;
+      Message := Message + 'Installation cannot continue.';
+      
+      MsgBox(Message, mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
 procedure DownloadStableButtonClick(Sender: TObject);
 var
   ResultCode: Integer;
 begin
-  Exec('cmd.exe', '/c start https://github.com/vitalie-vrabie/pshvtools/releases/latest', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  // Exit the installer after opening the link
-  Abort;
+  Exec('cmd.exe', '/c start https://github.com/vitalie-vrabie/pshvtools/releases/latest', '', SW_HIDE, ewNoWait, ResultCode);
+  Sleep(100);
+  ExitProcess(0);
 end;
 
 function CheckPowerShellVersion(): Boolean;
@@ -417,41 +457,6 @@ begin
     begin
       PowerShellVersionPage.RichEditViewer.Lines.Add('System requirements check failed!');
       PowerShellVersionPage.RichEditViewer.Lines.Add('Please install the required components and try again.');
-    end;
-  end;
-end;
-
-function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  Message: String;
-begin
-  Result := True;
-
-  // Handle dev build consent page
-  if (DevBuildConsentPage <> nil) and (CurPageID = DevBuildConsentPage.ID) then
-  begin
-    if not DevBuildConsentCheck.Checked then
-    begin
-      MsgBox('You must check "I understand and want to continue." to proceed.', mbError, MB_OK);
-      Result := False;
-      exit;
-    end;
-  end;
-
-  // Handle requirements check page - just validate, checks already ran in CurPageChanged
-  if (PowerShellVersionPage <> nil) and (CurPageID = PowerShellVersionPage.ID) then
-  begin
-    if not RequirementsOK then
-    begin
-      Message := 'Your system does not meet the minimum requirements for PSHVTools.' + #13#10 + #13#10;
-      Message := Message + 'Required:' + #13#10;
-      Message := Message + '  - PowerShell 5.1 or later' + #13#10;
-      Message := Message + '  - 7-Zip (7z.exe in PATH or standard install location)' + #13#10;
-      Message := Message + '  - Hyper-V (recommended)' + #13#10 + #13#10;
-      Message := Message + 'Do you want to abort the installation?';
-      
-      if MsgBox(Message, mbError, MB_YESNO) = IDYES then
-        Result := False;
     end;
   end;
 end;
