@@ -275,6 +275,12 @@ var
   AppPath: String;
   ModulePath: String;
 begin
+  // Unload the module first so files aren't locked
+  Exec('powershell.exe', 
+    '-NoProfile -NonInteractive -Command "Remove-Module pshvtools -Force -ErrorAction SilentlyContinue; exit 0"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(500);
+
   // Remove files from app directory (but keep directory)
   AppPath := ExpandConstant('{autopf}\PSHVTools');
   if DirExists(AppPath) then
@@ -292,6 +298,16 @@ begin
   end;
 
   Result := True;
+end;
+
+procedure DeinitializeSetup();
+var
+  ResultCode: Integer;
+begin
+  // Reload the module after installation completes (if not cancelled)
+  Exec('powershell.exe',
+    '-NoProfile -NonInteractive -Command "Import-Module pshvtools -Force -ErrorAction SilentlyContinue; exit 0"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure InitializeWizard();
