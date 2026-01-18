@@ -230,6 +230,8 @@ var
   ResultCode: Integer;
 begin
   Exec('cmd.exe', '/c start https://github.com/vitalie-vrabie/pshvtools/releases/latest', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // Exit the installer after opening the link
+  Abort;
 end;
 
 function CheckPowerShellVersion(): Boolean;
