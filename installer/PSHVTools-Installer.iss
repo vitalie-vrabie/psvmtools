@@ -74,6 +74,8 @@ english.ModuleInstall=Installing PowerShell module...
 [Files]
 ; Module files - install to PowerShell modules directory
 Source: "..\scripts\hvbak.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\hvcompact.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
+Source: "..\scripts\hvfixacl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 Source: "..\scripts\pshvtools.psm1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 Source: "..\scripts\pshvtools.psd1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
 Source: "..\scripts\fix-vhd-acl.ps1"; DestDir: "{commonpf64}\WindowsPowerShell\Modules\pshvtools"; Flags: ignoreversion
@@ -584,7 +586,7 @@ begin
     '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ' +
     '"$ErrorActionPreference=''Stop''; ' +
     '$p=''' + InstallPath + '''; ' +
-    '$files=@(''pshvtools.psd1'',''pshvtools.psm1'',''hvbak.ps1'',''fix-vhd-acl.ps1'',''restore-vmbackup.ps1'',''restore-orphaned-vms.ps1'',''remove-gpu-partitions.ps1''); ' +
+    '$files=@(''pshvtools.psd1'',''pshvtools.psm1'',''hvbak.ps1'',''hvcompact.ps1'',''hvfixacl.ps1'',''fix-vhd-acl.ps1'',''restore-vmbackup.ps1'',''restore-orphaned-vms.ps1'',''remove-gpu-partitions.ps1''); ' +
     'foreach($f in $files){ $fp=Join-Path $p $f; if(-not (Test-Path -LiteralPath $fp)){ throw (''Missing file: {0}'' -f $fp) } }; ' +
     'Test-ModuleManifest -Path (Join-Path $p ''pshvtools.psd1'') | Out-Null; exit 0"';
 
