@@ -7,7 +7,7 @@
 #define MyAppVersion "1.1.1"
 #endif
 #ifndef MyAppLatestStableVersion
-#define MyAppLatestStableVersion "1.1.0"
+#define MyAppLatestStableVersion "1.1.1"
 #endif
 
 #define MyAppPublisher "Vitalie Vrabie"
@@ -137,17 +137,36 @@ begin
   Result := T;
 end;
 
+(*
+
+function CheckLatestStableRelease(): String;
+var
+  ResultCode: Integer;
+  Output: String;
+begin
+  Exec('cmd.exe', 
+    '/c powershell.exe -NoProfile -NonInteractive -Command "try { $releases = Invoke-WebRequest -Uri ''https://api.github.com/repos/vitalie-vrabie/pshvtools/releases'' -UseBasicParsing | ConvertFrom-Json; $latestStable = $releases | Where-Object { -not $_.prerelease } | Select-Object -First 1; if ($latestStable) { $latestStable.tag_name } else { ''unknown'' } } catch { ''unknown'' }"',
+    Output, SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if ResultCode = 0 then
+    Result := Trim(Output)
+  else
+    Result := 'unknown';
+end;
+
+*)
+
 procedure RequireDevBuildConsent(const CurrentVersion, ReferenceVersion, ReferenceLabel: String);
 begin
   NeedsDevBuildConsent := True;
   if DevBuildConsentPage <> nil then
   begin
-    DevBuildConsentPage.Caption := 'Development build warning';
+    DevBuildConsentPage.Caption := 'Version Check Warning';
     DevBuildConsentPage.Description :=
-      'This installer appears to be a development build.' + #13#10 +
+      'This installer appears to be a development build or may not be the latest stable release.' + #13#10 +
       'Installer version: ' + CurrentVersion + #13#10 +
       ReferenceLabel + ': ' + ReferenceVersion + #13#10 + #13#10 +
-      'This build may be unstable. You must acknowledge before continuing.';
+      'Please check https://github.com/vitalie-vrabie/pshvtools/releases for the latest stable release.' + #13#10 +
+      'You can download the latest stable release or continue with this version.';
     DevBuildConsentCheck.Checked := False;
   end;
 end;
