@@ -43,6 +43,7 @@ Describe 'PSHVTools Module' {
                 'Restore-OrphanedVMs',
                 'Remove-GpuPartitions',
                 'Clone-VM',
+                'Invoke-VHDCompact',
                 'Test-PSHVToolsEnvironment',
                 'Get-PSHVToolsConfig',
                 'Set-PSHVToolsConfig',
@@ -62,14 +63,20 @@ Describe 'PSHVTools Module' {
             $expectedAliases = @(
                 'hvbak',
                 'hv-bak',
-                'fix-vhd-acl',
+                'hvfixacl',
+                'hv-fixacl',
                 'hvrestore',
+                'hv-restore',
                 'hvrecover',
-                'nogpup',
+                'hv-recover',
+                'hvnogpup',
+                'hv-nogpup',
                 'hvclone',
                 'hv-clone',
                 'hvhealth',
-                'hv-health'
+                'hv-health',
+                'hvcompact',
+                'hv-compact'
             )
             
             foreach ($alias in $expectedAliases) {
