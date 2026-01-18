@@ -31,7 +31,7 @@ function Get-PSHVToolsConfig {
         try {
             Get-Content $configPath | ConvertFrom-Json
         } catch {
-            Write-Warning "Failed to read config from $configPath: $_"
+            Write-Warning "Failed to read config from ${configPath}: $_"
             Get-PSHVToolsDefaultConfig
         }
     } else {

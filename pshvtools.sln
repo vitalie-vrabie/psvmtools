@@ -1,8 +1,8 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{B2D7987F-4C7C-4F10-9C1A-A0F9F5CDE3C7}"
 	ProjectSection(SolutionItems) = preProject
 		fix-vhd-acl.ps1 = fix-vhd-acl.ps1
@@ -13,7 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{B2D7
 		pshvtools.psm1 = pshvtools.psm1
 	EndProjectSection
 EndProject
-
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{7D32AC1D-4B40-44EA-8B38-0A2AC2D243D5}"
 	ProjectSection(SolutionItems) = preProject
 		PSHVTools-Installer.iss = PSHVTools-Installer.iss
@@ -21,7 +20,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{
 		INNO_SETUP_INSTALLER.md = INNO_SETUP_INSTALLER.md
 	EndProjectSection
 EndProject
-
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{EA75FA0B-BB91-4E78-AD74-9FFB4E56B50F}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
@@ -33,14 +31,38 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{EA75FA0B-B
 		INNO_SETUP_INSTALLER.md = INNO_SETUP_INSTALLER.md
 	EndProjectSection
 EndProject
-
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PSHVTools.GUI", "PSHVTools.GUI", "{6BBACC6E-250B-AFA2-A372-09A6C88821EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSHVToolsShell", "PSHVTools.GUI\PSHVToolsShell\PSHVToolsShell.csproj", "{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Debug|x64.Build.0 = Debug|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Debug|x86.Build.0 = Debug|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x64.ActiveCfg = Release|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x64.Build.0 = Release|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x86.ActiveCfg = Release|Any CPU
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A} = {6BBACC6E-250B-AFA2-A372-09A6C88821EE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B49C5B78-5B05-4DCF-A6D3-ED1091A768EB}

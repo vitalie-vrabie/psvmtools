@@ -1,21 +1,21 @@
-BeforeAll {
-    $ModulePath = Join-Path $PSScriptRoot '..\scripts\pshvtools.psd1'
-    
-    # Check if Hyper-V module is available (may not be on GitHub Actions)
-    $hvModuleAvailable = Get-Module -ListAvailable -Name Hyper-V
-    
-    if (-not $hvModuleAvailable) {
-        Write-Warning "Hyper-V module not available - some tests will be skipped"
-    }
-    
-    # Import module without Hyper-V requirement check for CI
-    if (Test-Path $ModulePath) {
-        $manifest = Import-PowerShellDataFile $ModulePath
-        # Module will be imported in tests that need it
-    }
-}
-
 Describe 'PSHVTools Module' {
+    BeforeAll {
+        $ModulePath = Join-Path $PSScriptRoot '..\scripts\pshvtools.psd1'
+        
+        # Check if Hyper-V module is available (may not be on GitHub Actions)
+        $hvModuleAvailable = Get-Module -ListAvailable -Name Hyper-V
+        
+        if (-not $hvModuleAvailable) {
+            Write-Warning "Hyper-V module not available - some tests will be skipped"
+        }
+        
+        # Import module without Hyper-V requirement check for CI
+        if (Test-Path $ModulePath) {
+            $manifest = Import-PowerShellDataFile $ModulePath
+            # Module will be imported in tests that need it
+        }
+    }
+
     Context 'Module Manifest' {
         It 'Should have a valid module manifest' {
             $ModulePath = Join-Path $PSScriptRoot '..\scripts\pshvtools.psd1'
@@ -88,38 +88,38 @@ Describe 'PSHVTools Module' {
     Context 'Module Files' {
         It 'Should have main module file' {
             $moduleFile = Join-Path $PSScriptRoot '..\scripts\pshvtools.psm1'
-            Test-Path $moduleFile | Should -Be $true
+            Test-Path $moduleFile | Should Be $true
         }
         
         It 'Should have config module file' {
             $configFile = Join-Path $PSScriptRoot '..\scripts\PSHVTools.Config.psm1'
-            Test-Path $configFile | Should -Be $true
+            Test-Path $configFile | Should Be $true
         }
         
         It 'Should have health check script' {
             $healthFile = Join-Path $PSScriptRoot '..\scripts\Test-PSHVToolsEnvironment.ps1'
-            Test-Path $healthFile | Should -Be $true
+            Test-Path $healthFile | Should Be $true
         }
     }
     
     Context 'Version Consistency' {
         It 'Should have consistent versions across all files' {
             $versionCheckScript = Join-Path $PSScriptRoot 'Test-VersionConsistency.ps1'
-            { & $versionCheckScript } | Should -Not -Throw
+            { & $versionCheckScript } | Should Not Throw
         }
     }
     
-    Context 'Documentation' -Skip:(-not (Get-Module -ListAvailable -Name Hyper-V)) {
+    Context 'Documentation' {
         BeforeAll {
             $ModulePath = Join-Path $PSScriptRoot '..\scripts\pshvtools.psd1'
             Import-Module $ModulePath -Force -ErrorAction SilentlyContinue
         }
         
-        It 'Invoke-VMBackup should have help documentation' {
+        It 'Invoke-VMBackup should have help documentation' -Skip:(-not (Get-Module -ListAvailable -Name Hyper-V)) {
             $help = Get-Help Invoke-VMBackup -ErrorAction SilentlyContinue
             if ($help) {
-                $help.Synopsis | Should -Not -BeNullOrEmpty
-                $help.Description | Should -Not -BeNullOrEmpty
+                $help.Synopsis | Should Not BeNullOrEmpty
+                $help.Description | Should Not BeNullOrEmpty
             }
         }
         
@@ -127,8 +127,4 @@ Describe 'PSHVTools Module' {
             Remove-Module pshvtools -Force -ErrorAction SilentlyContinue
         }
     }
-}
-
-AfterAll {
-    Remove-Module pshvtools -Force -ErrorAction SilentlyContinue
 }

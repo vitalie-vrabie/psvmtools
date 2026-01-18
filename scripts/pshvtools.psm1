@@ -690,7 +690,7 @@ function Invoke-VHDCompact {
 # Import additional module components
 $configModule = Join-Path -Path $PSScriptRoot -ChildPath 'PSHVTools.Config.psm1'
 if (Test-Path -LiteralPath $configModule) {
-    Import-Module $configModule -Force
+    . $configModule
 }
 
 $healthCheckScript = Join-Path -Path $PSScriptRoot -ChildPath 'Test-PSHVToolsEnvironment.ps1'
