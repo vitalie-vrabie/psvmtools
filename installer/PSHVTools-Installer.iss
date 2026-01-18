@@ -109,7 +109,7 @@ Name: "{group}\Changelog"; Filename: "{app}\CHANGELOG.md"
 Name: "{group}\Quick Start Guide"; Filename: "{app}\QUICKSTART.md"
 Name: "{group}\Contributing Guide"; Filename: "{app}\CONTRIBUTING.md"
 Name: "{group}\Troubleshooting"; Filename: "{app}\TROUBLESHOOTING.md"
-Name: "{group}\PSHVTools GUI"; Filename: "{app}\PSHVToolsShell.exe"; WorkingDir: "{app}"; IconFilename: "{app}\PSHVToolsShell.exe"; Comment: "Launch PSHVTools GUI"
+Name: "{group}\PSHVTools GUI"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""Start-Process -FilePath '{app}\PSHVToolsShell.exe' -Verb RunAs"""; WorkingDir: "{app}"; IconFilename: "{app}\PSHVToolsShell.exe"; Comment: "Launch PSHVTools GUI"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
 [Registry]
