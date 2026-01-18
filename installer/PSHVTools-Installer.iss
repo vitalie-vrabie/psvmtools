@@ -113,3 +113,5 @@ Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string
 [Run]
 ; Clean up old module directory to ensure fresh install
 Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Remove-Item -Path '{commonpf64}\WindowsPowerShell\Modules\pshvtools' -Recurse -Force -ErrorAction SilentlyContinue; exit 0"""; Flags: RunHidden; StatusMsg: "Cleaning up old module files..."
+; Import the new module to activate aliases and functions
+Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Import-Module pshvtools -Force; exit 0"""; Flags: RunHidden; StatusMsg: "Activating PowerShell module..."
