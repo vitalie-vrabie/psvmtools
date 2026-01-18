@@ -275,6 +275,13 @@ var
   AppPath: String;
   ModulePath: String;
 begin
+  // Explicitly unload the module first
+  Exec('powershell.exe',
+    '-NoProfile -NonInteractive -Command "Remove-Module pshvtools -Force -ErrorAction SilentlyContinue; exit 0"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(500);
+
+  // Kill all PowerShell processes to release any file locks
   Exec('taskkill.exe', '/F /IM powershell.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Sleep(1000);
 
