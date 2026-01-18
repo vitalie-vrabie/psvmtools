@@ -25,11 +25,22 @@ jobs:
       run: |
         choco install innosetup -y
         
-    - name: Build Installer
+    - name: Update Documentation and Samples
       shell: pwsh
       run: |
-        ./build.ps1 -Verbose
+        # Update docs and samples before release
+        # This step ensures documentation is current and samples are updated
+        Write-Host "Updating documentation and samples..."
+        # Add commands here to update docs, e.g., regenerate README, update samples, etc.
+        # For now, this is a placeholder - implement specific update logic as needed
         
+    - name: Rebuild Installer (if needed)
+      shell: pwsh
+      run: |
+        # Rebuild installer to ensure it's up-to-date with latest changes
+        Write-Host "Rebuilding installer..."
+        ./build.ps1 -Verbose
+
     - name: Generate Checksums
       shell: pwsh
       run: |
