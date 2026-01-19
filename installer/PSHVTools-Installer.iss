@@ -357,27 +357,42 @@ var
   Version: String;
   ResultCode: Integer;
 begin
-  // Check for .NET 10 runtime in registry
+  // More robust check for .NET 10 runtime / Desktop runtime.
+  // First look for registry entries for Microsoft.WindowsDesktop.App (desktop runtime)
+  // and Microsoft.NETCore.App (core runtime). Include common WOW6432Node variants.
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App\10.0.0', 'Version', Version) then
+  begin
+    Result := True;
+    exit;
+  end;
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App\10.0.1', 'Version', Version) then
+  begin
+    Result := True;
+    exit;
+  end;
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App\10.0.0', 'Version', Version) then
+  begin
+    Result := True;
+    exit;
+  end;
+  // Also accept Microsoft.NETCore.App entries (non-desktop scenarios)
   if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.0', 'Version', Version) then
   begin
     Result := True;
-  end
-  else if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.1', 'Version', Version) then
-  begin
-    Result := True;
-  end
-  else if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.2', 'Version', Version) then
-  begin
-    Result := True;
-  end
-  else
-  begin
-    // Fallback to dotnet command
-    if Exec('cmd.exe', '/c dotnet --version 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      Result := (ResultCode = 0)
-    else
-      Result := False;
+    exit;
   end;
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App\10.0.1', 'Version', Version) then
+  begin
+    Result := True;
+    exit;
+  end;
+
+  // Fallback: use dotnet --list-runtimes and search for runtime entries with major version 10
+  // Use findstr to look specifically for Microsoft.WindowsDesktop.App or Microsoft.NETCore.App with " 10." in the runtime list.
+  if Exec('cmd.exe', '/c dotnet --list-runtimes 2>nul | findstr /C:"Microsoft.WindowsDesktop.App 10." /C:"Microsoft.NETCore.App 10." >nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Result := (ResultCode = 0)
+  else
+    Result := False;
 end;
 
 function InitializeSetup(): Boolean;
