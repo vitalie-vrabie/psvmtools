@@ -20,7 +20,7 @@
   <Target Name="RunInstallerScript" AfterTargets="Build">
     <Message Text="Running installer build script '$(BuildScript)' in $(MSBuildProjectDirectory)" Importance="high" />
     <Error Condition="!Exists('$(MSBuildProjectDirectory)\$(BuildScript)')" Text="Build script '$(BuildScript)' not found in installer folder." />
-    <Exec Command="cmd /c &quot;\"$(MSBuildProjectDirectory)\\$(BuildScript)\&quot;&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Command="cmd /c &quot;$(MSBuildProjectDirectory)\$(BuildScript)&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 
   <Target Name="Clean">

@@ -16,7 +16,7 @@
 
 [Setup]
 ; Basic application information
-AppId={{8C5E8F1D-9D4B-4A2C-B6E7-8F3D9C1A5B2E}
+AppId={{8C5E8F1D-9D4B-4A2C-B6E7-8F3D9C1A5B2E}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -92,7 +92,11 @@ Source: "..\scripts\restore-orphaned-vms.ps1"; DestDir: "{commonpf64}\WindowsPow
 ; NOTE: The GUI publish artifact may not be present in CI/build environments.
 ; The CI workflows publish the GUI before building the installer so the executable
 ; should be available at the path below during the installer build.
+#if FileExists('..\\PSHVTools.GUI\\PSHVToolsShell\\bin\\Release\\net10.0-windows\\win-x64\\publish\\PSHVToolsShell.exe')
 Source: "..\PSHVTools.GUI\PSHVToolsShell\bin\Release\net10.0-windows\win-x64\publish\PSHVToolsShell.exe"; DestDir: "{app}"; Flags: ignoreversion
+#else
+; GUI publish artifact not found - skipping GUI executable
+#endif
 
 ; Documentation files - install to application directory
 Source: "..\docs\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
@@ -206,7 +210,7 @@ begin
       val := 0;
       while (i < Length(aStr)) and (aStr[i+1] >= '0') and (aStr[i+1] <= '9') do
       begin
-        val := val * 10 + (Ord(aStr[i+1]) - Ord('0'))
+        val := val * 10 + (Ord(aStr[i+1]) - Ord('0'));
         i := i + 1;
       end;
       aParts[idx] := val;
