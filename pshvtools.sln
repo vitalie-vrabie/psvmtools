@@ -1,38 +1,35 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11408.102 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{B2D7987F-4C7C-4F10-9C1A-A0F9F5CDE3C7}"
 	ProjectSection(SolutionItems) = preProject
 		fix-vhd-acl.ps1 = fix-vhd-acl.ps1
 		Install-PSHVTools.ps1 = Install-PSHVTools.ps1
-		Uninstall-PSHVTools.ps1 = Uninstall-PSHVTools.ps1
 		pshvtools.psd1 = pshvtools.psd1
 		pshvtools.psm1 = pshvtools.psm1
+		Uninstall-PSHVTools.ps1 = Uninstall-PSHVTools.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{7D32AC1D-4B40-44EA-8B38-0A2AC2D243D5}"
-	ProjectSection(SolutionItems) = preProject
-		PSHVTools-Installer.iss = PSHVTools-Installer.iss
-		Build-InnoSetupInstaller.bat = Build-InnoSetupInstaller.bat
-		INNO_SETUP_INSTALLER.md = docs\installer\INNO_SETUP_INSTALLER.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{EA75FA0B-BB91-4E78-AD74-9FFB4E56B50F}"
 	ProjectSection(SolutionItems) = preProject
-		docs\README.md = docs\README.md
-		docs\QUICKSTART.md = docs\QUICKSTART.md
 		BUILD_GUIDE.md = BUILD_GUIDE.md
 		docs\CHANGELOG.md = docs\CHANGELOG.md
+		docs\installer\INNO_SETUP_INSTALLER.md = docs\installer\INNO_SETUP_INSTALLER.md
 		LICENSE.txt = LICENSE.txt
 		PROJECT_SUMMARY.md = PROJECT_SUMMARY.md
-		docs\installer\INNO_SETUP_INSTALLER.md = docs\installer\INNO_SETUP_INSTALLER.md
+		docs\QUICKSTART.md = docs\QUICKSTART.md
+		docs\README.md = docs\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PSHVTools.GUI", "PSHVTools.GUI", "{6BBACC6E-250B-AFA2-A372-09A6C88821EE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSHVToolsShell", "PSHVTools.GUI\PSHVToolsShell\PSHVToolsShell.csproj", "{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSHVTools.Installer", "installer\PSHVTools.Installer.csproj", "{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +53,18 @@ Global
 		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x64.Build.0 = Release|Any CPU
 		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x86.ActiveCfg = Release|Any CPU
 		{3BF6729E-A7AA-4BF5-A56E-EF0EDBF83D6A}.Release|x86.Build.0 = Release|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Debug|x64.Build.0 = Debug|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Debug|x86.Build.0 = Debug|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Release|x64.ActiveCfg = Release|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Release|x64.Build.0 = Release|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Release|x86.ActiveCfg = Release|Any CPU
+		{91E5A09A-97F6-82BE-07F5-BB98CBB37F75}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

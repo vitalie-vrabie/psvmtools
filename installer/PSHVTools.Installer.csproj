@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+
+    <!-- Installer helper properties -->
+    <InstallerScript>PSHVTools-Installer.iss</InstallerScript>
+    <BuildScript>Build-InnoSetupInstaller.bat</BuildScript>
+    <OutDir>dist</OutDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Show files in Solution Explorer without compiling them -->
+    <None Include="**\*.*" />
+  </ItemGroup>
+
+  <Target Name="EnsureBuildScript" BeforeTargets="Build">
+    <Error Condition="!Exists('$(MSBuildProjectDirectory)\$(BuildScript)')" Text="Build script '$(BuildScript)' not found in installer folder." />
+  </Target>
+
+  <Target Name="Build" DependsOnTargets="EnsureBuildScript">
+    <Message Text="Building Inno Setup installer using $(BuildScript) in $(MSBuildProjectDirectory)" Importance="high" />
+    <Exec Command="&quot;$(MSBuildProjectDirectory)\$(BuildScript)&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target Name="Clean">
+    <Message Text="Cleaning installer output '$(OutDir)'" Importance="high" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)" />
+  </Target>
+</Project>
