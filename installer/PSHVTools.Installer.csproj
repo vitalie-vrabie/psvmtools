@@ -20,6 +20,11 @@
   <Target Name="RunInstallerScript" AfterTargets="Build">
     <Message Text="Running installer build script '$(BuildScript)' in $(MSBuildProjectDirectory)" Importance="high" />
     <Error Condition="!Exists('$(MSBuildProjectDirectory)\$(BuildScript)')" Text="Build script '$(BuildScript)' not found in installer folder." />
+    <!-- Strict check: fail the build if Inno Setup (ISCC.exe) is not available on the machine.
+         This ensures CI builds that are expected to produce the installer EXE will fail fast when requirements are missing. -->
+    <Message Text="Checking for Inno Setup (ISCC.exe) on PATH or common install locations..." Importance="high" />
+    <Exec Command="powershell -NoProfile -Command &quot;if (Get-Command ISCC.exe -ErrorAction SilentlyContinue) { exit 0 } elseif (Test-Path \&quot;$env:ProgramFiles(x86)\\Inno Setup 6\\ISCC.exe\&quot; -or Test-Path \&quot;$env:ProgramFiles\\Inno Setup 6\\ISCC.exe\&quot; -or Test-Path \&quot;$env:ProgramFiles(x86)\\Inno Setup 5\\ISCC.exe\&quot;) { exit 0 } else { Write-Error 'Inno Setup (ISCC.exe) not found. Install Inno Setup 6.'; exit 2 }&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+
     <Exec Command="cmd /c &quot;$(MSBuildProjectDirectory)\$(BuildScript)&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 

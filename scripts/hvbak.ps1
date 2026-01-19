@@ -603,10 +603,10 @@ foreach ($vm in $vms) {
                 }
 
                 LocalLog ("Creating 7z archive: {0} -> {1}" -f $vmTemp, $tempArchive)
-                # Use 7z format with fast compression and multithreading
+                # Use 7z format with default compression and multithreading
                 # Add -bsp1 to get progress percentage updates
                 $mmtArg = if ($ThreadCap -and $ThreadCap -gt 0) { "-mmt=$ThreadCap" } else { "-mmt=on" }
-                $args = @("a","-t7z","-mx=1",$mmtArg,"-bsp1",$tempArchive,"*")
+                $args = @("a","-t7z",$mmtArg,"-bsp1",$tempArchive,"*")
 
                 # Start 7z as a separate process with redirected output to capture progress
                 $proc = $null
