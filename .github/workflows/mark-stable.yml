@@ -1,0 +1,70 @@
+name: Mark installer stable
+
+# This workflow updates the installer definition so that the installer
+# will not warn about a dev build when the given version is the latest stable.
+#
+# Triggers:
+#  - workflow_dispatch: manual run with `version` input
+#  - release: when a GitHub Release is published (will use the release tag_name)
+#
+# When you say "mark a release as stable" run this workflow (or create a release)
+# and it will update `installer/PSHVTools-Installer.iss` to set
+# `MyAppLatestStableVersion` to the provided version, commit and push the change.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to mark as stable (e.g. 1.1.2)'
+        required: true
+  release:
+    types: [published]
+
+jobs:
+  mark-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Show version
+        run: echo "Marking installer latest stable version: ${{ steps.get_version.outputs.version }}"
+
+      - name: Update installer file
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          FILE="installer/PSHVTools-Installer.iss"
+          if [ ! -f "$FILE" ]; then
+            echo "Installer file not found: $FILE" >&2
+            exit 1
+          fi
+          # Replace the MyAppLatestStableVersion define value
+          sed -E -i "s/(#define MyAppLatestStableVersion \")([^"]+)(\")/\1${VERSION}\3/" "$FILE"
+          echo "Updated $FILE"
+          git --no-pager diff -- $FILE || true
+
+      - name: Commit and push
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          git config user.name "$GIT_AUTHOR_NAME"
+          git config user.email "$GIT_AUTHOR_EMAIL"
+          git add installer/PSHVTools-Installer.iss
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Installer: mark latest stable version as ${{ steps.get_version.outputs.version }}"
+          git push origin HEAD:master
