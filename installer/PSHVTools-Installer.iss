@@ -4,10 +4,10 @@
 
 #define MyAppName "PSHVTools"
 #ifndef MyAppVersion
-#define MyAppVersion "1.1.2"
+#define MyAppVersion "1.1.3"
 #endif
 #ifndef MyAppLatestStableVersion
-#define MyAppLatestStableVersion "1.1.2"
+#define MyAppLatestStableVersion "1.1.3"
 #endif
 
 #define MyAppPublisher "Vitalie Vrabie"
