@@ -79,26 +79,56 @@ if (-not $notes) { $notes = "Release $tag" }
 # Use gh CLI if available
 $gh = Get-Command gh -ErrorAction SilentlyContinue
 if ($gh) {
-    Write-Short "Using gh CLI to create release (stable)"
+    Write-Short "Using gh CLI to create or update release (stable)"
     if ($WhatIf) {
-        Write-Short "WhatIf: gh release create $tag --title 'PSHVTools $tag' --notes-file $releaseNotesPath --assets $installer"
+        Write-Short "WhatIf: gh release create $tag --title 'PSHVTools $tag' --notes-file $releaseNotesPath <assets...>"
     } else {
-    # Build gh args: positional filenames (assets) come immediately after the tag
-    $args = @('release','create',$tag)
+        # Check if release already exists
+        $releaseExists = $false
+        try {
+            & gh release view $tag --repo $ownerRepo > $null 2>&1
+            if ($LASTEXITCODE -eq 0) { $releaseExists = $true }
+        } catch {}
 
-    # Attach installer and checksum as positional arguments if present
-    if ($installer -and $installer.Path) { $args += $installer.Path }
-    if (Test-Path $checksum) { $args += $checksum }
+        if ($releaseExists) {
+            Write-Short "Release $tag already exists; uploading assets and updating release notes"
 
-    # Notes: prefer file if available, otherwise pass inline notes
-    if (Test-Path $releaseNotesPath) {
-        $args += @('--title', "PSHVTools $tag", '--notes-file', $releaseNotesPath, '--repo', $ownerRepo)
-    } else {
-        $args += @('--title', "PSHVTools $tag", '--notes', $notes, '--repo', $ownerRepo)
-    }
+            # Upload assets (use --clobber to replace existing assets with same name)
+            $uploadArgs = @('release','upload',$tag,'--repo',$ownerRepo,'--clobber')
+            if ($installer -and $installer.Path) { $uploadArgs += $installer.Path }
+            if (Test-Path $checksum) { $uploadArgs += $checksum }
 
-    & gh @args
-    if ($LASTEXITCODE -ne 0) { throw "gh release create failed with exit code $LASTEXITCODE" }
+            if ($uploadArgs.Count -gt 4) {
+                & gh @uploadArgs
+                if ($LASTEXITCODE -ne 0) { throw "gh release upload failed with exit code $LASTEXITCODE" }
+            } else {
+                Write-Short "No assets found to upload for release $tag"
+            }
+
+            # Update release notes/title
+            if (Test-Path $releaseNotesPath) {
+                & gh release edit $tag --repo $ownerRepo --title "PSHVTools $tag" --notes-file $releaseNotesPath
+            } else {
+                & gh release edit $tag --repo $ownerRepo --title "PSHVTools $tag" --notes "$notes"
+            }
+            if ($LASTEXITCODE -ne 0) { throw "gh release edit failed with exit code $LASTEXITCODE" }
+
+            Write-Short "Release update via gh complete"
+            return
+        }
+
+        # Create new release
+        $args = @('release','create',$tag)
+        if ($installer -and $installer.Path) { $args += $installer.Path }
+        if (Test-Path $checksum) { $args += $checksum }
+        if (Test-Path $releaseNotesPath) {
+            $args += @('--title', "PSHVTools $tag", '--notes-file', $releaseNotesPath, '--repo', $ownerRepo)
+        } else {
+            $args += @('--title', "PSHVTools $tag", '--notes', $notes, '--repo', $ownerRepo)
+        }
+
+        & gh @args
+        if ($LASTEXITCODE -ne 0) { throw "gh release create failed with exit code $LASTEXITCODE" }
     }
     Write-Short "Release creation via gh complete"
     return
