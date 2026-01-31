@@ -87,11 +87,25 @@ jobs:
       id: check_stable
       shell: pwsh
       run: |
+        # Determine whether this release should be marked as a prerelease.
+        # Rules:
+        #  - If the tag contains a prerelease identifier (e.g. 1.2.3-rc1 or 1.2.3-beta), mark prerelease.
+        #  - Otherwise, compare the tag (without leading 'v') to the canonical release version in version.json.
+        #    If they differ, treat as prerelease. If they match exactly, treat as stable.
         $versionJson = Get-Content version.json | ConvertFrom-Json
-        $stableVersion = $versionJson.stableVersion
+        $releaseVersion = $versionJson.version
         $tag = $env:GITHUB_REF_NAME -replace '^v', ''
-        $isStable = $tag -eq $stableVersion
-        Write-Host "is_stable=$isStable" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+        $isPrerelease = $false
+        if ($tag -match '-') {
+            $isPrerelease = $true
+        } elseif ($tag -ne $releaseVersion) {
+            $isPrerelease = $true
+        }
+
+        # Emit output as lowercase 'true'/'false' strings for GitHub Actions
+        $out = $isPrerelease.ToString().ToLower()
+        Write-Host "is_prerelease=$out" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -102,6 +116,6 @@ jobs:
           dist/PSHVToolsShell.exe
         body_path: RELEASE_NOTES.md
         draft: false
-        prerelease: ${{ steps.check_stable.outputs.is_stable == 'False' }}
+        prerelease: ${{ eq( steps.check_stable.outputs.is_prerelease, 'true') }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
