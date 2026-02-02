@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,7 +23,7 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
-    private void RunPowerShellCommand(string command)
+    private async void RunPowerShellCommand(string command)
     {
         try
         {
@@ -35,19 +36,28 @@ public partial class MainWindow : Window
                 CreateNoWindow = true
             };
 
-            var process = Process.Start(psi);
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+            await Task.Run(() =>
+            {
+                using var process = Process.Start(psi);
+                if (process == null)
+                {
+                    AppendOutput("Failed to start process.");
+                    return;
+                }
 
-            AppendOutput(output);
-            if (!string.IsNullOrWhiteSpace(error))
-                AppendOutput("ERROR: " + error);
+                process.OutputDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) AppendOutput(e.Data); };
+                process.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) AppendOutput("ERROR: " + e.Data); };
 
-            if (process.ExitCode == 0)
-                AppendOutput("Command completed successfully.");
-            else
-                AppendOutput($"Command failed with exit code {process.ExitCode}.");
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                process.WaitForExit();
+
+                if (process.ExitCode == 0)
+                    AppendOutput("Command completed successfully.");
+                else
+                    AppendOutput($"Command failed with exit code {process.ExitCode}.");
+            });
         }
         catch (Exception ex)
         {
