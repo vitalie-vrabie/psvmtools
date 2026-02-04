@@ -1,92 +1,34 @@
-# PSHVTools v1.1.2
+---
+# Release Notes - PSHVTools v1.1.3
 
-Release date: 2026-01-18
+Release date: 2026-01-31
 
-> This is the release notes for the major release `v1.1.0`.
-> For ongoing development toward the next release (e.g. v1.2.0), see `CHANGELOG.md` under **[Unreleased]**.
+This release marks `1.1.3` as the latest stable release. It includes an installer update to suppress the development-build prompt for this version and CI changes to make stable-tagging an explicit, manual action.
 
-## Major Highlights
+Highlights
+- Installer: Updated Inno Setup script so the installer no longer shows a development-build consent page for this release.
+- CI: The `build-installer` workflow is now opt-in for creating/updating the `stable` tag. Use the workflow manual dispatch (`markStable=true`) to mark a run as stable.
+- Docs: README, Quick Start, and installer docs updated with guidance on marking stable builds.
 
-### Complete Rewrite & Professional Tooling
-- Transformed from basic PowerShell scripts to a full-featured PowerShell module
-- Professional Windows installer with GUI wizard and system requirements checking
-- Comprehensive CI/CD pipeline with automated testing and releases
-- Module manifest with proper versioning and dependencies
+Changes
+- Bumped internal installer stable marker: `MyAppLatestStableVersion` ? `1.1.3` (`installer/PSHVTools-Installer.iss`).
+- Updated `version.json` `stableVersion` to `1.1.3`.
+- Made stable tagging opt-in: `.github/workflows/build-installer.yml` (added `workflow_dispatch` input `markStable`).
+- Documentation updates in `docs/README.md`, `docs/QUICKSTART.md`, and `docs/installer/INNO_SETUP_INSTALLER.md`.
 
-### Enhanced Installer Experience
-- Intelligent development build detection with user consent
-- Mandatory system requirements validation (PowerShell 5.1+, Hyper-V, 7-Zip)
-- Complete cleanup of previous installations (removes entire directories)
-- Professional UI with step-by-step guidance and error handling
+How to publish this release
+- Preferred (interactive): run the release helper locally with the `gh` CLI installed and authenticated:
 
-### CI/CD & DevOps Integration
-- GitHub Actions workflow for automated build, test, and release
-- Version consistency validation across all project files
-- Automated test execution with Pester framework
-- SHA256 checksum generation for build artifacts
-- Automatic stable/pre-release classification based on version declarations
+  powershell -ExecutionPolicy Bypass -File installer\Publish-GitHubRelease.ps1
 
-### New Features & Tools
-- Configuration Management: `Set-PSHVToolsConfig`, `Get-PSHVToolsConfig`, `Reset-PSHVToolsConfig`
-- Health Check: `hvhealth` command for environment diagnostics
-- Enhanced Build Script: Version validation, checksums, `-WhatIf` support, `-Clean` flag
-- VM Backup with Checkpoints: Full Hyper-V checkpoint support
-- Compression: 7-Zip integration for efficient backups
-- Restore Capabilities: Restore orphaned VMs and backup archives
+- Non-interactive (REST API): set an environment variable `GITHUB_TOKEN` with a token that has `repo` permissions and run the script on a machine with network access.
 
-### Documentation & User Experience
-- Comprehensive documentation suite (README, QUICKSTART, TROUBLESHOOTING, etc.)
-- CONTRIBUTING.md with development guidelines
-- PROJECT_SUMMARY.md with architecture overview
-- Improved error messages with actionable tips
-- Quick start guide for immediate usage
+Preview/WhatIf
 
-### Quality & Reliability
-- Pester test framework with comprehensive coverage
-- Module manifest validation
-- Version consistency checks
-- Professional error handling and logging
+To preview actions without publishing:
 
-## Installation
+  powershell -ExecutionPolicy Bypass -File installer\Publish-GitHubRelease.ps1 -WhatIf
 
-### GUI Installer (Recommended)
-```cmd
-PSHVTools-Setup.exe
-```
+For full changelog details, see `docs/CHANGELOG.md`.
 
-### Silent Install
-```cmd
-PSHVTools-Setup.exe /VERYSILENT /NORESTART
-```
-
-### PowerShell Gallery (Future)
-```powershell
-Install-Module PSHVTools
-```
-
-## Quick Start
-
-    Import-Module pshvtools
-
-    # Check environment health
-    hvhealth
-
-    # Configure defaults
-    Set-PSHVToolsConfig -DefaultBackupPath "D:\Backups" -DefaultKeepCount 5
-
-    # Backup all VMs
-    hvbak -NamePattern "*"
-
-    # Compact VHD files
-    hvcompact -NamePattern "*" -WhatIf
-
-    # View configuration
-    Show-PSHVToolsConfig
-
-## Key Links
-
-GitHub: https://github.com/vitalie-vrabie/pshvtools
-Documentation: https://github.com/vitalie-vrabie/pshvtools#readme
-Issues: https://github.com/vitalie-vrabie/pshvtools/issues
-Contributing: See CONTRIBUTING.md
-Troubleshooting: See TROUBLESHOOTING.md
+---
