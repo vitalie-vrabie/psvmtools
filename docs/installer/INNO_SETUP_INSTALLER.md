@@ -37,7 +37,7 @@ installer\Build-InnoSetupInstaller.bat
 
 ### Output
 
-- **File:** `dist\PSHVTools-Setup-1.0.5.exe`
+- **File:** `dist\PSHVTools-Setup.exe`
 - **Type:** Native Windows EXE with GUI wizard
 
 ## Installer Features

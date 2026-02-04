@@ -1,6 +1,6 @@
 # PSHVTools - PowerShell Hyper-V Tools
 
-**Version:** 1.1.1  
+**Version:** 1.1.3  
 **Product Name:** PSHVTools (PowerShell Hyper-V Tools)  
 **Module Name:** pshvtools  
 **License:** MIT
@@ -43,6 +43,8 @@ PSHVTools is a comprehensive PowerShell module for backing up and managing Hyper
 2. Run as Administrator
 3. Follow the installation wizard
 4. The module will be available system-wide
+
+Note about CI builds: The GitHub Actions installer workflow no longer auto-tags successful push builds as "stable". To mark a specific build as the official `stable` tag, run the workflow manually (Actions ? Build Inno Setup Installer ? Run workflow) and enable the `markStable` input. This will create or update the repository `stable` tag pointing to that run's commit.
 
 **Silent Installation:**
 ```powershell

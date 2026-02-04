@@ -13,6 +13,8 @@
 PSHVTools-Setup.exe /VERYSILENT /NORESTART
 ```
 
+Note: The CI installer workflow requires a manual dispatch to mark a build as `stable` if desired. See the repository Actions page to run the workflow with `markStable=true`.
+
 ## Available Commands
 
 After installation, the **pshvtools** module provides:
